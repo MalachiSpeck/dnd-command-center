@@ -1,0 +1,8 @@
+[
+  {
+    "fact": "The ancient amulet is cursed by Dendar the Night Serpent.",
+    "known_by": ["char_1"],
+    "learned_session": "2026-08-03",
+    "source": "Detect Magic and History check in the tomb"
+  }
+]

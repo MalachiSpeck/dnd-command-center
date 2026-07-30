@@ -1,0 +1,20 @@
+{
+  "name": "I BESTIARY \nSTAR SPAWN GRUE",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 11,
+  "hp": 17,
+  "speed": "30 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "1/4",
+  "actions": [],
+  "raw_extracted": "STR \n6 (- 2) \nDEX \n13 (+l) \nCON \n10 (+O) \nDamage Immunities psychic \nINT \n9 (- 1) \nWIS \n11 (+O) \nSenses darkvision 60 ft., passive Perception 10 \nLanguages Deep Speech \nChallenge 1/4 (50 XP) \nCHA \n6 (-2) \nAura of Madness. Creatures within 20 feet of the grue that aren't aberrations have disadvantage on saving throws, as well as \non attack rolls against creatures other than a star spawn grue. \nACTIONS \nConfounding Bite. Melee Weapon Attack: +3 to hit, reach 5 ft., \none target. Hit: 6 (2d4 + 1) piercing damage. and the target \nmust succeed on a DC 10 Wisdom saving throw or attack rolls \nagainst it have advantage until the start of the grue's next turn. \nSTAR SPAWN HULK \nLarge aberration, chaotic evil \nArmor Class 16 (natural armor) \nHit Points 136 (13dl 0 + 65) \n.\u2022 \nSpeed 30 ft. \n\u2022 \nSTR \n20 (+5) \nDEX \n8 (- 1) \nCON \n21 (+5) \nSaving Throws Dex +3, Wis +5 \nSkills Perception +5 \nINT \n7 (-2) \nWIS \n12 (+l) \nCHA \n9 (- 1) \nDamage Resistances bludgeoning, piercing, and slashing from \nnonmagical a"
+}

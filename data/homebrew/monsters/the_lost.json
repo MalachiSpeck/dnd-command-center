@@ -1,0 +1,20 @@
+{
+  "name": "THE LOST",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 15,
+  "hp": 78,
+  "speed": "30 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "7",
+  "actions": [],
+  "raw_extracted": "STR \n17 (+3) \nDEX \n12 (+l) \nSkills Athletics +6 \nCON \n15 (+2) \nINT \n6 (-2) \nWIS \n7 (-2) \nCHA \n5 (- 3) \nDamage Resistances bludgeoning, piercing, and slashing while \nin dim light or darkness \nSenses darkvision 60 ft., passive Perception 8 \nLanguages Common \nChallenge 7 (2,900 XP) \nJ.,1\"-. \n--... \n----------------~~~~==---=~- ~ \n\u2022 \nACTIONS \n....... \nMultiattack. The Lost makes two arm spike attacks. \nArm Spike. Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 14 (2dl0 + 3) piercing damage. \nEmbrace. Melee Weapon Attack: +6 to it, reach 5 ft., one target. \nHit: 25 (4dl0 + 3) piercing damage, and the target is grappled \n(escape DC 14) if it is a Medium or smaller creature. Until the \ngrapple ends, the target is frightened, and it takes 27 (6d8) \npsychic damage at the end of each of its turns. The Lost can \nembrace only one creature at a time. \nREACTIONS \n. . \nTightening Embrace. If the Lost takes damage while it has a \ncreature grappled, that creature takes 18 (4d8) psychic da"
+}

@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DM Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Spells parchment card deck style */
+        .spell-book-card {
+            background-color: #f6ebd6; /* parchment */
+            color: #3b2818; /* dark sepia */
+            border: 2px solid #8e6c43;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+            font-family: Georgia, serif;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        .spell-book-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(139, 92, 246, 0.4);
+            border-color: var(--arcane-violet);
+        }
+        .spell-book-card h4 {
+            margin: 0 0 4px 0;
+            color: #5c2c16;
+            font-family: 'Cinzel', serif;
+            font-size: 1.05rem;
+            border-bottom: 1px solid #c9b195;
+            padding-bottom: 2px;
+        }
+
+        /* Hover spell statistics lookup tooltip styling */
+        .spell-tooltip-link {
+            color: #a78bfa !important;
+            text-decoration: underline dashed #8b5cf6 !important;
+            cursor: help !important;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .spell-hover-tooltip {
+            position: absolute;
+            bottom: 120%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1e1b2e;
+            color: #f1f5f9;
+            border: 1px solid #7e22ce;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            width: 280px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 50000;
+            display: none;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
+            font-family: 'Inter', sans-serif;
+            text-align: left;
+            pointer-events: none;
+            line-height: 1.4;
+        }
+        
+        .spell-tooltip-link:hover .spell-hover-tooltip {
+            display: block;
+        }
+
+        /* Spell Slots Resource Tracker styles */
+        .spell-slots-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            margin-top: 8px;
+            background: #0f0f13;
+            border: 1px solid var(--border-iron);
+            border-radius: 4px;
+            padding: 6px;
+        }
+        
+        .slot-pill {
+            background: #1e1b2e;
+            border: 1px solid var(--border-iron);
+            border-radius: 3px;
+            padding: 2px 4px;
+            text-align: center;
+            font-size: 0.7rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+        }
+        
+        .slot-pill.active {
+            border-color: var(--arcane-violet);
+            box-shadow: 0 0 4px rgba(139, 92, 246, 0.2);
+        }
+        
+        .slot-counter-btns {
+            display: flex;
+            gap: 2px;
+            margin-top: 2px;
+        }
+        
+        .slot-btn {
+            background: #312e45;
+            color: white;
+            border: none;
+            border-radius: 2px;
+            padding: 1px 3px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .slot-btn:hover {
+            background: var(--arcane-violet);
+        }
+
+        /* Stream Deck simulation controller styled deck buttons */
+        .stream-deck-bar {
+            display: flex;
+            gap: 10px;
+            background-color: #0d0d11;
+            border: 1px solid var(--border-iron);
+            border-radius: 6px;
+            padding: 8px 15px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+        
+        .deck-btn {
+            background: linear-gradient(145deg, #1f1b2d, #141121);
+            color: #fbbf24;
+            border: 1px solid #3c325c;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            font-family: 'Cinzel', serif;
+            cursor: pointer;
+            box-shadow: 3px 3px 5px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        
+        .deck-btn:hover {
+            border-color: var(--arcane-violet);
+            background: linear-gradient(145deg, #2b2342, #1b172b);
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+            transform: scale(1.02);
+        }
+
+        /* Fog of War projector mask styles */
+        .fow-projector-mask {
+            position: absolute;
+            background-color: rgba(5, 5, 7, 0.96); /* dense pitch black */
+            border: 1px dashed rgba(255,255,255,0.4);
+            z-index: 40000;
+        }
+
+        /* Sidebar/Grid additions for new sections */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 15px;
+            padding: 15px;
+            flex-grow: 1;
+            height: calc(100vh - 145px);
+            overflow: hidden;
+        }
+
+        /* Utility Tab Styles */
+        .utility-tab-content.hidden {
+            display: none !important;
+        }
+        .drawer-tab-btn {
+            background: #111827;
+            border: 1px solid var(--border-iron);
+            color: var(--text-muted);
+            font-family: 'Cinzel', serif;
+            font-weight: bold;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 4px;
+        }
+        .drawer-tab-btn.active {
+            background: var(--arcane-violet) !important;
+            color: white !important;
+            border-color: #a78bfa !important;
+            box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+        }
+
+        .side-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .center-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        /* Secrets slide-out drawer styles */
+        .drawer {
+            position: fixed;
+            top: 0; right: -400px;
+            width: 380px; height: 100vh;
+            background-color: var(--shadow-card);
+            border-left: 2px solid var(--border-iron);
+            z-index: 2000;
+            transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: -5px 0 25px rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+        }
+        .drawer.open {
+            right: 0;
+        }
+        .drawer-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-iron);
+            background-color: #0f0f13;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .drawer-body {
+            padding: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        /* Floating Soundboard & Improv grid */
+        .soundboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .sound-btn {
+            background: #111827;
+            border: 1px solid var(--border-iron);
+            color: var(--text-main);
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        .sound-btn:hover {
+            background: var(--arcane-violet);
+            box-shadow: 0 0 5px rgba(139, 92, 246, 0.3);
+            border-color: #a78bfa;
+        }
+
+        /* Spell list item scroll container */
+        .item-scroll-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border-iron);
+            background: var(--bg-abyss);
+            border-radius: 4px;
+            padding: 5px;
+        }
+
+        .list-row-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            border-bottom: 1px solid #1f192e;
+            font-size: 0.85rem;
+        }
+        .list-row-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <header class="top-nav">
+        <h1 style="font-size: 1.6rem;">DM Command Center</h1>
+        <div id="global-calendar-date-display" style="color:var(--gold-amber); font-weight:bold; font-size:0.9rem; margin-left:15px; font-family:'Cinzel', serif;">15 Mirtul 1493 | Time: 08:00</div>
+        <!-- Saved Encounters Prep container element -->
+        <div id="saved-encounters-dropdown-container" style="display:inline-block;"></div>
+        
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <button class="btn-primary" style="background: #fbbf24; color: black;" id="open-review-btn" onclick="openReviewModal()">Review Imports & Syncs</button>
+            <button class="btn-primary" style="background:#10b981;" onclick="saveCurrentEncounterPrep()">Save Prep</button>
+            <button class="btn-primary" style="background: #e11d48; color: white;" onclick="openConditionsCompendium()">Conditions Compendium</button>
+            <button class="btn-primary" style="background: #a78bfa; color: #1e1b2e;" id="open-grimoire-btn">Spells Grimoire Compendium</button>
+            <button class="btn-primary" style="background: #10b981;" id="open-notes-btn">Campaign Notes</button>
+            <button class="btn-primary" style="background: #2563eb;" id="open-ingest-btn">Smart Text Ingester</button>
+            <button class="btn-primary" id="open-improv-btn">Improv Cheat Sheet</button>
+            <button class="btn-primary" id="open-downtime-btn">Camp / Downtime</button>
+            <button class="btn-primary" style="background: #ec4899; color: white;" onclick="openWave4MasterModal()">Deep Dig Panel</button>
+            <div class="status-indicator">● System Online</div>
+        </div>
+    </header>
+
+    <!-- Elgato Stream Deck Physical Simulator Bar -->
+    <div class="stream-deck-bar" style="margin: 15px 15px 0 15px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+        <span style="font-family: 'Cinzel', serif; font-size: 0.8rem; font-weight: bold; color: var(--arcane-violet); letter-spacing: 1px;">Stream Deck Simulator:</span>
+        <button class="deck-btn" onclick="advanceTurnIndex()">⏩ Next Turn</button>
+        <button class="deck-btn" onclick="rewindTurnIndex()">⏪ Prev Turn</button>
+        <button class="deck-btn" onclick="triggerSound('sword-clash.mp3')"> Clash Sound</button>
+        <button class="deck-btn" onclick="triggerSound('spell-cast.mp3')"> Magic Sound</button>
+        <button class="deck-btn" onclick="spawnProjectorTemplate('circle', 20, '#ef4444', 'Fireball')"> Fireball (20ft)</button>
+        <button class="deck-btn" onclick="spawnProjectorTemplate('circle', 15, '#10b981', 'Shatter')"> Shatter (15ft)</button>
+        <button class="deck-btn" style="color: #ef4444; border-color: #ef4444;" onclick="clearProjectorTemplates()"> Clear Board</button>
+        
+        <!-- Rest buttons triggers calendar advancement -->
+        <button class="deck-btn" style="background:#22c55e;" onclick="triggerShortRestRestorativeProcess()">Short Rest</button>
+        <button class="deck-btn" style="background:#15803d;" onclick="triggerLongRestRestorativeProcess()">Long Rest</button>
+        <button class="deck-btn" style="background:#3b82f6;" onclick="openFactionReputationModal()">Factions</button>
+        <button class="deck-btn" style="background:#8b5cf6;" onclick="openQuestsTrackerModal()">Quests</button>
+        <button class="deck-btn" style="background:#eab308; color:black;" onclick="openPartyInventoryModal()">Inventory</button>
+        <button class="deck-btn" style="background:#6b21a8;" onclick="openPuzzlesBankModal()">Puzzles</button>
+        <button class="deck-btn" style="background:#0284c7;" onclick="openStoryTimelineModal()">Timeline</button>
+        <button class="deck-btn" style="background:#4b5563;" onclick="openAttendanceTrackerModal()">Attendance</button>
+        
+        <!-- Toolbox Quick Tabs -->
+        <span style="font-family: 'Cinzel', serif; font-size: 0.8rem; font-weight: bold; color: #fbbf24; letter-spacing: 1px; margin-left: 10px;">DM Toolbox:</span>
+        <button class="deck-btn" style="border-color: #f59e0b; color: #f59e0b; background: rgba(245, 158, 11, 0.1);" onclick="toggleUtilityTab('projector')"> Projector</button>
+        <button class="deck-btn" style="border-color: #10b981; color: #10b981; background: rgba(16, 185, 129, 0.1);" onclick="toggleUtilityTab('bazaar')"> Grand Bazaar</button>
+        <button class="deck-btn" style="border-color: #a78bfa; color: #a78bfa; background: rgba(167, 139, 250, 0.1);" onclick="toggleUtilityTab('grimoire')"> Grimoire</button>
+        <button class="deck-btn" style="border-color: #ec4899; color: #ec4899; background: rgba(236, 72, 153, 0.1);" onclick="openWave4MasterModal()"> Wave 4 Deep Dig</button>
+        <button class="deck-btn" style="border-color: #3b82f6; color: #3b82f6; background: rgba(59, 130, 246, 0.1);" onclick="toggleUtilityTab('utilities')"> DM Utilities</button>
+        <button class="deck-btn" style="border-color: #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1);" onclick="toggleUtilityTab('encounters')"> Random Encounters</button>
+    </div>
+
+    <main class="dashboard-grid">
+        
+        <!-- COLUMN 1: PARTY MATRIX -->
+        <div class="side-column" style="height: 100%; display: flex; flex-direction: column;">
+            <section class="panel" style="flex: 1; min-height: 0; height: 100%;">
+                <div class="panel-header">
+                    <h2>Party Matrix</h2>
+                    <button class="btn-primary" id="add-character-btn">+ Add Char</button>
+                </div>
+                <div class="content-area" id="party-list" style="overflow-y: auto; padding: 10px; height: calc(100% - 60px);">
+                    <p class="empty-state">No characters loaded.</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- COLUMN 2: COMBAT & ENCOUNTER TRACKER -->
+        <div class="center-column" style="height: 100%; display: flex; flex-direction: column;">
+            <section class="panel" id="combat-tracker" style="flex: 1; min-height: 0; height: 100%;">
+                <div class="panel-header" style="position: relative;">
+                    <div style="display: flex; flex-direction: column;">
+                        <h2>Active Encounter</h2>
+                        <!-- Round Counter & Turn Timer Tracker Interface -->
+                        <div style="display: flex; gap: 12px; margin-top: 4px; font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">
+                            <span id="global-round-display" style="color: #fbbf24;">Round 1</span>
+                            <span>|</span>
+                            <span>Turn Time: <span id="turn-timer-display" style="color: #10b981;">00:00</span></span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-primary" style="background: #a78bfa; color: #1e1b2e; padding: 4px 8px;" onclick="openAoEDamageAllocatorModal()">AoE Dmg</button>
+                        <button class="btn-primary" style="background: #4b5563; padding: 4px 8px;" onclick="rewindTurnIndex()">⏪ Prev</button>
+                        <button class="btn-primary" style="background: #3b82f6; padding: 4px 8px;" onclick="sortInitiative()">⇅ Sort</button>
+                        <button class="btn-primary" id="next-turn-btn" style="background: #fbbf24; color: black; padding: 4px 8px;">Next Turn ⏩</button>
+                        <button class="btn-primary" id="spawn-menu-btn" style="padding: 4px 8px;">+ Spawn Monster</button>
+                        <button class="btn-danger" style="padding: 4px 8px;" onclick="clearEncounter()">Clear</button>
+                    </div>
+                </div>
+                <div class="content-area" id="initiative-list" style="overflow-y: auto; height: calc(100% - 60px);">
+                    <p class="empty-state">The battlefield is quiet.</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- NEW DRAWER-BASED DM TOOLBOX WITH DOCKABLE SIDE BAR TABS -->
+    <div id="utility-drawer" class="drawer" style="width: 500px; right: -520px; z-index: 2500;">
+        <div class="drawer-header" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 id="utility-drawer-title" style="font-size: 1.2rem; color: var(--arcane-violet);">DM Toolbox</h2>
+                <button class="btn-danger" onclick="closeUtilityDrawer()" style="padding: 4px 10px;">Close</button>
+            </div>
+            <!-- TAB SELECTOR ROW -->
+            <div class="drawer-tabs" style="display: flex; gap: 4px; border-bottom: 1px solid var(--border-iron); padding-bottom: 5px;">
+                <button class="drawer-tab-btn active" onclick="switchUtilityTab('projector')" id="tab-btn-projector" style="flex: 1; padding: 6px 4px; font-size: 0.75rem;">Projector</button>
+                <button class="drawer-tab-btn" onclick="switchUtilityTab('bazaar')" id="tab-btn-bazaar" style="flex: 1; padding: 6px 4px; font-size: 0.75rem;">Bazaar</button>
+                <button class="drawer-tab-btn" onclick="switchUtilityTab('grimoire')" id="tab-btn-grimoire" style="flex: 1; padding: 6px 4px; font-size: 0.75rem;">Grimoire</button>
+                <button class="drawer-tab-btn" onclick="switchUtilityTab('utilities')" id="tab-btn-utilities" style="flex: 1; padding: 6px 4px; font-size: 0.75rem;">Utilities</button>
+                <button class="drawer-tab-btn" onclick="switchUtilityTab('encounters')" id="tab-btn-encounters" style="flex: 1; padding: 6px 4px; font-size: 0.75rem;">Encounters</button>
+            </div>
+        </div>
+        <div class="drawer-body" style="padding: 15px; overflow-y: auto; height: calc(100% - 110px);">
+            
+            <!-- TAB 1: PROJECTOR -->
+            <div id="tab-content-projector" class="utility-tab-content" style="display: flex; flex-direction: column; gap: 15px;">
+                <!-- MAP OVERLAY & AOE SLIDER INTERFACE (TABLE PROJECTOR CONTROL) -->
+                <section class="panel" style="flex: 1; min-height: 280px; background: transparent; border: none;">
+                    <div class="panel-header" style="background: transparent; border-bottom: 1.5px solid var(--border-iron); padding: 5px 0 12px 0;">
+                        <h2 style="font-size: 1.1rem;">Table Projector (Monitor 3)</h2>
+                        <div style="display: flex; gap: 6px;">
+                            <button class="btn-primary" style="background: #10b981; font-size: 0.75rem; padding: 4px 8px;" onclick="toggleCalibrationMode()">Toggle Calibration Grid</button>
+                            <button class="btn-danger" style="font-size: 0.75rem; padding: 4px 8px;" onclick="clearProjectorTemplates()">Clear All Templates</button>
+                        </div>
+                    </div>
+                    <div class="content-area" style="display: flex; flex-direction: column; gap: 15px; font-size: 0.9rem; padding: 12px 0;">
+                        
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <!-- Player Handout Push buttons -->
+                            <div style="display:flex; gap:8px;">
+                                <button class="btn-primary" style="background:#8b5cf6;" onclick="pushPlayerViewHandoutImage()">Push Handout</button>
+                                <button class="btn-danger" style="background:#ef4444;" onclick="dismissPlayerViewHandout()">Clear Handout</button>
+                            </div>
+
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <label style="color: var(--text-muted); width: 85px;">Map URL:</label>
+                                <input type="text" id="projector-map-url" placeholder="Paste Map Image URL" style="flex: 1; padding: 6px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px; font-size: 0.8rem;">
+                                <button class="btn-primary" style="padding: 4px 8px; font-size:0.8rem;" onclick="updateProjectorMap()">Set</button>
+                            </div>
+
+                            <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
+                                <label style="color: var(--text-muted); width: 85px;">Map File:</label>
+                                <input type="file" id="projector-map-file" accept="image/*" style="display:none;" onchange="uploadProjectorMapFile(this)">
+                                <button class="btn-primary" style="padding: 4px 8px; font-size:0.8rem; background: var(--arcane-violet);" onclick="document.getElementById('projector-map-file').click()">Upload Map</button>
+                                <div id="map-drop-zone" style="flex: 1; border: 2px dashed var(--border-iron); border-radius: 4px; padding: 4px; font-size: 0.75rem; color: var(--text-muted); text-align: center; cursor: pointer;" ondragover="event.preventDefault(); this.style.borderColor='var(--arcane-violet)';" ondragleave="this.style.borderColor='var(--border-iron)';" ondrop="handleMapFileDrop(event)">
+                                    Drag &amp; Drop Map Here
+                                </div>
+                            </div>
+
+                            <!-- Dynamic lights weather and day/night visual overlays selection -->
+                            <div style="background:#0f0f13; border:1px solid var(--border-iron); padding:8px; border-radius:6px; display:flex; flex-direction:column; gap:6px;">
+                                <strong style="color:var(--text-muted); font-size:0.8rem;">World Environment Overlays:</strong>
+                                <div style="display:flex; gap:6px;">
+                                    <select id="weather-dropdown-selector" onchange="setWeatherOverlayMode(this.value)" style="background:var(--bg-abyss); color:white; border:1px solid var(--border-iron); padding:4px; font-size:0.75rem; border-radius:4px; flex:1;">
+                                        <option value="Clear">Clear Weather</option>
+                                        <option value="Heavy Rain">Heavy Rain</option>
+                                        <option value="Heavy Snow">Heavy Snow</option>
+                                        <option value="Sandstorm">Sandstorm</option>
+                                    </select>
+                                    <select id="daynight-dropdown-selector" onchange="toggleDayNightCycleMode(this.value)" style="background:var(--bg-abyss); color:white; border:1px solid var(--border-iron); padding:4px; font-size:0.75rem; border-radius:4px; flex:1;">
+                                        <option value="Day">Day Phase</option>
+                                        <option value="Dawn">Dawn Tint</option>
+                                        <option value="Dusk">Dusk Tint</option>
+                                        <option value="Night">Night Dim</option>
+                                        <option value="Midnight">Midnight dark</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style="background: #0f0f13; border: 1px solid var(--border-iron); padding: 8px; border-radius: 6px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <label style="color: var(--text-muted); font-size:0.8rem;">Physical Table Grid Calibration:</label>
+                                    <span id="grid-scale-display" style="color: var(--arcane-violet); font-weight: bold; font-size:0.8rem;">50 px</span>
+                                </div>
+                                <input type="range" id="grid-scale-slider" min="20" max="150" value="50" style="width: 100%; margin-top: 5px; cursor: pointer;">
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                <strong style="color: var(--text-muted); font-size: 0.8rem;">Spawn AoE Templates:</strong>
+                                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                                    <button class="btn-primary" style="background: #ef4444; font-size: 0.75rem; padding: 4px 8px;" onclick="spawnProjectorTemplate('circle', 20, '#ef4444', 'Fireball')">Fireball (20ft)</button>
+                                    <button class="btn-primary" style="background: #10b981; font-size: 0.75rem; padding: 4px 8px;" onclick="spawnProjectorTemplate('circle', 15, '#10b981', 'Shatter')">Shatter (15ft)</button>
+                                    <button class="btn-primary" style="background: #3b82f6; font-size: 0.75rem; padding: 4px 8px;" onclick="spawnProjectorTemplate('square', 10, '#3b82f6', 'Fog Cloud')">Fog Cloud (20ft)</button>
+                                    <button class="btn-primary" style="background: #a78bfa; font-size: 0.75rem; padding: 4px 8px; color: black;" onclick="spawnProjectorTemplate('cone', 15, '#a78bfa', 'Burning Hands')">Cone (15ft)</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- FOG OF WAR BRUSH PAINTER AND BRUSH SELECTION MODULE -->
+                        <div id="fog-painter-controls-container" style="margin-top: 10px;"></div>
+
+                        <!-- Layered Active Spell templates list queue container -->
+                        <div style="display: flex; flex-direction: column; border-top: 1px solid var(--border-iron); padding-top: 15px; margin-top: 5px;">
+                            <strong style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 8px;">Active Spell Effects Layer Queue:</strong>
+                            <div id="active-effects-list" style="overflow-y: auto; max-height: 160px; background: #07070a; border-radius: 4px; padding: 6px; border: 1px solid var(--border-iron);">
+                                <div style="color: var(--text-muted); font-size: 0.8rem; text-align: center; padding-top: 10px;">No templates active.</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- TAB 2: BAZAAR -->
+            <div id="tab-content-bazaar" class="utility-tab-content hidden" style="display: flex; flex-direction: column; gap: 15px;">
+                <!-- THE GRAND BAZAAR WITH PRESET DROPDOWNS -->
+                <section class="panel" style="background: transparent; border: none;">
+                    <div class="panel-header" style="background: transparent; border-bottom: 1.5px solid var(--border-iron); padding: 5px 0 12px 0;">
+                        <h2 style="font-size: 1.1rem;">The Grand Bazaar</h2>
+                        <div style="display: flex; gap: 4px; align-items: center;">
+                            <select id="bazaar-preset-select" style="background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); padding: 3px; font-size:0.75rem; border-radius: 4px;">
+                                <option value="all">All Items</option>
+                                <option value="armory">Armory / Blacksmith</option>
+                                <option value="alchemist">Alchemist / Potions</option>
+                                <option value="curiosities">Rare Curiosities</option>
+                            </select>
+                            <button class="btn-primary" style="font-size:0.75rem; padding: 4px 8px;" onclick="generateShop()">Roll</button>
+                        </div>
+                    </div>
+                    
+                    <div style="padding: 10px 0; background: transparent; border-bottom: 1px solid var(--border-iron);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label style="color: var(--text-muted); font-size: 0.85rem;">Persuasion Discount:</label>
+                            <span id="discount-display" style="color: #10b981; font-weight: bold; font-size: 1.1rem;">0%</span>
+                        </div>
+                        <input type="range" id="haggle-slider" min="0" max="50" value="0" style="width: 100%; margin-top: 5px; cursor: pointer;">
+                    </div>
+
+                    <div class="content-area" id="shop-inventory" style="max-height: calc(100vh - 280px); overflow-y: auto; padding: 10px 0;">
+                        <p class="empty-state">Stall is currently empty.</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- TAB 3: GRIMOIRE -->
+            <div id="tab-content-grimoire" class="utility-tab-content hidden" style="display: flex; flex-direction: column; gap: 15px;">
+                <!-- SPELLS GRIMOIRE COMPENDIUM PANEL -->
+                <section class="panel" style="background: transparent; border: none;">
+                    <div class="panel-header" style="background: transparent; border-bottom: 1.5px solid var(--border-iron); padding: 5px 0 12px 0;">
+                        <h2 style="font-size: 1.1rem;">Spells Grimoire</h2>
+                        <div style="display: flex; gap: 4px;">
+                            <input type="text" id="spell-search-input" placeholder="Search Spells..." oninput="filterSpellsList()" style="background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); padding: 4px; font-size: 0.75rem; border-radius: 4px; width: 110px;">
+                            <select id="spell-school-filter" onchange="filterSpellsList()" style="background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); padding: 4px; font-size: 0.75rem; border-radius: 4px; width: 85px;">
+                                <option value="">All Schools</option>
+                                <option value="abjuration">Abjuration</option>
+                                <option value="conjuration">Conjuration</option>
+                                <option value="divination">Divination</option>
+                                <option value="enchantment">Enchantment</option>
+                                <option value="evocation">Evocation</option>
+                                <option value="illusion">Illusion</option>
+                                <option value="necromancy">Necromancy</option>
+                                <option value="transmutation">Transmutation</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="content-area" id="spells-grimoire-list" style="overflow-y: auto; max-height: 250px; padding: 10px 0;">
+                        <!-- Spells render as beautiful parchment book-style cards dynamically -->
+                        <div style="color: var(--text-muted); font-size:0.8rem; text-align:center; padding-top:20px;">Fetching spells from database...</div>
+                    </div>
+                </section>
+
+                <!-- PINNED SPELLS REFERENCE LIST -->
+                <section class="panel" style="background: transparent; border: none; margin-top: 10px;">
+                    <div class="panel-header" style="background: transparent; border-bottom: 1.5px solid var(--border-iron); padding: 5px 0 12px 0;">
+                        <h2 style="font-size: 1.1rem;">Pinned Spells</h2>
+                    </div>
+                    <div id="pinned-spells-container" style="height: 180px; overflow-y:auto; padding:10px; background: #0c0c12; border-radius:4px; border:1.5px solid var(--border-iron); margin-top:10px;">
+                        <div style="color:var(--text-muted); font-size:0.75rem; text-align:center;">No pinned spells.</div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- TAB 4: UTILITIES -->
+            <div id="tab-content-utilities" class="utility-tab-content hidden" style="display: flex; flex-direction: column; gap: 15px;">
+                <!-- READIED ACTIONS SIDEBAR QUEUE -->
+                <section class="panel" style="background: transparent; border: none;">
+                    <div class="panel-header" style="background: transparent; border-bottom: 1.5px solid var(--border-iron); padding: 5px 0 12px 0;">
+                        <h2 style="font-size: 1.1rem;">Readied Actions Queue</h2>
+                    </div>
+                    <div id="readied-actions-container" style="height: 140px; overflow-y:auto; padding:10px; background:#0c0c12; border-radius:4px; border:1.5px solid var(--border-iron); margin-top:10px;">
+                        <div style="color:var(--text-muted); font-size:0.75rem; text-align:center;">No readied actions.</div>
+                    </div>
+                </section>
+
+                <!-- SOUNDBOARD & HAZARD COMPONENT -->
+                <section class="panel" style="background: transparent; border: none; margin-top: 10px;">
+                    <div class="panel-header" style="background: transparent; border-bottom: 1.5px solid var(--border-iron); padding: 5px 0 12px 0;">
+                        <h2 style="font-size: 1.1rem;">Soundboard & Hazards</h2>
+                    </div>
+                    <div class="content-area" style="overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding: 12px 0;">
+                        
+                        <div>
+                            <strong style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 6px;">Audio Effects</strong>
+                            <div class="soundboard-grid">
+                                <button class="sound-btn" onclick="triggerSound('sword-clash.mp3')"> Sword Clash</button>
+                                <button class="sound-btn" onclick="triggerSound('desert-wind.mp3')"> Desert Wind</button>
+                                <button class="sound-btn" onclick="triggerSound('spell-cast.mp3')"> Magic Cast</button>
+                                <button class="sound-btn" onclick="triggerSound('monster-growl.mp3')"> Beast Growl</button>
+                            </div>
+                        </div>
+
+                        <!-- ENCOUNTER DIFFICULTY CALCULATOR & UTILITY TOOLS -->
+                        <div style="border-top:1px solid var(--border-iron); padding-top:10px; display:flex; flex-direction:column; gap:8px;">
+                            <strong style="color:var(--text-muted); font-size:0.8rem; display:block;">Encounter Difficulty Budget</strong>
+                            <div style="display:flex; gap:6px;">
+                                <input type="number" id="calc-party-size" value="4" placeholder="Size" style="width:55px; background:var(--bg-abyss); border:1px solid var(--border-iron); padding:4px; font-size:0.75rem; border-radius:4px; color:white; text-align:center;">
+                                <input type="number" id="calc-avg-level" value="1" placeholder="Level" style="width:55px; background:var(--bg-abyss); border:1px solid var(--border-iron); padding:4px; font-size:0.75rem; border-radius:4px; color:white; text-align:center;">
+                                <button class="btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="calculateEncounterDifficulty()">Budget</button>
+                                <span id="difficulty-rating-badge" style="font-size:0.7rem; font-weight:bold; padding:4px 8px; border-radius:4px; text-transform:uppercase; display:inline-flex; align-items:center; color:white; background:#4b5563;">Trivial</span>
+                            </div>
+                        </div>
+
+                        <!-- PASSIVE PERCEPTION RADAR & MOB ATTACK CALCULATOR -->
+                        <div style="border-top:1px solid var(--border-iron); padding-top:10px; display:flex; flex-direction:column; gap:8px;">
+                            <strong style="color:var(--text-muted); font-size:0.8rem; display:block;">Passive Perception Radar</strong>
+                            <div style="display:flex; gap:6px;">
+                                <input type="number" id="stealth-check-input" value="12" placeholder="DC" style="width:55px; background:var(--bg-abyss); border:1px solid var(--border-iron); padding:4px; font-size:0.75rem; border-radius:4px; color:white; text-align:center;">
+                                <button class="btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="runPassivePerceptionRadar()">Scan</button>
+                            </div>
+                            <div id="passive-perception-radar-results" style="max-height:80px; overflow-y:auto;"></div>
+                        </div>
+
+                        <!-- WILD MAGIC SURGE TRACKER -->
+                        <div style="border-top:1px solid var(--border-iron); padding-top:10px; display:flex; flex-direction:column; gap:8px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <strong style="color:var(--text-muted); font-size:0.8rem;">Wild Magic Surge Tracker</strong>
+                                <button class="btn-primary" style="padding:3px 6px; font-size:0.7rem;" onclick="rollWildMagicSurgeTracker()">Surge Roll</button>
+                            </div>
+                            <div id="wild-magic-display-box" style="background:#0f0f13; border:1px solid var(--border-iron); border-radius:4px; padding:6px; font-size:0.75rem; min-height:30px;">
+                                <span class="empty-state" style="margin-top:2px;">Awaiting spell casting surge...</span>
+                            </div>
+                        </div>
+
+                        <!-- MOB COMBAT CALCULATOR -->
+                        <div style="border-top:1px solid var(--border-iron); padding-top:10px; display:flex; flex-direction:column; gap:8px;">
+                            <strong style="color:var(--text-muted); font-size:0.8rem; display:block;">Mob Combat Calculator</strong>
+                            <div style="display:flex; gap:4px;">
+                                <input type="number" id="mob-calc-count" placeholder="Qty" value="10" style="width:45px; background:var(--bg-abyss); border:1px solid var(--border-iron); padding:4px; font-size:0.75rem; border-radius:4px; color:white; text-align:center;">
+                                <input type="number" id="mob-calc-bonus" placeholder="Atk" value="4" style="width:45px; background:var(--bg-abyss); border:1px solid var(--border-iron); padding:4px; font-size:0.75rem; border-radius:4px; color:white; text-align:center;">
+                                <input type="number" id="mob-calc-ac" placeholder="AC" value="15" style="width:45px; background:var(--bg-abyss); border:1px solid var(--border-iron); padding:4px; font-size:0.75rem; border-radius:4px; color:white; text-align:center;">
+                                <button class="btn-primary" style="padding:4px 6px; font-size:0.75rem;" onclick="runMobCombatCalculator()">Mob</button>
+                            </div>
+                            <div id="mob-calc-results" style="font-size:0.75rem; color:var(--text-muted);"></div>
+                        </div>
+
+                        <!-- Persistent Quick dice roller with advanced formula parser and DM Map Notes sidebar -->
+                        <div style="border-top:1px solid var(--border-iron); padding-top:10px; display:flex; flex-direction:column; gap:8px;">
+                            <strong style="color:var(--text-muted); font-size:0.8rem; display:block;">Quick Dice Roller (Formula)</strong>
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <input type="text" id="dice-formula-input" placeholder="2d6+3" style="flex:1; background:var(--bg-abyss); border:1px solid var(--border-iron); padding:4px; font-size:0.75rem; border-radius:4px; color:white;">
+                                <label style="font-size:0.7rem; cursor:pointer;"><input type="checkbox" id="chk-secret-dice-roll" style="cursor:pointer;"> Sec</label>
+                                <button class="btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="rollCustomDiceFormulaNotation()">Roll</button>
+                            </div>
+                            <div id="dice-results-history-box" style="max-height:100px; overflow-y:auto;"></div>
+                        </div>
+
+                        <div style="border-top:1px solid var(--border-iron); padding-top:10px; display:flex; flex-direction:column; gap:8px;">
+                            <strong style="color:var(--text-muted); font-size:0.8rem; display:block;">DM Sticky Map Notes (Coord Pins)</strong>
+                            <button class="btn-primary" style="padding:4px; font-size: 0.75rem;" onclick="addMapCoordinatesAnnotationPin('battle-map-1', parseInt(prompt('Row (0-11):') || 0), parseInt(prompt('Col (0-11):') || 0))">Add Map Pin</button>
+                            <div id="dm-map-pins-list-sidebar"></div>
+                        </div>
+
+                        <!-- RANDOM NPC TABLE GENERATOR -->
+                        <div style="border-top:1px solid var(--border-iron); padding-top:10px; display:flex; flex-direction:column; gap:8px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <strong style="color:var(--text-muted); font-size:0.8rem;">NPC Quick-Generator</strong>
+                                <button class="btn-primary" style="padding:3px 6px; font-size:0.7rem;" onclick="generateRandomNPC()">Spawn NPC</button>
+                            </div>
+                            <div id="npc-display-box" style="background:#0f0f13; border:1px solid var(--border-iron); border-radius:4px; padding:6px; font-size:0.75rem; min-height:40px;">
+                                <span class="empty-state" style="margin-top:2px;">Generate a random NPC profile.</span>
+                            </div>
+                        </div>
+
+                        <!-- COMBAT LOG ACTION ENGINE PANEL STREAM -->
+                        <div style="border-top:1px solid var(--border-iron); padding-top:10px; display:flex; flex-direction:column; gap:8px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <strong style="color:var(--text-muted); font-size:0.8rem;">Session Action Log stream</strong>
+                            </div>
+                            <div id="console-combat-log-stream" style="background:#050507; border:1px solid var(--border-iron); border-radius:4px; padding:8px; height:120px; overflow-y:auto;"></div>
+                        </div>
+
+                        <!-- RANDOM TREASURE LOOT ROLLER -->
+                        <div style="border-top:1px solid var(--border-iron); padding-top:10px; display:flex; flex-direction:column; gap:8px;">
+                            <strong style="color:var(--text-muted); font-size:0.8rem; display:block;">Loot & Treasure Generator (DMG)</strong>
+                            <div style="display:flex; gap:4px;">
+                                <select id="treasure-tier-select" style="background:var(--bg-abyss); color:white; border:1px solid var(--border-iron); border-radius:4px; padding:4px; font-size:0.75rem; flex:1;">
+                                    <option value="0-4">Tier 1: CR 0-4</option>
+                                    <option value="5-10">Tier 2: CR 5-10</option>
+                                    <option value="11-16">Tier 3: CR 11-16</option>
+                                    <option value="17+">Tier 4: CR 17+</option>
+                                </select>
+                                <select id="treasure-type-select" style="background:var(--bg-abyss); color:white; border:1px solid var(--border-iron); border-radius:4px; padding:4px; font-size:0.75rem; width:80px;">
+                                    <option value="individual">Individual</option>
+                                    <option value="hoard">Hoard</option>
+                                </select>
+                                <button class="btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="rollRandomTreasure()">Roll</button>
+                            </div>
+                            <div id="treasure-results-box" style="font-size:0.75rem; color:var(--text-muted); padding:6px; background:#0f0f13; border:1px solid var(--border-iron); border-radius:4px;"></div>
+                        </div>
+
+                        <!-- CAMPAIGN DATA EXPORT DATA BACKUP -->
+                        <div style="border-top:1px solid var(--border-iron); padding-top:10px; display:flex; flex-direction:column; gap:8px;">
+                            <strong style="color:var(--text-muted); font-size:0.8rem; display:block;">Campaign Backup Management</strong>
+                            <button class="btn-primary" style="padding:8px; font-family:'Cinzel'; width:100%; background: #3b82f6;" onclick="triggerCampaignDataBackup()">Download Campaign Backup</button>
+                        </div>
+
+                        <!-- SCRATCHPAD -->
+                        <div style="border-top: 1px solid var(--border-iron); padding-top: 10px;">
+                            <strong style="color: var(--text-muted); font-size: 0.8rem; display:block; margin-bottom:8px;">Session Scratchpad</strong>
+                            <div style="display:flex; gap:6px;">
+                                <textarea id="scratchpad-textarea" placeholder="Take rapid game notes..." style="flex:1; height:60px; background:var(--bg-abyss); color:white; border:1px solid var(--border-iron); border-radius:4px; padding:6px; font-size:0.8rem; font-family:'Inter'; resize:none;"></textarea>
+                                <button class="btn-primary" style="padding:6px; font-size:0.75rem;" onclick="saveScratchpadNote()">Log</button>
+                            </div>
+                            <div id="scratchpad-list" style="max-height: 120px; overflow-y:auto; margin-top:8px;"></div>
+                        </div>
+
+                        <!-- HAZARDS -->
+                        <div style="border-top: 1px solid var(--border-iron); padding-top: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <strong style="color: var(--text-muted); font-size: 0.8rem;">Random Hazards & Traps</strong>
+                                <button class="btn-primary" style="font-size: 0.7rem; padding: 3px 6px;" onclick="generateRandomHazard()">Roll Trap</button>
+                            </div>
+                            <div id="trap-display-box" style="background: #0f0f13; border: 1px solid var(--border-iron); border-radius: 4px; padding: 8px; font-size: 0.8rem; min-height: 60px;">
+                                <span class="empty-state" style="margin-top: 10px; display: block; text-align: center;">Roll to generate a hazard.</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            
+            <!-- TAB 5: RANDOM ENCOUNTERS -->
+            <div id="tab-content-encounters" class="utility-tab-content hidden" style="display: flex; flex-direction: column; gap: 15px;">
+                <section class="panel" style="background: transparent; border: none;">
+                    <div class="panel-header" style="background: transparent; border-bottom: 1.5px solid var(--border-iron); padding: 5px 0 12px 0;">
+                        <h2 style="font-size: 1.1rem; color: #fbbf24; font-family: 'Cinzel', serif;">Random Encounter Generator</h2>
+                    </div>
+                    <div class="content-area" style="display: flex; flex-direction: column; gap: 12px; padding: 12px 0;">
+                        <!-- Dropdowns row -->
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div>
+                                <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 4px;">Environment / Area:</label>
+                                <select id="encounter-area-select" onchange="onEncounterAreaChange()" style="width: 100%; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); padding: 6px; font-size: 0.85rem; border-radius: 4px;">
+                                    <option value="">-- Select Environment --</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <div style="flex: 1;">
+                                    <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 4px;">Min Level:</label>
+                                    <select id="encounter-minlvl-select" onchange="onEncounterLevelChange()" style="width: 100%; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); padding: 6px; font-size: 0.85rem; border-radius: 4px;">
+                                        <option value="">-- Min Lvl --</option>
+                                    </select>
+                                </div>
+                                <div style="flex: 1;">
+                                    <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 4px;">Max Level:</label>
+                                    <select id="encounter-maxlvl-select" onchange="onEncounterLevelChange()" style="width: 100%; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); padding: 6px; font-size: 0.85rem; border-radius: 4px;">
+                                        <option value="">-- Max Lvl --</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Roll Action Button -->
+                        <button class="btn-primary" onclick="rollRandomEncounter()" style="background: #ef4444; width: 100%; padding: 10px; font-family: 'Cinzel', serif; font-weight: bold; font-size: 0.95rem; margin-top: 5px;">
+                            Roll Encounter (d100)
+                        </button>
+
+                        <!-- Roll Results Display Box -->
+                        <div id="encounter-roll-result-box" style="margin-top: 10px; background: #0c0c12; border: 1.5px solid var(--border-iron); border-radius: 6px; padding: 15px; display: none; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px;">
+                                <span id="encounter-roll-badge" style="background: var(--gold-amber); color: black; font-weight: bold; font-family: monospace; font-size: 0.85rem; padding: 3px 8px; border-radius: 4px;">Rolled: 45</span>
+                                <span style="color: var(--text-muted); font-size: 0.8rem;" id="encounter-roll-range">Range: 41 - 45</span>
+                            </div>
+                            <p id="encounter-roll-text" style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.4; margin: 0; font-family: 'Inter', sans-serif;">
+                                <!-- Rolled text with links parsed -->
+                            </p>
+                            <div id="encounter-spawn-action-container" style="display: flex; flex-direction: column; gap: 6px; margin-top: 5px;">
+                                <!-- Spawn buttons render dynamically -->
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Help instructions -->
+                        <div style="background: rgba(167, 139, 250, 0.05); border: 1px dashed rgba(167, 139, 250, 0.2); border-radius: 6px; padding: 10px; font-size: 0.75rem; color: #94a3b8; line-height: 1.4;">
+                            <strong style="color: #a78bfa; display: block; margin-bottom: 4px;">DM Manual:</strong>
+                            The generator selects the level-appropriate encounter table, rolls a d100, and highlights the result. Monsters are parsed into clickable links to view their stat block, and can be imported to the Active Initiative tracker with rolled hit dice automatically!
+                        </div>
+                    </div>
+                </section>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- SLIDE-OUT DRAWER: MAGICAL GRIMOIRE COMPENDIUM FULL VIEW -->
+    <div id="grimoire-drawer" class="drawer" style="width: 480px; right: -500px;">
+        <div class="drawer-header">
+            <h2>The Grand Grimoire</h2>
+            <button class="btn-danger" onclick="closeGrimoireDrawer()">X</button>
+        </div>
+        <div class="drawer-body" style="display: flex; flex-direction: column; height: calc(100% - 70px); box-sizing: border-box;">
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <input type="text" id="grimoire-search-input" placeholder="Search Master Spells..." oninput="filterGrimoireDrawerList()" style="flex:1; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); padding: 8px; font-size: 0.85rem; border-radius: 4px;">
+                <select id="grimoire-school-filter" onchange="filterGrimoireDrawerList()" style="background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); padding: 8px; font-size: 0.85rem; border-radius: 4px; width: 120px;">
+                    <option value="">All Schools</option>
+                    <option value="abjuration">Abjuration</option>
+                    <option value="conjuration">Conjuration</option>
+                    <option value="divination">Divination</option>
+                    <option value="enchantment">Enchantment</option>
+                    <option value="evocation">Evocation</option>
+                    <option value="illusion">Illusion</option>
+                    <option value="necromancy">Necromancy</option>
+                    <option value="transmutation">Transmutation</option>
+                </select>
+            </div>
+            
+            <div id="grimoire-drawer-list-container" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px;">
+                <!-- Full details spell cards load dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAY: SPELL CARD POPOUT DETAIL VIEW -->
+    <div id="spell-detail-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 500px; padding: 25px; background: #eaddca; color: #2d1c0b; border: 3px solid #8e6c43; border-radius: 8px; font-family: Georgia, serif; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+            <div class="panel-header" style="background: transparent; border-bottom: 1px solid #8e6c43; padding: 0 0 10px 0; margin-bottom: 15px;">
+                <h2 id="spell-modal-title" style="font-size: 1.8rem; margin: 0; color: #5c2c16; font-family: 'Cinzel', serif;">Spell Name</h2>
+                <button class="btn-danger" style="background: #8e6c43; color: white;" onclick="document.getElementById('spell-detail-modal').classList.add('hidden')">Close</button>
+            </div>
+            <div id="spell-modal-body" style="font-size: 0.95rem; line-height: 1.5; max-height: 60vh; overflow-y: auto;">
+                <!-- Spell details -->
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE-OUT DRAWER: CAMPAIGN NOTES popout -->
+    <div id="notes-drawer" class="drawer">
+        <div class="drawer-header">
+            <h2>Campaign Log Book</h2>
+            <button class="btn-danger" onclick="closeNotesDrawer()">X</button>
+        </div>
+        <div class="drawer-body" style="display: flex; flex-direction: column; height: calc(100% - 70px); box-sizing: border-box;">
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.3;">
+                Keep long-term session notes, plot timelines, or campaign summaries here. It automatically writes directly to a local text database on save.
+            </p>
+            <textarea id="campaign-notes-textarea" placeholder="Start cataloging your adventures here..." style="flex: 1; width: 100%; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 6px; padding: 12px; font-family: 'Inter'; font-size: 0.9rem; resize: none; margin-bottom: 15px; box-sizing: border-box; line-height: 1.5;"></textarea>
+            
+            <button class="btn-primary" style="width: 100%; padding: 12px; font-family: 'Cinzel'; background: #10b981;" id="save-notes-btn">Lock Log Changes</button>
+        </div>
+    </div>
+
+    <!-- SLIDE-OUT DRAWER: CHARACTER SECRETS & GENERAL CHARACTER VIEWER -->
+    <div id="secrets-drawer" class="drawer">
+        <div class="drawer-header">
+            <h2 id="secrets-drawer-char-name">Character Dossier</h2>
+            <button class="btn-danger" onclick="closeSecretsDrawer()">X</button>
+        </div>
+        <div class="drawer-body">
+            <div id="secrets-dossier-stats" style="background: #0f0f13; border: 1px solid var(--border-iron); border-radius: 6px; padding: 12px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5;">
+                <!-- Filled dynamically by JavaScript -->
+            </div>
+            
+            <strong style="color: var(--text-muted); font-size: 0.85rem; display: block; margin-bottom: 6px;">DM Character Secrets & plot hooks (Supports HTML/Bullet Lists):</strong>
+            <textarea id="secrets-text-input" style="width: 100%; height: 250px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 6px; padding: 10px; font-family: 'Inter'; font-size: 0.9rem; resize: none; margin-bottom: 15px;"></textarea>
+            
+            <button class="btn-primary" style="width: 100%; padding: 10px;" id="save-secrets-btn">Save Dossier Changes</button>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAY: SMART TEXT INGESTER -->
+    <div id="ingest-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 650px; max-width: 95%;">
+            <div class="panel-header" style="background: transparent; border-bottom: none; padding: 0 0 15px 0;">
+                <h2>Smart Text Ingest Hub</h2>
+                <button class="btn-danger" onclick="document.getElementById('ingest-modal').classList.add('hidden')">Close</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; line-height: 1.4;">
+                    Paste a raw block of text (markdown, JSON, or unformatted copy-pastes from D&D Beyond / wikis). 
+                    Our smart heuristic parser will automatically classify the entity (Monster, Spell, Player, or Magic Item), format the attributes, and append it to your persistent storage.
+                </p>
+                <textarea id="ingest-raw-text" placeholder="Paste your block of text, Markdown, or JSON here..." style="width: 100%; height: 280px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 6px; padding: 12px; font-family: 'Inter'; font-size: 0.85rem; resize: none;"></textarea>
+                
+                <div id="ingest-status-box" style="background: #0f0f13; border: 1px solid var(--border-iron); border-radius: 4px; padding: 10px; font-size: 0.85rem; min-height: 40px; display: none;">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="btn-primary" style="padding: 10px 20px; font-family: 'Cinzel';" onclick="submitSmartIngest()">Analyze & Ingest</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAY: CAMP / DOWNTIME -->
+    <div id="downtime-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="panel-header" style="background: transparent; border-bottom: none; padding: 0 0 15px 0;">
+                <h2>Active Downtime Projects</h2>
+                <button class="btn-danger" id="close-downtime-btn">Close</button>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; background: #0f0f13; padding: 12px; border-radius: 6px; border: 1px solid var(--border-iron);">
+                <input type="text" id="new-dt-char" placeholder="Char Name" style="flex: 1; padding: 8px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px; font-family: 'Inter'; font-size: 0.85rem;">
+                <input type="text" id="new-dt-proj" placeholder="Project Description" style="flex: 2; padding: 8px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px; font-family: 'Inter'; font-size: 0.85rem;">
+                <input type="number" id="new-dt-max" placeholder="Max Pts" style="width: 80px; padding: 8px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px; font-family: 'Inter'; font-size: 0.85rem;">
+                <button class="btn-primary" onclick="createNewProject()">+ Add</button>
+            </div>
+
+            <div id="downtime-list" style="max-height: 400px; overflow-y: auto;">
+                <!-- Downtime list targets -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAY: FACTIONS REPUTATION -->
+    <div id="faction-rep-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 500px;">
+            <div class="panel-header" style="background: transparent; border-bottom: none; padding: 0 0 15px 0;">
+                <h2>Factions Reputation Matrix</h2>
+                <button class="btn-danger" onclick="document.getElementById('faction-rep-modal').classList.add('hidden')">Close</button>
+            </div>
+            <div id="faction-reputation-rows" style="max-height: 350px; overflow-y:auto; padding-right:5px;"></div>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAY: QUESTS TRACKER -->
+    <div id="quests-tracker-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 500px;">
+            <div class="panel-header" style="background: transparent; border-bottom: none; padding: 0 0 15px 0;">
+                <h2>Active Quests & Objectives</h2>
+                <button class="btn-danger" onclick="document.getElementById('quests-tracker-modal').classList.add('hidden')">Close</button>
+            </div>
+            <div id="quests-list-rows" style="max-height: 350px; overflow-y:auto; padding-right:5px;"></div>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAY: PARTY INVENTORY -->
+    <div id="inventory-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 500px;">
+            <div class="panel-header" style="background: transparent; border-bottom: none; padding: 0 0 15px 0; display:flex; justify-content:space-between; align-items:center;">
+                <h2>Shared Party Chest</h2>
+                <span id="inventory-gold-display-box" style="font-weight:bold; color:var(--gold-amber); font-size:1.1rem;">0 gp</span>
+                <button class="btn-danger" onclick="document.getElementById('inventory-modal').classList.add('hidden')">Close</button>
+            </div>
+            
+            <div style="background:#0f0f13; padding:10px; border-radius:6px; margin-bottom:12px; border:1px solid var(--border-iron);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; font-size:0.8rem; color:var(--text-muted);">
+                    <span id="inventory-capacity-label">Carry Capacity: 0 / 300 lbs</span>
+                    <button class="btn-primary" style="padding:2px 6px; font-size:0.7rem; background:var(--gold-amber); color:black;" onclick="dividePartyGoldTreasureEvenly()">Split Gold</button>
+                </div>
+                <div style="height:6px; background:var(--bg-abyss); border-radius:3px; overflow:hidden; border:1px solid #222;">
+                    <div id="inventory-capacity-bar" style="height:100%; width:0%; background:var(--arcane-violet); transition:width 0.3s;"></div>
+                </div>
+            </div>
+
+            <div id="inventory-items-rows" style="max-height: 300px; overflow-y:auto; padding-right:5px; margin-bottom:12px;"></div>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAY: PUZZLES BANK -->
+    <div id="puzzles-bank-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 600px;">
+            <div class="panel-header" style="background: transparent; border-bottom: none; padding: 0 0 15px 0;">
+                <h2>Riddles & Puzzles Bank</h2>
+                <button class="btn-danger" onclick="document.getElementById('puzzles-bank-modal').classList.add('hidden')">Close</button>
+            </div>
+            <div id="puzzles-list-rows" style="max-height: 400px; overflow-y:auto; padding-right:5px;"></div>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAY: STORY TIMELINE -->
+    <div id="story-timeline-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 500px;">
+            <div class="panel-header" style="background: transparent; border-bottom: none; padding: 0 0 15px 0;">
+                <h2>Campaign Chronicles</h2>
+                <button class="btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="addEventToCampaignStoryTimeline()">+ Milestone</button>
+                <button class="btn-danger" onclick="document.getElementById('story-timeline-modal').classList.add('hidden')">Close</button>
+            </div>
+            <div id="story-timeline-dots-rows" style="max-height: 350px; overflow-y:auto; padding-right:5px;"></div>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAY: ATTENDANCE TRACKER -->
+    <div id="attendance-tracker-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 500px;">
+            <div class="panel-header" style="background: transparent; border-bottom: none; padding: 0 0 15px 0;">
+                <h2>Player Attendance Checklist</h2>
+                <button class="btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="applyAttendanceFilterToCombatSpawning(); document.getElementById('attendance-tracker-modal').classList.add('hidden');">Apply Presence</button>
+                <button class="btn-danger" onclick="document.getElementById('attendance-tracker-modal').classList.add('hidden')">Close</button>
+            </div>
+            <div id="attendance-checkboxes-rows" style="max-height: 300px; overflow-y:auto; padding-right:5px;"></div>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAY: LEVEL-UP WIZARD -->
+    <div id="levelup-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 500px;">
+            <div class="panel-header" style="background: transparent; border-bottom: none; padding: 0 0 15px 0;">
+                <h2 id="levelup-title">Level Up Character</h2>
+                <button class="btn-danger" onclick="document.getElementById('levelup-modal').classList.add('hidden')">Close</button>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">Increase Max HP:</label>
+                    <input type="number" id="levelup-hp-add" value="5" style="padding: 10px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px;">
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">Choose Feat:</label>
+                    <select id="levelup-feat-select" style="padding: 10px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px; font-family: 'Inter';">
+                        <option value="">-- No Feat / Skip --</option>
+                        <option value="Alert">Alert (+5 Initiative)</option>
+                        <option value="Tough">Tough (+2 HP per level)</option>
+                        <option value="War Caster">War Caster (Advantage on Concentration)</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">Ability Score Increase (ASI):</label>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="levelup-asi-stat" style="flex: 2; padding: 8px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px;">
+                            <option value="">-- Select ASI Stat --</option>
+                            <option value="STR">Strength (+1)</option>
+                            <option value="DEX">Dexterity (+1)</option>
+                            <option value="CON">Constitution (+1)</option>
+                            <option value="INT">Intelligence (+1)</option>
+                            <option value="WIS">Wisdom (+1)</option>
+                            <option value="CHA">Charisma (+1)</option>
+                        </select>
+                        <select id="levelup-asi-val" style="flex: 1; padding: 8px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px;">
+                            <option value="1">+1</option>
+                            <option value="2">+2</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="btn-primary" style="padding: 12px; font-size: 1rem; font-family: 'Cinzel';" onclick="submitLevelUp()">Confirm Level Up</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAY: MULTI-TARGET AOE DAMAGE ALLOCATOR -->
+    <div id="aoe-allocator-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 500px;">
+            <div class="panel-header" style="background: transparent; border-bottom: none; padding: 0 0 15px 0;">
+                <h2>Multi-Target Damage Allocator</h2>
+                <button class="btn-danger" onclick="document.getElementById('aoe-allocator-modal').classList.add('hidden')">Close</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">Base Damage Amount:</label>
+                    <input type="number" id="aoe-allocator-damage" placeholder="Damage" style="padding: 10px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px;">
+                </div>
+                <div id="aoe-allocator-list" style="max-height: 250px; overflow-y: auto; background: var(--bg-abyss); padding: 8px; border-radius: 4px; border: 1px solid var(--border-iron);">
+                    <!-- Checked lists -->
+                </div>
+                <button class="btn-primary" style="padding: 12px; font-family: 'Cinzel';" onclick="applyAoEDamageBatch()">Apply Damage Batch</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAY: SPAWN MONSTER MENU -->
+    <div id="spawn-monster-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 500px;">
+            <div class="panel-header" style="background: transparent; border-bottom: none; padding: 0 0 15px 0;">
+                <h2>Spawn Beastiary Monster</h2>
+                <button class="btn-danger" onclick="document.getElementById('spawn-monster-modal').classList.add('hidden')">Close</button>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">Select pre-loaded Monster:</label>
+                    <input type="text" id="spawn-monster-search" placeholder="Type to filter..." style="padding: 6px; margin-bottom: 5px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px; font-size: 0.8rem;" oninput="filterSpawnMonsterSelect()">
+                    <select id="spawn-monster-select" style="padding: 10px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px; font-family: 'Inter';">
+                        <option value="">-- Loading Beastiary... --</option>
+                    </select>
+                </div>
+
+                <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin: 5px 0;">- OR CREATE QUICK CUSTOM MONSTER -</div>
+
+                <div style="display: flex; gap: 10px; align-items:center;">
+                    <input type="text" id="custom-mon-name" placeholder="Name" style="flex: 2; padding: 8px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px;">
+                    <input type="number" id="custom-mon-hp" placeholder="HP" style="flex: 1; padding: 8px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px;">
+                    <input type="number" id="custom-mon-ac" placeholder="AC" style="flex: 1; padding: 8px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px;">
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <label style="font-size:0.85rem; color:var(--text-muted)">Spawn Quantity:</label>
+                    <input type="number" id="spawn-monster-count" value="1" min="1" max="10" style="width: 60px; padding: 8px; background: var(--bg-abyss); color: white; border:1px solid var(--border-iron); border-radius:4px; text-align:center;">
+                </div>
+
+                <button class="btn-primary" style="padding: 12px; font-family: 'Cinzel';" onclick="spawnSelectedMonster()">Summon Combatant</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAY: IMPROVISED DAMAGE CHEAT SHEET -->
+    <div id="improv-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 700px; max-width: 95%;">
+            <div class="panel-header" style="background: transparent; border-bottom: none; padding: 0 0 15px 0;">
+                <h2>Improvised Damage Matrix (DMG)</h2>
+                <button class="btn-danger" onclick="document.getElementById('improv-modal').classList.add('hidden')">Close</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <div style="display:flex; gap:8px; margin-bottom:12px;">
+                    <input type="text" id="rules-search-input" placeholder="Search rules..." oninput="filterRulesReferenceList()" style="flex:1; background: var(--bg-abyss); border: 1px solid var(--border-iron); color: white; padding: 8px; border-radius: 4px; font-size: 0.9rem;">
+                </div>
+                <div id="rules-search-results" style="max-height: 450px; overflow-y:auto; padding-right:5px;"></div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <h3 style="font-family:'Cinzel', serif; color: var(--gold-amber); font-size: 1.1rem; margin-bottom: 10px; border-bottom: 1px solid var(--border-iron); padding-bottom: 2px;">Improvised Damage Severity Table (DMG)</h3>
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; border: 1px solid var(--border-iron);">
+                    <thead>
+                        <tr style="background: var(--bg-abyss); border-bottom: 2px solid var(--border-iron);">
+                            <th style="padding: 10px;">Level</th>
+                            <th style="padding: 10px;">Setback</th>
+                            <th style="padding: 10px;">Moderate</th>
+                            <th style="padding: 10px;">Dangerous</th>
+                            <th style="padding: 10px;">Deadly</th>
+                        </tr>
+                    </thead>
+                    <tbody id="improv-table-body">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAY: MONSTER ENEMY STAT BLOCK VIEWER -->
+    <div id="statblock-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 550px; max-height: 85vh; overflow-y: auto; padding: 25px; background-color: #15151c; border: 2px solid var(--border-iron); border-radius: 8px;">
+            <div class="panel-header" style="background: transparent; border-bottom: none; padding: 0 0 10px 0;">
+                <h2 id="statblock-name" style="font-size: 1.8rem; margin: 0; color: #fbbf24;">Monster Name</h2>
+                <button class="btn-danger" onclick="document.getElementById('statblock-modal').classList.add('hidden')">Close</button>
+            </div>
+            
+            <div id="statblock-modal-body" style="font-size: 0.9rem; line-height: 1.4; color: var(--text-main);">
+                <!-- Stat block data renders dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAY: CONDITIONS COMPENDIUM -->
+    <div id="conditions-compendium-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 600px; max-width: 95%;">
+            <div class="panel-header" style="background: transparent; border-bottom: none; padding: 0 0 15px 0;">
+                <h2>5e Conditions Compendium</h2>
+                <button class="btn-danger" onclick="document.getElementById('conditions-compendium-modal').classList.add('hidden')">Close</button>
+            </div>
+            <div style="display:flex; gap:8px; margin-bottom:12px;">
+                <input type="text" id="conditions-search-input" placeholder="Search conditions..." oninput="filterConditionsCompendiumList()" style="flex:1; background: var(--bg-abyss); border: 1px solid var(--border-iron); color: white; padding: 8px; border-radius: 4px; font-size: 0.9rem;">
+            </div>
+            <div id="conditions-search-results" style="max-height: 400px; overflow-y:auto; padding-right:5px; display:flex; flex-direction:column; gap:10px;">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAY: ADD NEW CHARACTER WIZARD -->
+    <div id="add-char-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 500px;">
+            <div class="panel-header" style="background: transparent; border-bottom: none; padding: 0 0 15px 0;">
+                <h2>Add Party Member</h2>
+                <button class="btn-danger" onclick="document.getElementById('add-char-modal').classList.add('hidden')">Close</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.85rem;">
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                        <label>Name:</label>
+                        <input type="text" id="newchar-name" placeholder="Arric" style="padding: 8px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px;">
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                        <label>Race:</label>
+                        <input type="text" id="newchar-race" placeholder="Human" style="padding: 8px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px;">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                        <label>Class:</label>
+                        <input type="text" id="newchar-class" placeholder="Fighter" style="padding: 8px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px;">
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                        <label>Level:</label>
+                        <input type="number" id="newchar-level" value="5" style="padding: 8px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px;">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                        <label>Max HP:</label>
+                        <input type="number" id="newchar-hp" placeholder="40" style="padding: 8px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px;">
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                        <label>Armor Class (AC):</label>
+                        <input type="number" id="newchar-ac" placeholder="15" style="padding: 8px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px;">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                        <label>Art Card URL:</label>
+                        <input type="text" id="newchar-art" placeholder="Image web link" style="padding: 8px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px;">
+                    </div>
+                </div>
+                <button class="btn-primary" style="padding: 12px; margin-top: 10px; font-family: 'Cinzel';" onclick="submitAddNewCharacter()">Register Character</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAY: PLAYER CONNECT QR CODE -->
+    <div id="player-qr-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 350px; text-align: center;">
+            <div class="panel-header" style="background: transparent; border-bottom: none; padding: 0 0 15px 0;">
+                <h2 id="qr-modal-title">Suri's Sheet</h2>
+                <button class="btn-danger" onclick="document.getElementById('player-qr-modal').classList.add('hidden')">Close</button>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                <p style="font-size: 0.8rem; color: var(--text-muted);">Scan this QR with a phone camera to open the live character sheet on LAN.</p>
+                <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                    <img id="qr-modal-image" src="" alt="QR Code" style="width: 200px; height: 200px; display: block;">
+                </div>
+                <div style="font-size: 0.8rem; color: var(--gold-amber); font-family: monospace; word-break: break-all;" id="qr-modal-link"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAY: REVIEW STAGE & OFFLINE PROPOSALS -->
+    <div id="review-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="width: 900px; max-width: 95%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 20px;">
+            <div class="panel-header" style="background: transparent; border-bottom: 1px solid var(--border-iron); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="font-family: 'Cinzel', serif; color: var(--gold-amber); font-size: 1.5rem; margin: 0;">Review Stage & Sync Proposals</h2>
+                <button class="btn-danger" onclick="document.getElementById('review-modal').classList.add('hidden')">Close</button>
+            </div>
+
+            <!-- Tab Buttons -->
+            <div style="display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border-iron);">
+                <button id="tab-btn-drafts" class="deck-btn" style="border-color: var(--arcane-violet); background: rgba(139, 92, 246, 0.1); color: var(--text-main);" onclick="switchReviewTab('drafts')">PDF Draft Imports</button>
+                <button id="tab-btn-syncs" class="deck-btn" style="border-color: var(--border-iron); background: transparent; color: var(--text-muted);" onclick="switchReviewTab('syncs')">Offline Player Proposals</button>
+            </div>
+
+            <!-- TAB CONTENT: DRAFTS -->
+            <div id="review-tab-drafts" style="display: flex; flex: 1; overflow: hidden; margin-top: 15px; gap: 15px;">
+                <!-- Sidebar (List of Draft Files) -->
+                <div style="width: 260px; border-right: 1px solid var(--border-iron); padding-right: 15px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <h3 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin: 0;">Draft Files</h3>
+                        <button class="btn-primary" style="background: var(--success-green); color: white; padding: 3px 8px; font-size: 0.65rem; font-weight: bold; border-radius: 4px; cursor: pointer; border: none;" onclick="approveAllDrafts()">Approve All</button>
+                    </div>
+                    <div id="drafts-sidebar-list" style="display: flex; flex-direction: column; gap: 6px;">
+                        <!-- Dynamically filled with draft files -->
+                    </div>
+                </div>
+
+                <!-- Main Content Pane (Side-by-side editing & raw preview) -->
+                <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;" id="draft-editing-pane">
+                    <div style="text-align: center; color: var(--text-muted); margin-top: 50px; font-style: italic;">
+                        Select an imported draft file from the sidebar to review, edit, and approve!
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB CONTENT: SYNCS -->
+            <div id="review-tab-syncs" style="display: none; flex-direction: column; flex: 1; overflow-y: auto; margin-top: 15px;">
+                <div style="display: flex; gap: 20px;">
+                    <!-- Left: Sync proposals queue -->
+                    <div style="flex: 1; min-width: 300px; border-right: 1px solid var(--border-iron); padding-right: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h3 style="font-size: 0.9rem; text-transform: uppercase; color: var(--gold-amber); margin: 0;">Player Proposals Queue</h3>
+                            <button class="btn-primary" style="background: var(--success-green); color: white; padding: 6px 12px; font-size: 0.75rem; font-weight: bold; border-radius: 4px; cursor: pointer; border: none; font-family: 'Cinzel', serif;" onclick="approveAllProposals()">Approve All Sync Proposals</button>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">These features/levels were modified by players in Offline Mode and are waiting for your approval to be permanently committed.</p>
+                        <div id="sync-proposals-queue" style="display: flex; flex-direction: column; gap: 10px;">
+                            <!-- Filled dynamically with sync proposals -->
+                        </div>
+                    </div>
+
+                    <!-- Right: Proposed New Characters -->
+                    <div style="flex: 1; min-width: 300px;">
+                        <h3 style="font-size: 0.9rem; text-transform: uppercase; color: var(--arcane-violet); margin-bottom: 10px; font-family: 'Cinzel', serif;">Forge Proposals: New Characters</h3>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">These heroes were created from scratch on the Join page. Approve to add them permanently, or Reject to nuke them.</p>
+                        <div id="pending-characters-queue" style="display: flex; flex-direction: column; gap: 10px;">
+                            <!-- Filled dynamically with new character proposals -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+    <script src="app_loader.js"></script>
+    <script>
+        window.switchUtilityTab = function(tabName) {
+            document.querySelectorAll('.utility-tab-content').forEach(el => {
+                el.classList.add('hidden');
+            });
+            document.querySelectorAll('.drawer-tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            const activeContent = document.getElementById('tab-content-' + tabName);
+            if (activeContent) {
+                activeContent.classList.remove('hidden');
+            }
+            const activeBtn = document.getElementById('tab-btn-' + tabName);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+            }
+        };
+
+        window.openUtilityDrawer = function(tabName) {
+            const drawer = document.getElementById('utility-drawer');
+            if (drawer) {
+                drawer.style.right = '0px';
+                drawer.classList.add('open');
+            }
+            if (tabName) {
+                window.switchUtilityTab(tabName);
+            }
+        };
+
+        window.closeUtilityDrawer = function() {
+            const drawer = document.getElementById('utility-drawer');
+            if (drawer) {
+                drawer.style.right = '-520px';
+                drawer.classList.remove('open');
+            }
+        };
+
+        window.toggleUtilityTab = function(tabName) {
+            const drawer = document.getElementById('utility-drawer');
+            if (!drawer) return;
+            
+            const isClosed = drawer.style.right !== '0px';
+            const isCurrentTab = document.getElementById('tab-btn-' + tabName).classList.contains('active');
+            
+            if (isClosed) {
+                window.openUtilityDrawer(tabName);
+            } else {
+                if (isCurrentTab) {
+                    window.closeUtilityDrawer();
+                } else {
+                    window.switchUtilityTab(tabName);
+                }
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeProjectorMapDropzone();
+            initializeFogOfWarPainter();
+            loadScratchpadNotes();
+        });
+    </script>
+</body>
+</html>

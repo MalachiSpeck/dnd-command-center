@@ -1,0 +1,110 @@
+{
+  "dungeon": {
+    "visual": [
+      "Torchlight flickers across damp stone walls covered in slick green moss.",
+      "The heavy stone arches overhead are cracked and draped in thick webs.",
+      "Long shadows stretch across the uneven flagstones as you enter."
+    ],
+    "auditory": [
+      "The distant, rhythmic drip of water echoes from somewhere deep ahead.",
+      "A dry, skittering sound scurries away into the darkness as you step forward.",
+      "A faint, whistling breeze moans through the cracks in the masonry."
+    ],
+    "olfactory": [
+      "The air is heavy with the smell of damp earth and centuries-old decay.",
+      "A sharp, metallic tang of iron or copper hangs faint in the air.",
+      "A dry, dusty odor tickles your nostrils, smelling of ancient stone."
+    ],
+    "tactile": [
+      "The floor is slick with condensation, making your footing feel unsure.",
+      "A sudden draft of cold, wet wind brushes past your cheek like a ghostly finger.",
+      "Granular soot covers every surface, leaving a black smear on your gloves."
+    ],
+    "features": [
+      "A half-toppled stone pedestal sits in the center, its surface scratched.",
+      "A pile of shattered pottery lies swept into a corner, covered in grime.",
+      "An iron grate in the floor looks down into an abyss of absolute darkness."
+    ]
+  },
+  "tavern": {
+    "visual": [
+      "Thick clouds of pipe smoke drift lazily below the soot-stained wooden rafters.",
+      "Dozens of melted tallow candles cast a warm, dancing glow over the patrons.",
+      "The polished bar reflects the amber light of a crackling hearth."
+    ],
+    "auditory": [
+      "A cacophony of clinking tankards, raucous laughter, and thick chatter fills the room.",
+      "A bard in the corner plucks a upbeat tune on a battered lute.",
+      "The heavy thud of wooden mugs slamming onto tables echoes constantly."
+    ],
+    "olfactory": [
+      "The scent of roasting meats, spilled ale, and damp wool hits you immediately.",
+      "A sweet aroma of spiced mulled wine mingles with stale pipe tobacco.",
+      "The air smells heavily of rancid grease and wet dogs from the doorway."
+    ],
+    "tactile": [
+      "The wooden table has a sticky residue of spilled honey-mead.",
+      "A wave of stifling heat from the fireplace warms your travel-chilled limbs.",
+      "The bench beneath you creaks under your weight, polished smooth by generations."
+    ],
+    "features": [
+      "A massive boar's head is mounted above the hearth, its glass eyes glittering.",
+      "A bulletin board near the bar is cluttered with curled parchment notices.",
+      "A heavy trapdoor behind the counter stands slightly ajar, leading down."
+    ]
+  },
+  "forest": {
+    "visual": [
+      "Dappled sunlight filters through the dense canopy, painting gold patterns on the forest floor.",
+      "Gnarled roots of ancient oaks weave across the path like sleeping serpents.",
+      "A blanket of lush green ferns carpets the undergrowth as far as you can see."
+    ],
+    "auditory": [
+      "The gentle rustling of leaves overhead accompanies the chirping of forest birds.",
+      "A twig snaps somewhere deep in the thicket, followed by sudden silence.",
+      "The low murmur of a nearby bubbling creek provides a constant, soothing backdrop."
+    ],
+    "olfactory": [
+      "The air is clean and crisp, smelling of damp pine needles and wild thyme.",
+      "A rich, sweet scent of damp moss and rotting logs rises from the soil.",
+      "A sudden floral aroma of blooming nightshade catches you by surprise."
+    ],
+    "tactile": [
+      "The ground is soft and spongy beneath your boots, cushioned by pine needles.",
+      "A sticky cobweb brushes across your face, clinging to your skin.",
+      "A drop of cold dew drips from an overhanging branch onto your neck."
+    ],
+    "features": [
+      "A hollowed-out tree stump is filled with a patch of glowing, pale mushrooms.",
+      "A ring of smooth, moss-covered stones surrounds an old, cold campfire site.",
+      "A fallen giant log blocks the path, its bark peeling away in long strips."
+    ]
+  },
+  "city_street": {
+    "visual": [
+      "Tall, timber-framed houses lean over the narrow cobblestone alley, blocking the sky.",
+      "Rills of dirty water wash down the central gutter between the cobbles.",
+      "Colorful shop signs swing creakily in the breeze above the storefronts."
+    ],
+    "auditory": [
+      "The rumble of wooden carriage wheels and iron horseshoes echoes off the walls.",
+      "Street vendors yell their prices over the general chatter of bustling shoppers.",
+      "A distant temple bell tolls the hour, vibrating deep in your chest."
+    ],
+    "olfactory": [
+      "The scent of fresh-baked bread from a bakery clashes with the stench of open gutters.",
+      "A strong smell of horse manure and wet hay hangs heavy in the air.",
+      "The aroma of coal smoke and roasted chestnuts drifts from a nearby cart."
+    ],
+    "tactile": [
+      "The air feels thick and humid, filled with the grit of a busy city.",
+      "A passing beggar brushes against your sleeve, their hand briefly lingering.",
+      "The uneven cobblestones force you to watch your step to avoid twisting an ankle."
+    ],
+    "features": [
+      "An overturned wooden crate lies spilled, leaking bruised apples onto the path.",
+      "A rusted iron street lantern hangs from a bracket, waiting to be lit.",
+      "A narrow stone staircase squeezes between two buildings, climbing upwards."
+    ]
+  }
+}

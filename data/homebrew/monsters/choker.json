@@ -1,0 +1,19 @@
+{
+  "name": "CHOKER",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 16,
+  "hp": 13,
+  "speed": "30 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "1",
+  "actions": []
+}

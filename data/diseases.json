@@ -1,0 +1,58 @@
+[
+  {
+    "name": "Sewer Plague",
+    "stages": [
+      {
+        "stage": 1,
+        "effect": "Exhaustion level 1, disadvantage on STR checks, and any HP regained from resting is halved.",
+        "save": "DC 11 CON",
+        "advance_on_fail": true
+      },
+      {
+        "stage": 2,
+        "effect": "Exhaustion level 2, regain only half HP from healing magic, and speed is halved.",
+        "save": "DC 13 CON",
+        "advance_on_fail": true
+      },
+      {
+        "stage": 3,
+        "effect": "Exhaustion level 3, cannot regain HP except by Greater Restoration, and disadvantage on all saving throws.",
+        "save": "DC 15 CON"
+      }
+    ]
+  },
+  {
+    "name": "Sight Rot",
+    "stages": [
+      {
+        "stage": 1,
+        "effect": "Disadvantage on Wisdom (Perception) checks relying on sight. Eyes bleed faintly.",
+        "save": "DC 15 CON",
+        "advance_on_fail": true
+      },
+      {
+        "stage": 2,
+        "effect": "Blinded condition is applied. Blinded until the rot is cured with rare Eyebright herb or Lesser Restoration.",
+        "save": "DC 17 CON",
+        "advance_on_fail": false
+      }
+    ]
+  },
+  {
+    "name": "Curse of the Crawling Grave",
+    "stages": [
+      {
+        "stage": 1,
+        "effect": "Cannot regain HP. Skin turns dusty and dry like tomb rot.",
+        "save": "DC 12 WIS",
+        "advance_on_fail": true
+      },
+      {
+        "stage": 2,
+        "effect": "Max HP is reduced by 1d10 each dawn. If Max HP drops to 0, the character dies and rises as a Ghoul.",
+        "save": "DC 14 WIS"
+      }
+    ],
+    "cure": "Remove Curse spell or destroying the reliquary of the mummy lord."
+  }
+]

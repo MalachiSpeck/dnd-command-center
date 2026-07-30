@@ -1,0 +1,85 @@
+D&D PDF Rules Parser & Extractor Walkthrough
+=============================================
+
+1. What is this Tool?
+---------------------
+The parse_pdf.py file is a Command Line Interface (CLI) script written in Python. It acts as an automated "reader" that scans D&D 5e sourcebook PDF files (like the Player's Handbook, Monster Manual, or third-party supplements) and extracts structural text layouts into clean, formatted database entries.
+
+How it categorizes data:
+* Spells: Parsed as Markdown (.md) files containing metadata frontmatter (YAML) with spell parameters, casting times, descriptions, and heightening rules.
+* Monsters / Stat Blocks: Parsed as structured JavaScript Object Notation (.json) files including parsed Armor Class, Hit Points, base Speed, six core ability stats, challenge ratings, and actions/attacks lists.
+* Magic Items: Parsed as JSON (.json) files extracting item type, attunement, rarity, and custom properties.
+
+
+2. Where Does Extracted Content Go?
+-----------------------------------
+When you run the script, it automatically parses rules and outputs them as "Draft proposals" into folders inside your campaign directory. This integrates directly with your PDF Draft Imports dashboard on your DM Console:
+* Spells path: data/drafts/spells/ (Saved as .md markdown scrolls)
+* Monsters path: data/drafts/monsters/ (Saved as .json stat cards)
+* Magic Items path: data/drafts/magic_items/ (Saved as .json loot entries)
+
+From your DM Dashboard Web Console, you can review, edit, and click "Approve" on these drafts to instantly inject them into your campaign's active grimoire, beastiary, or magic item bazaar!
+
+
+3. Step-by-Step Walkthrough: How to Use It
+------------------------------------------
+
+Step A: Prerequisites (Installing the Engine Requirements)
+The parser uses specialized Python packages to analyze PDF geometry and text structures (PyMuPDF and pdfplumber). Before running it, you must make sure those packages are installed.
+
+1. Open your terminal or Command Prompt (CMD).
+2. Run this command to install the required libraries:
+   pip install pymupdf pdfplumber pyyaml
+
+Step B: How to Open Your Terminal in the Right Folder
+The tool must be run inside your campaign folder to properly find the directory structure.
+
+1. On Windows:
+   * Open File Explorer and navigate to: C:\Users\mattm\Desktop\dnd-command-center
+   * Click inside the address bar at the top of the explorer window (where the folder path is displayed).
+   * Type "cmd" and press Enter. A terminal window will pop open, already scoped to your project folder!
+2. On Mac/Linux:
+   * Open your Terminal and type:
+     cd /Users/mattm/Desktop/dnd-command-center
+
+Step C: How to Control the Parser (Commands & Arguments)
+You instruct the parser on what to do by passing "flags" or arguments when executing the script. 
+
+The command structure:
+python parse_pdf.py --file "PATH_TO_YOUR_PDF" --type CATEGORY --pages PAGE_SELECTION
+
+Understanding the controls:
+* --file (Required): The exact path to the PDF sourcebook you want to read. 
+  (Tip: If the path contains spaces, wrap it in double quotes, e.g., "C:\My Books\5e PHB.pdf")
+* --type (Required): Tells the tool what rules format to look for. You can choose:
+  * spells: Scans specifically for spell layouts (Casting Time, Range, Duration, etc.).
+  * monsters: Scans for stat blocks (Armor Class, Hit Points, Ability Stats matrix).
+  * magic_items: Scans for wondrous items, armors, and weapons with rarity lines.
+  * all: Runs all three parsers over the chosen page range.
+* --pages (Optional): Restricts the scan to a specific page range. This is highly recommended because scanning an entire 350-page book takes a long time and generates clutter.
+  * To select a range: --pages 112-140
+  * To select specific pages: --pages 45,46,49
+  * Omit this flag entirely if you want to scan the entire book.
+
+
+4. Practical Action Examples
+----------------------------
+
+Example 1: Extract Spells 12 through 20 from a Handbook
+If you have a Player's Handbook PDF on your desktop and want to pull spells on pages 210 to 220:
+python parse_pdf.py --file "C:\Users\mattm\Desktop\Players_Handbook.pdf" --type spells --pages 210-220
+
+Example 2: Extract a specific monster's stat card
+If you want to extract a legendary monster that sits on Page 154 of the Monster Manual on your desktop:
+python parse_pdf.py --file "C:\Users\mattm\Desktop\Monster_Manual.pdf" --type monsters --pages 154
+
+Example 3: Scan a whole booklet of magic items
+If you downloaded a homebrew PDF supplement named artifacts.pdf on your desktop and want to import all its custom magic items:
+python parse_pdf.py --file "C:\Users\mattm\Desktop\artifacts.pdf" --type magic_items
+
+
+5. Troubleshooting & Parsing Tips
+---------------------------------
+
+* Page Numbers vs. PDF Page Index: Book page numbers printed on the paper footer often do not match the PDF's computer page index (due to title pages, tables of contents, and introductory pages). Always open your PDF in a standard reader and check the actual PDF viewer page number when specifying ranges!
+* Formatting Cleanliness: Because PDF text flow can vary, some scanned layouts might trap headers or page numbers inside descriptions. This is perfectly normal! The parser places these in the data/drafts/ directory so they are staged safely for you. You don't have to look at the JSON/MD code -- just open the PDF Draft Imports review drawer on your DM Dashboard, clean up any typos on-screen, and hit Approve!

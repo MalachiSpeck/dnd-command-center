@@ -1,0 +1,20 @@
+{
+  "name": "OGRE CHAIN BRUTE",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 11,
+  "hp": 59,
+  "speed": "40 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "3",
+  "actions": [],
+  "raw_extracted": "STR \n19 (+4) \nDEX \n8 (-1) \nCON \n16 (+3) \nINT \n5 (- 3) \nWIS \n7 (- 2) \nSenses darkvision 60 ft., passive Perception 8 \nLanguages Common, Giant \nChallenge 3 (700 XP) \nACTIONS \nCHA \n7 (-2) \nFist. Melee Weapon Attack: +6 to hit, reach ft., one target. Hit: 9 \n(2d4 + 4) bludgeoning damage. \nChain Sweep. The ogre swings its chain, and every creature \nwithin 10 feet of it must make a DC 14 Dexterity saving throw. \nOn a failed saving throw, a creature takes 8 (1d8 + 4) bludgeon\u00b7 \ning damage and is knocked prone. On a successful save, the \ncreature takes half as much damage and isn't knocked prone. \nChain Smash (Recharge 6). Melee Weapon Attack: +6 to hit, \nreach 10 ft., one target. Hit: 13 (2d8 + 4) bludgeoning damage, \nand the target must succeed on a DC 14 Constitution saving \nthrow or be knocked unconscious for 1 minute. The unconscious target repeats the saving throw if it takes damage and \nat the end of each of its turns, ending the effect on itself on \na success."
+}

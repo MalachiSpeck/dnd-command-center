@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Player View - Active Encounter</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background-color: #050507;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            height: 100vh;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        .main-player-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            width: 100%;
+            max-width: 1100px;
+            gap: 40px;
+            height: 100%;
+            align-items: center;
+        }
+        .cinematic-board {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .player-card {
+            background-color: var(--shadow-card);
+            border: 2px solid var(--border-iron);
+            border-radius: 8px;
+            padding: 15px 25px;
+            font-size: 1.4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+        .player-card.active-turn {
+            border-color: var(--arcane-violet);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+            transform: scale(1.03);
+            background: #111019;
+        }
+        .status-fucked-up {
+            color: var(--crimson-rage);
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            border: 1px solid var(--crimson-rage);
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: rgba(239, 68, 68, 0.08);
+            box-shadow: 0 0 5px rgba(239, 68, 68, 0.2);
+        }
+        /* Cinematic Turn Art Card on right half */
+        .art-card-container {
+            background-color: var(--shadow-card);
+            border: 2px solid var(--border-iron);
+            border-radius: 12px;
+            width: 100%;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            transition: all 0.5s;
+        }
+        .art-card-image {
+            width: 100%;
+            flex-grow: 1;
+            background-size: cover;
+            background-position: center;
+            transition: background-image 0.5s ease-in-out;
+            background-color: #0b0b0e;
+        }
+        .art-card-details {
+            padding: 20px;
+            background: #0f0f13;
+            border-top: 1px solid var(--border-iron);
+            text-align: center;
+        }
+        .art-card-details h2 {
+            margin: 0;
+            font-family: 'Cinzel', serif;
+            color: var(--arcane-violet);
+            font-size: 1.8rem;
+            letter-spacing: 2px;
+        }
+        .art-card-details p {
+            margin: 5px 0 0 0;
+            color: var(--text-muted);
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        @keyframes popFlash {
+            0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+            10% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
+            15% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            85% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-player-layout">
+        
+        <!-- Left Side: Cinematic Initiative Order -->
+        <div class="cinematic-board" id="public-initiative-list">
+            <h2 style="text-align: center; color: var(--text-muted); font-family: 'Cinzel';">Awaiting Initiative...</h2>
+        </div>
+
+        <!-- Right Side: Turn Art Card Showcase -->
+        <div class="art-card-container" id="public-art-card">
+            <!-- Round Counter header tracker on player mirror -->
+            <div id="player-round-header" style="background:#0f0f13; border-bottom:1px solid var(--border-iron); padding:10px; font-family:'Cinzel', serif; font-size:1.2rem; color:#fbbf24; text-align:center;">Round 1</div>
+            <div class="art-card-image" id="active-combatant-art" style="background-image: url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=400');"></div>
+            <div class="art-card-details">
+                <h2 id="active-combatant-name">Turn Banner</h2>
+                <p id="active-combatant-status">The Arena Awaits Your Blade</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Hidden audio elements to trigger local play requests from board events -->
+    <audio id="sound-trigger-element" style="display: none;"></audio>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/app_wave4.js"></script>
+    <script>
+        let lastPlayedSoundTimestamp = null;
+        const socket = io();
+        socket.emit('join-room', 'mirror');
+
+        // Function to process and render the board state data
+        function processBoardState(data) {
+            const boardState = data.encounter;
+            const activeIndex = data.activeCombatIndex || 0;
+            const soundTrigger = data.soundTrigger;
+            
+            // Sync active round on Player Mirror
+            const roundNum = data.activeRound || 1;
+            document.getElementById('player-round-header').innerText = `Round ${roundNum}`;
+
+            // 1. Audio soundboard trigger handling
+            if (soundTrigger && soundTrigger.timestamp !== lastPlayedSoundTimestamp) {
+                lastPlayedSoundTimestamp = soundTrigger.timestamp;
+                triggerLocalAudioPlay(soundTrigger.sound);
+            }
+            
+            const list = document.getElementById('public-initiative-list');
+            
+            if (!boardState || boardState.length === 0) {
+                list.innerHTML = '<h2 style="text-align: center; color: var(--text-muted); font-family: \'Cinzel\';">Awaiting Initiative...</h2>';
+                // Reset Art Showcase to default state
+                document.getElementById('active-combatant-art').style.backgroundImage = `url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=400')`;
+                document.getElementById('active-combatant-name').innerText = "Turn Banner";
+                document.getElementById('active-combatant-status').innerText = "The Arena Awaits Your Blade";
+                return;
+            }
+
+            list.innerHTML = '';
+            
+            // Draw public initiative cards with active status tracking
+            boardState.forEach((combatant, idx) => {
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                
+                let activeGlow = '';
+                let nameColorStyle = 'color: var(--text-main);';
+                if (idx === activeIndex) {
+                    card.classList.add('active-turn');
+                    // Menacing boss icon or golden glow indicator for active turn combatant
+                    if (combatant.type === 'player') {
+                        card.style.boxShadow = '0 0 15px #fbbf24';
+                        card.style.borderColor = '#fbbf24';
+                        activeGlow = `<span style="color:#fbbf24; margin-right:8px; filter: drop-shadow(0 0 4px #fbbf24); font-size: 1.25rem;"></span>`;
+                        nameColorStyle = 'color: #fbbf24; text-shadow: 0 0 8px rgba(251, 191, 36, 0.6);';
+                    } else if (combatant.type === 'monster') {
+                        card.style.boxShadow = '0 0 15px #ef4444';
+                        card.style.borderColor = '#ef4444';
+                        activeGlow = `<span style="color:#ef4444; margin-right:8px; filter: drop-shadow(0 0 4px #ef4444); font-size: 1.25rem;"></span>`;
+                        nameColorStyle = 'color: #ef4444; text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);';
+                    } else {
+                        activeGlow = `<span style="color:#fbbf24; margin-right:8px;"></span>`;
+                    }
+                }
+                
+                let statusTag = '';
+                if (combatant.isDefeated) {
+                    statusTag = `<span class="status-fucked-up" style="color: #6b7280; border-color: #4b5563; background: rgba(0,0,0,0.25);">DEFEATED</span>`;
+                    card.style.opacity = '0.35';
+                    card.style.borderColor = '#1f1a2e';
+                    card.style.boxShadow = 'none';
+                } else if (combatant.isFuckedUp) {
+                    statusTag = `<span class="status-fucked-up">FUCKED UP</span>`;
+                    card.style.borderColor = 'var(--crimson-rage)';
+                    if (idx !== activeIndex) {
+                        card.style.boxShadow = '0 0 12px rgba(239, 68, 68, 0.4)';
+                    }
+                }
+
+                // Render condition tags on players mirror
+                let conditionsListHtml = '';
+                if ((combatant.conditions && combatant.conditions.length > 0) || combatant.concentratingSpell) {
+                    conditionsListHtml += `<div style="display:flex; gap:4px; margin-top:5px; flex-wrap:wrap; align-items:center;">`;
+                    if (combatant.concentratingSpell) {
+                        conditionsListHtml += `<span style="font-size:0.75rem; background:#fbbf24; color:black; padding:2px 6px; border-radius:3px; font-weight:bold; box-shadow: 0 0 6px #fbbf24;"> Conc: ${combatant.concentratingSpell}</span>`;
+                    }
+                    if (combatant.conditions && combatant.conditions.length > 0) {
+                        combatant.conditions.forEach(c => {
+                            conditionsListHtml += `<span style="font-size:0.75rem; background:#8b5cf6; color:white; padding:2px 6px; border-radius:3px; font-weight:bold;">${c}</span>`;
+                        });
+                    }
+                    conditionsListHtml += `</div>`;
+                }
+
+                card.innerHTML = `
+                    <div style="display:flex; flex-direction:column; width:100%;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                            <span style="${nameColorStyle} font-family: 'Cinzel'; font-weight: bold; display:flex; align-items:center;">${activeGlow} ${combatant.name}</span> 
+                            ${statusTag}
+                        </div>
+                        ${conditionsListHtml}
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+
+            // 2. Active Combatant Art Showcase Handling
+            const currentCombatant = boardState[activeIndex];
+            if (currentCombatant) {
+                document.getElementById('active-combatant-name').innerText = currentCombatant.name;
+                
+                if (currentCombatant.isDefeated) {
+                    document.getElementById('active-combatant-status').innerText = "DEFEATED / UNCONSCIOUS";
+                    document.getElementById('active-combatant-status').style.color = "#6b7280";
+                    document.getElementById('active-combatant-art').style.filter = "grayscale(100%) brightness(50%)";
+                } else if (currentCombatant.isFuckedUp) {
+                    document.getElementById('active-combatant-status').innerText = "FUCKED UP";
+                    document.getElementById('active-combatant-status').style.color = "var(--crimson-rage)";
+                    document.getElementById('active-combatant-art').style.filter = "none";
+                } else {
+                    document.getElementById('active-combatant-status').innerText = "STILL STANDING & COMBAT READY";
+                    document.getElementById('active-combatant-status').style.color = "var(--text-muted)";
+                    document.getElementById('active-combatant-art').style.filter = "none";
+                }
+
+                // Fallback artwork selection if none specified
+                const defaultArt = currentCombatant.id.startsWith('pc_') 
+                    ? 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=400' 
+                    : 'https://images.unsplash.com/photo-1555685812-4b943f1cb0eb?q=80&w=400';
+                    
+                const artUrl = currentCombatant.art || defaultArt;
+                document.getElementById('active-combatant-art').style.backgroundImage = `url('${artUrl}')`;
+            }
+        }
+
+        // Listen for real-time WebSocket updates
+        socket.on('board-state-updated', (data) => {
+            console.log("Real-time combat update received!");
+            processBoardState(data);
+        });
+
+        socket.on('legendary-resistance-triggered', (bossName) => {
+            const banner = document.createElement('div');
+            banner.style.cssText = "position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%); background: #ef4444; color: white; padding: 20px 40px; border-radius: 10px; font-family: 'Cinzel', serif; font-size: 2.2rem; border: 3px solid #fbbf24; box-shadow: 0 0 30px rgba(239, 68, 68, 0.8); z-index: 99999; pointer-events: none; animation: popFlash 2.5s forwards; text-align: center; text-transform: uppercase;";
+            banner.innerHTML = ` LEGENDARY RESISTANCE USED <br><span style="font-size: 1.5rem; color: #fbbf24;">${bossName} resists the effect!</span>`;
+            document.body.appendChild(banner);
+            setTimeout(() => banner.remove(), 2500);
+        });
+
+        // Load initially on page load
+        async function loadInitialState() {
+            try {
+                const response = await fetch('/api/board-state');
+                const data = await response.json();
+                processBoardState(data);
+            } catch (err) {
+                console.error("Initial load failed.", err);
+            }
+        }
+
+        window.onload = loadInitialState;
+
+        function triggerLocalAudioPlay(soundFile) {
+            const audio = document.getElementById('sound-trigger-element');
+            if (audio) {
+                // Try playing from local server directory first, fallback gracefully
+                audio.src = `/sounds/${soundFile}`;
+                audio.play().catch(e => {
+                    console.log(`Sound file play attempt for ${soundFile} failed (likely file missing or user interaction block).`);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

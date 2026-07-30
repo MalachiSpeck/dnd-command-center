@@ -1,0 +1,38 @@
+{
+  "Material Plane": {
+    "effects": "Standard 5e physics and environmental laws apply.",
+    "visual_filter": "none",
+    "speed_multiplier": 1.0,
+    "rest_save_dc": 0
+  },
+  "Feywild": {
+    "effects": "Time Dilation is active (1 day inside could be 1 year or 1 hour in the Material Plane). Advantage on Wisdom (Perception) checks. Spellcasters have a 10% chance of triggering wild magic surges on leveled spells.",
+    "visual_filter": "brightness(1.1) saturate(1.4) contrast(1.1)",
+    "speed_multiplier": 1.0,
+    "rest_save_dc": 0
+  },
+  "Shadowfell": {
+    "effects": "Disadvantage on all death saving throws. Disheartening gloom: any short rest requires a DC 10 Wisdom saving throw or the creature gains no benefit from the rest.",
+    "visual_filter": "grayscale(0.7) contrast(0.9)",
+    "speed_multiplier": 1.0,
+    "rest_save_dc": 10
+  },
+  "Astral Plane": {
+    "effects": "No aging, no need for food or water. Intelligence score replaces Strength score for physical speed and jump distance calculations.",
+    "visual_filter": "hue-rotate(90deg) saturate(0.8)",
+    "speed_multiplier": 2.0,
+    "rest_save_dc": 0
+  },
+  "Elemental Plane of Fire": {
+    "effects": "Fire resistance becomes normal fire damage (resistance bypassed). Unprotected creatures take 1d10 fire damage at the start of every round of combat. Extreme heat triggers exhaustion rules.",
+    "visual_filter": "sepia(0.5) hue-rotate(-20deg) saturate(1.5)",
+    "speed_multiplier": 1.0,
+    "rest_save_dc": 15
+  },
+  "Nine Hells": {
+    "effects": "Fiends have advantage on all saving throws. Creatures of good alignment must make a DC 12 Charisma saving throw each dawn or have disadvantage on all checks until the next dawn.",
+    "visual_filter": "contrast(1.2) sepia(0.4) saturate(1.1)",
+    "speed_multiplier": 1.0,
+    "rest_save_dc": 12
+  }
+}

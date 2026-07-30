@@ -1,0 +1,680 @@
+[
+  {
+    "id": "char_1",
+    "name": "Furfur",
+    "race": "Tiefling",
+    "class": "Bard",
+    "level": 7,
+    "hp": 45,
+    "ac": 12,
+    "passives": {
+      "perception": 11,
+      "insight": 11,
+      "investigation": 10
+    },
+    "magic_items": [
+      "Wand of Magic Missiles"
+    ],
+    "feats": [
+      "Actor"
+    ],
+    "secrets": "Owes 500gp to the Calimport Guildmaster; keeps a suspicious letter written in Infernal inside her boot.",
+    "art": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400",
+    "stats": {
+      "str": 8,
+      "dex": 14,
+      "con": 12,
+      "int": 10,
+      "wis": 12,
+      "cha": 18
+    },
+    "hp_current": 45,
+    "hp_temp": 0,
+    "conditions": [],
+    "death_saves": {
+      "successes": 0,
+      "failures": 0
+    },
+    "inventory": [],
+    "known_spells": [
+      "Animal Friendship"
+    ],
+    "prepared_spells": [],
+    "equipped_armor": "none",
+    "equipped_shield": false,
+    "theme": "sapphire",
+    "proficiency_bonus": 3,
+    "ability_scores_calculated": {
+      "str": 8,
+      "dex": 14,
+      "con": 12,
+      "int": 10,
+      "wis": 12,
+      "cha": 18
+    },
+    "ability_modifiers": {
+      "str": -1,
+      "dex": 2,
+      "con": 1,
+      "int": 0,
+      "wis": 1,
+      "cha": 4
+    },
+    "initiative_bonus": 2,
+    "spell_save_dc": 15,
+    "spell_attack_bonus": 7,
+    "spell_slots": [
+      4,
+      3,
+      3,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "spell_slots_current": [
+      0,
+      2,
+      3,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "hp_max": 45,
+    "classes": [
+      {
+        "class": "Bard",
+        "level": 7
+      }
+    ],
+    "wishlist": [
+      "Testing Arrric whispers"
+    ],
+    "exhaustion": 0,
+    "proposals": {
+      "level": 7,
+      "feats": [
+        "Actor"
+      ],
+      "stats": {
+        "str": 8,
+        "dex": 14,
+        "con": 12,
+        "int": 10,
+        "wis": 12,
+        "cha": 18
+      },
+      "hp_max": 45,
+      "classes": [
+        {
+          "class": "Bard",
+          "level": 7
+        }
+      ]
+    }
+  },
+  {
+    "id": "char_2",
+    "name": "Grizz Fiddlestop",
+    "race": "Halfling",
+    "class": "Artificer",
+    "level": 7,
+    "hp": 52,
+    "ac": 18,
+    "passives": {
+      "perception": 11,
+      "insight": 11,
+      "investigation": 13
+    },
+    "magic_items": [
+      "Cloak of Elvenkind"
+    ],
+    "feats": [
+      "Lucky"
+    ],
+    "secrets": "Accidentally blew up his master's workshop in Lantan; is being pursued by an clockwork bounty hunter named IronClaw.",
+    "art": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400",
+    "stats": {
+      "str": 10,
+      "dex": 16,
+      "con": 14,
+      "int": 16,
+      "wis": 12,
+      "cha": 8
+    },
+    "class_resources": {
+      "name": "Resources",
+      "current": 1
+    },
+    "hp_current": 1,
+    "hp_temp": 0,
+    "hp_max": 52,
+    "conditions": [],
+    "concentration_spell": "",
+    "classes": [
+      {
+        "class": "Artificer",
+        "level": 7
+      }
+    ],
+    "proficiency_bonus": 3,
+    "ability_scores_calculated": {
+      "str": 10,
+      "dex": 16,
+      "con": 14,
+      "int": 16,
+      "wis": 12,
+      "cha": 8
+    },
+    "ability_modifiers": {
+      "str": 0,
+      "dex": 3,
+      "con": 2,
+      "int": 3,
+      "wis": 1,
+      "cha": -1
+    },
+    "initiative_bonus": 3,
+    "spell_save_dc": 14,
+    "spell_attack_bonus": 6,
+    "spell_slots": [
+      4,
+      2,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "spell_slots_current": [
+      1,
+      2,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "death_saves": {
+      "successes": 0,
+      "failures": 0
+    },
+    "equipped_armor": "plate",
+    "theme": "sapphire",
+    "wishlist": [
+      "Testing Arrric whispers"
+    ],
+    "inventory": [],
+    "known_spells": [
+      "Conjure Elemental"
+    ],
+    "prepared_spells": [],
+    "equipped_shield": false,
+    "exhaustion": 0,
+    "proposals": {
+      "level": 7,
+      "feats": [
+        "Lucky"
+      ],
+      "stats": {
+        "str": 10,
+        "dex": 16,
+        "con": 14,
+        "int": 16,
+        "wis": 12,
+        "cha": 8
+      },
+      "hp_max": 52,
+      "classes": [
+        {
+          "class": "Artificer",
+          "level": 7
+        }
+      ]
+    }
+  },
+  {
+    "id": "char_3",
+    "name": "Arrrric",
+    "race": "Human",
+    "class": "Fighter",
+    "level": 6,
+    "hp": 58,
+    "ac": 11,
+    "passives": {
+      "perception": 10,
+      "insight": 10,
+      "investigation": 9
+    },
+    "magic_items": [
+      "+1 Longsword",
+      "Bag of Holding"
+    ],
+    "feats": [
+      "Great Weapon Master"
+    ],
+    "secrets": "Fled his military regiment during the Siege of Calimshan. If recognized, he could face a firing squad.",
+    "art": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400",
+    "stats": {
+      "str": 18,
+      "dex": 12,
+      "con": 16,
+      "int": 8,
+      "wis": 10,
+      "cha": 10
+    },
+    "hp_max": 58,
+    "hp_current": 2,
+    "hp_temp": 0,
+    "conditions": [],
+    "death_saves": {
+      "successes": 0,
+      "failures": 0
+    },
+    "inventory": [],
+    "known_spells": [],
+    "prepared_spells": [],
+    "equipped_armor": "none",
+    "equipped_shield": false,
+    "theme": "violet",
+    "classes": [
+      {
+        "class": "Fighter",
+        "level": 6
+      }
+    ],
+    "proficiency_bonus": 3,
+    "ability_scores_calculated": {
+      "str": 18,
+      "dex": 12,
+      "con": 16,
+      "int": 8,
+      "wis": 10,
+      "cha": 10
+    },
+    "ability_modifiers": {
+      "str": 4,
+      "dex": 1,
+      "con": 3,
+      "int": -1,
+      "wis": 0,
+      "cha": 0
+    },
+    "initiative_bonus": 1,
+    "spell_save_dc": 11,
+    "spell_attack_bonus": 3,
+    "spell_slots": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "spell_slots_current": [
+      0,
+      2,
+      3,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "level_up_audit": false,
+    "exhaustion": 0,
+    "wishlist": [
+      "Testing Arrric whispers"
+    ]
+  },
+  {
+    "id": "char_4",
+    "name": "Gnoah",
+    "race": "Rock Gnome",
+    "class": "Wizard",
+    "level": 7,
+    "hp": 50,
+    "ac": 13,
+    "passives": {
+      "perception": 11,
+      "insight": 11,
+      "investigation": 14
+    },
+    "magic_items": [
+      "Moon Sickle"
+    ],
+    "feats": [
+      "War Caster"
+    ],
+    "secrets": "His spellbook contains notes written in a cipher he cannot read. He suspects they were left by his grandfather.",
+    "art": "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=400",
+    "stats": {
+      "str": 8,
+      "dex": 14,
+      "con": 14,
+      "int": 18,
+      "wis": 12,
+      "cha": 10
+    },
+    "hp_max": 44,
+    "hp_current": 2,
+    "hp_temp": 2,
+    "class_resources": {
+      "name": "Resource Points",
+      "current": 0
+    },
+    "spell_slots": [
+      4,
+      3,
+      3,
+      2,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "max_spell_slots": {
+      "1": 4,
+      "2": 3,
+      "3": 3,
+      "4": 1,
+      "5": 0
+    },
+    "conditions": [],
+    "death_saves": {
+      "successes": 0,
+      "failures": 0
+    },
+    "inventory": [],
+    "classes": [
+      {
+        "class": "Wizard",
+        "level": 7
+      }
+    ],
+    "proficiency_bonus": 3,
+    "ability_scores_calculated": {
+      "str": 8,
+      "dex": 14,
+      "con": 14,
+      "int": 18,
+      "wis": 12,
+      "cha": 10
+    },
+    "ability_modifiers": {
+      "str": -1,
+      "dex": 2,
+      "con": 2,
+      "int": 4,
+      "wis": 1,
+      "cha": 0
+    },
+    "initiative_bonus": 2,
+    "spell_save_dc": 16,
+    "spell_attack_bonus": 8,
+    "spell_slots_current": [
+      2,
+      3,
+      2,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "concentration_spell": "",
+    "exhaustion": 0,
+    "equipped_armor": "padded",
+    "known_spells": [
+      "Acid Arrow",
+      "Acid Splash"
+    ],
+    "prepared_spells": [
+      "Acid Arrow"
+    ],
+    "wishlist": [
+      "Testing Arrric whispers"
+    ],
+    "theme": "crimson",
+    "proposals": {
+      "level": 8,
+      "feats": [
+        "War Caster"
+      ],
+      "stats": {
+        "str": 8,
+        "dex": 14,
+        "con": 14,
+        "int": 18,
+        "wis": 12,
+        "cha": 10
+      },
+      "hp_max": 50,
+      "classes": [
+        {
+          "class": "Wizard",
+          "level": 8
+        }
+      ]
+    },
+    "level_up_audit": true,
+    "unapproved_level": 8
+  },
+  {
+    "id": "char_5",
+    "name": "Valerie",
+    "race": "Elf",
+    "class": "Cleric",
+    "level": 6,
+    "hp": 45,
+    "ac": 10,
+    "passives": {
+      "perception": 14,
+      "insight": 14,
+      "investigation": 10
+    },
+    "magic_items": [
+      "Amulet of the Devout"
+    ],
+    "feats": [
+      "Alert"
+    ],
+    "secrets": "Was exiled from her home temple after she had a vision of the temple's high priest committing heresy.",
+    "art": "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=400",
+    "stats": {
+      "str": 12,
+      "dex": 10,
+      "con": 14,
+      "int": 10,
+      "wis": 18,
+      "cha": 12
+    },
+    "hp_max": 45,
+    "hp_current": 2,
+    "hp_temp": 0,
+    "class_resources": {
+      "name": "Resource Points",
+      "current": 0
+    },
+    "spell_slots": [
+      4,
+      3,
+      3,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "max_spell_slots": {
+      "1": 4,
+      "2": 3,
+      "3": 3,
+      "4": 0,
+      "5": 0
+    },
+    "conditions": [],
+    "death_saves": {
+      "successes": 0,
+      "failures": 0
+    },
+    "inventory": [],
+    "classes": [
+      {
+        "class": "Cleric",
+        "level": 6
+      }
+    ],
+    "proficiency_bonus": 3,
+    "ability_scores_calculated": {
+      "str": 12,
+      "dex": 10,
+      "con": 14,
+      "int": 10,
+      "wis": 18,
+      "cha": 12
+    },
+    "ability_modifiers": {
+      "str": 1,
+      "dex": 0,
+      "con": 2,
+      "int": 0,
+      "wis": 4,
+      "cha": 1
+    },
+    "initiative_bonus": 5,
+    "spell_save_dc": 16,
+    "spell_attack_bonus": 8,
+    "spell_slots_current": [
+      2,
+      2,
+      3,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "exhaustion": 0,
+    "concentration_spell": "",
+    "theme": "crimson",
+    "wishlist": [
+      "Testing Arrric whispers"
+    ]
+  },
+  {
+    "name": "Test",
+    "race": "Elf",
+    "class": "Fighter",
+    "subclass": "Champion",
+    "level": 1,
+    "hp": 10,
+    "ac": 16,
+    "art": "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=400",
+    "stats": {
+      "str": 10,
+      "dex": 10,
+      "con": 10,
+      "int": 10,
+      "wis": 10,
+      "cha": 10
+    },
+    "passives": {
+      "perception": 10,
+      "insight": 10,
+      "investigation": 10
+    },
+    "magic_items": [],
+    "secrets": "",
+    "class_features_srd": [
+      {
+        "name": "Fighting Style",
+        "desc": "You adopt a particular style of fighting as your specialty. Choose one of the following options. You can't take the same Fighting Style option more than once, even if you get to choose again.\n{\"type\":\"options\",\"entries\":[{\"type\":\"entries\",\"name\":\"Archery\",\"entries\":[\"You gain a +2 bonus to attack rolls you make with ranged weapons.\"]},{\"type\":\"entries\",\"name\":\"Close Quarters Shooter\",\"entries\":[\"When making a ranged attack while you are within 5 feet of a hostile creature, you do not have disadvantage on the attack roll. Your ranged attacks ignore half cover and three-quarters cover against targets within 30 feet of you. You have a +1 bonus to attack rolls on ranged attacks.\"],\"source\":\"UALightDarkUnderdark\"},{\"type\":\"entries\",\"name\":\"Defense\",\"entries\":[\"While you are wearing armor, you gain a +1 bonus to AC.\"]},{\"type\":\"entries\",\"name\":\"Dueling\",\"entries\":[\"When you are wielding a melee weapon in one hand and no other weapons, you gain a +2 bonus to damage rolls with that weapon.\"]},{\"type\":\"entries\",\"name\":\"Great Weapon Fighting\",\"entries\":[\"When you roll a 1 or 2 on a damage die for an attack you make with a melee weapon that you are wielding with two hands, you can reroll the die and must use the new roll, even if the new roll is a 1 or a 2. The weapon must have the two-handed or versatile property for you to gain this benefit.\"]},{\"type\":\"entries\",\"name\":\"Mariner\",\"entries\":[\"As long as you are not wearing heavy armor or using a shield, you have a swimming speed and a climbing speed equal to your normal speed, and you gain a +1 bonus to AC.\"],\"source\":\"UAWaterborneAdventures\"},{\"type\":\"entries\",\"name\":\"Protection\",\"entries\":[\"When a creature you can see attacks a target other than you that is within 5 feet of you, you can use your reaction to impose disadvantage on the attack roll. You must be wielding a shield.\"]},{\"type\":\"entries\",\"name\":\"Tunnel Fighter\",\"entries\":[\"As a bonus action, you can enter a defensive stance that lasts until the start of your next turn. While in your defensive stance, you can make opportunity attacks without using your reaction, and you can use your reaction to make a melee attack against a creature that moves more than 5 feet while within your reach.\"],\"source\":\"UALightDarkUnderdark\"},{\"type\":\"entries\",\"name\":\"Two-Weapon Fighting\",\"entries\":[\"When you engage in two-weapon fighting, you can add your ability modifier to the damage of the second attack.\"]},{\"type\":\"entries\",\"name\":\"Superior Technique\",\"entries\":[\"You learn one {@filter maneuver|optionalfeatures|feature type=MV;MV:B} of your choice from among those available to the Battle Master archetype. If a maneuver you use requires your target to make a saving throw to resist the maneuver's effects, the saving throw DC equals 8 + your proficiency bonus + your Strength or Dexterity modifier (your choice).\",\"You gain one superiority die, which is a {@dice d6} (this die is added to any superiority dice you have from another source). This die is used to fuel your maneuvers. A superiority die is expended when you use it. You regain your expended superiority dice when you finish a short or long rest.\"],\"source\":\"UAClassFeatureVariants\",\"page\":5},{\"type\":\"entries\",\"name\":\"Blind Fighting\",\"entries\":[\"Being unable to see a creature doesn't impose disadvantage on your attack rolls against it, provided the creature isn't hidden from you.\"],\"source\":\"UAClassFeatureVariants\",\"page\":12},{\"type\":\"entries\",\"name\":\"Interception\",\"entries\":[\"When a creature you can see hits a target that is within 5 feet of you with an attack, you can use your reaction to reduce the damage the target takes by {@dice 1d10} + your proficiency bonus (to a minimum of 0 damage). You must be wielding a shield or a simple or martial weapon to use this reaction.\"],\"source\":\"UAClassFeatureVariants\",\"page\":12},{\"type\":\"entries\",\"name\":\"Thrown Weapon Fighting\",\"entries\":[\"You can draw a weapon that has the thrown property as part of the attack you make with the weapon.\",\"In addition, when you hit with a ranged attack using a thrown weapon, you gain a +1 bonus to the damage roll.\"],\"source\":\"UAClassFeatureVariants\",\"page\":12},{\"type\":\"entries\",\"name\":\"Unarmed Fighting\",\"entries\":[\"Your unarmed strikes can deal bludgeoning damage equal to {@dice 1d6} + your Strength modifier. If you strike with two free hands, the {@dice d6} becomes a {@dice d8}.\",\"When you successfully start a grapple, you can deal {@dice 1d4} bludgeoning damage to the grappled creature. Until the grapple ends, you can also deal this damage to the creature whenever you hit it with a melee attack.\"],\"source\":\"UAClassFeatureVariants\",\"page\":12}]}"
+      },
+      {
+        "name": "Martial Versatility",
+        "desc": "{@i 1st-level feature (enhances Fighting Style)}\nWhenever you gain a level in this class, you can replace a fighting style you know with another style available to your class. This change represents a shift of focus in your martial training and practice, causing you to lose the benefits of one style and gain the benefits of another style."
+      },
+      {
+        "name": "Second Wind",
+        "desc": "You have a limited well of stamina that you can draw on to protect yourself from harm. On your turn, you can use a bonus action to regain hit points equal to {@dice 1d10} + your fighter level.\nOnce you use this feature, you must finish a short or long rest before you can use it again."
+      },
+      {
+        "name": "Maneuver Versatility",
+        "desc": "{@i 1st-level feature (enhances Maneuvers)}\nIf you know any maneuvers from the fighter's Battle Master archetype, you can replace one maneuver you know with a different maneuver whenever you finish a long rest. This change reflects your physical and mental preparation for the day ahead."
+      }
+    ],
+    "proficiencies": {
+      "skills": [],
+      "saving_throws": [
+        "Strength",
+        "Constitution"
+      ],
+      "armor": [
+        "light",
+        "medium",
+        "heavy",
+        "shields"
+      ],
+      "weapons": [
+        "simple",
+        "martial"
+      ]
+    },
+    "spell_slots": [
+      0,
+      2,
+      0,
+      0,
+      0,
+      0
+    ],
+    "current_slots": [
+      0,
+      2,
+      0,
+      0,
+      0,
+      0
+    ],
+    "resources": [],
+    "hp_current": 2,
+    "hp_max": 10,
+    "hp_temp": 0,
+    "conditions": [],
+    "id": "char_1784401791183",
+    "theme": "crimson",
+    "wishlist": [
+      "Testing Arrric whispers"
+    ],
+    "spell_slots_current": [
+      2,
+      2,
+      3,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "exhaustion": 0
+  }
+]

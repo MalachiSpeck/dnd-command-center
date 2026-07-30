@@ -1,0 +1,22 @@
+{
+  "short_name": "My Sheet",
+  "name": "DM Command Center — Player Sheet",
+  "description": "Your D&D 5e character sheet",
+  "icons": [
+    {
+      "src": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=192&h=192&fit=crop",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=512&h=512&fit=crop",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/join",
+  "background_color": "#0a0a0c",
+  "theme_color": "#8b5cf6",
+  "display": "standalone",
+  "orientation": "portrait"
+}

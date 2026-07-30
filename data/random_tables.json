@@ -1,0 +1,9 @@
+[
+  {
+    "region": "Calimshan Desert",
+    "entries": [
+      { "weight": 3, "result": "Bandit" },
+      { "weight": 1, "result": "Adult Blue Dragon" }
+    ]
+  }
+]

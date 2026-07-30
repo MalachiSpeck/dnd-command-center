@@ -1,0 +1,3760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Character Sheet - D&D Command Center</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#8b5cf6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/offline-store.js"></script>
+    <script src="/js/character-engine.js"></script>
+    <script src="/js/sync-engine.js"></script>
+    <script src="/js/envelope-receiver.js"></script>
+    <script src="/js/envelope-presenters.js"></script>
+    <script src="/js/gdrive-client.js"></script>
+    <script src="/js/between-session-sync.js"></script>
+    <script src="/js/gdrive-auth-ui.js"></script>
+    <script src="/js/tavern-board.js"></script>
+    <script src="/js/journal.js"></script>
+    <script src="/js/session-reconnect.js"></script>
+    <script src="/js/conflict-resolver.js"></script>
+    <link rel="stylesheet" href="/css/envelopes.css">
+    <link rel="stylesheet" href="/css/tavern-board.css">
+    <link rel="stylesheet" href="/css/journal.css">
+    <script src="https://apis.google.com/js/api.js" async defer></script>
+    <script src="/app_wave3.js"></script>
+    <script src="/app_wave4.js"></script>
+    <style>
+        :root {
+            --bg-abyss: #0a0a0c;
+            --shadow-card: #141419;
+            --border-iron: #2a2438;
+            --arcane-violet: #8b5cf6;
+            --crimson-rage: #ef4444;
+            --gold-amber: #fbbf24;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --success-green: #22c55e;
+            --glow-color: rgba(139, 92, 246, 0.4);
+        }
+
+        /* Predefined themed style sets */
+        body.theme-violet {
+            --arcane-violet: #8b5cf6;
+            --border-iron: #2a2438;
+            --glow-color: rgba(139, 92, 246, 0.4);
+        }
+        body.theme-crimson {
+            --arcane-violet: #ef4444;
+            --border-iron: #451a1a;
+            --glow-color: rgba(239, 68, 68, 0.4);
+        }
+        body.theme-amber {
+            --arcane-violet: #fbbf24;
+            --border-iron: #453b1a;
+            --glow-color: rgba(251, 191, 36, 0.4);
+        }
+        body.theme-emerald {
+            --arcane-violet: #10b981;
+            --border-iron: #1a452a;
+            --glow-color: rgba(16, 185, 129, 0.4);
+        }
+        body.theme-sapphire {
+            --arcane-violet: #3b82f6;
+            --border-iron: #1a2a45;
+            --glow-color: rgba(59, 130, 246, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-abyss);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 70px; /* Space for bottom nav */
+            overflow-x: hidden;
+        }
+
+        header {
+            background-color: var(--shadow-card);
+            border-bottom: 1px solid var(--border-iron);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .char-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            border: 2px solid var(--arcane-violet);
+            box-shadow: 0 0 10px var(--glow-color);
+        }
+
+        .char-header-info {
+            flex-grow: 1;
+        }
+
+        .char-header-info h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.15rem;
+            color: var(--arcane-violet);
+            text-shadow: 0 0 5px var(--glow-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+        }
+
+        .char-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+
+        /* Banner for whose turn it is */
+        .turn-banner {
+            background: rgba(139, 92, 246, 0.1);
+            border-bottom: 1px solid var(--arcane-violet);
+            color: white;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+            box-shadow: inset 0 0 10px rgba(139, 92, 246, 0.1);
+        }
+
+        .turn-banner.active-turn {
+            background: rgba(251, 191, 36, 0.15);
+            border-color: var(--gold-amber);
+            color: var(--gold-amber);
+            animation: pulse-glow 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: inset 0 0 5px rgba(251, 191, 36, 0.2); }
+            50% { box-shadow: inset 0 0 15px rgba(251, 191, 36, 0.4); }
+        }
+
+        /* Walter Kammerer Tabbed Navigation Layout */
+        .tab-content {
+            display: none;
+            padding: 12px;
+            flex-grow: 1;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bottom-tabs {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background-color: var(--shadow-card);
+            border-top: 1px solid var(--border-iron);
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            z-index: 1000;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
+        }
+
+        .tab-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            border-radius: 0;
+            padding: 4px;
+            font-size: 0.65rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn i {
+            font-size: 1.1rem;
+            margin-bottom: 3px;
+        }
+
+        .tab-btn.active {
+            color: var(--arcane-violet);
+            background-color: rgba(139, 92, 246, 0.05);
+            font-weight: 700;
+            box-shadow: inset 0 3px 0 var(--arcane-violet);
+        }
+
+        /* Section Cards */
+        .section-card {
+            background-color: var(--shadow-card);
+            border: 1px solid var(--border-iron);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        .section-title {
+            font-family: 'Cinzel', serif;
+            font-size: 0.95rem;
+            color: var(--arcane-violet);
+            border-bottom: 1px solid var(--border-iron);
+            padding-bottom: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Vitals layout */
+        .vitals-summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .vital-box {
+            background: #0d0d12;
+            border: 1px solid var(--border-iron);
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+            position: relative;
+        }
+
+        .vital-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .vital-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: white;
+            margin: 4px 0;
+        }
+
+        .hp-adjust-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 6px;
+        }
+
+        .hp-adjust-btn {
+            background-color: #1a1a24;
+            color: var(--text-main);
+            border: 1px solid var(--border-iron);
+            border-radius: 4px;
+            width: 32px;
+            height: 28px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+
+        .hp-adjust-btn:active {
+            background-color: var(--arcane-violet);
+            color: white;
+        }
+
+        /* Abilities View */
+        .ability-row-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0d0d12;
+            border: 1px solid var(--border-iron);
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+        }
+
+        .ability-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ability-badge-circle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background-color: var(--shadow-card);
+            border: 2px solid var(--arcane-violet);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            box-shadow: 0 0 5px var(--glow-color);
+        }
+
+        .ability-names {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ability-full-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .ability-short-name {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .ability-edit-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ability-score-display {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: white;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .btn-edit-score {
+            width: 24px;
+            height: 24px;
+            background: #1a1a24;
+            border: 1px solid var(--border-iron);
+            color: white;
+            font-weight: bold;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-edit-score:active {
+            background-color: var(--arcane-violet);
+        }
+
+        /* Skills and Saves lists */
+        .skills-grid-compact {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .skill-compact-row {
+            background: #0d0d12;
+            border: 1px solid var(--border-iron);
+            border-radius: 4px;
+            padding: 6px 8px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+        }
+
+        /* Spellbook styling */
+        .spellbook-filters {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 10px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .filter-btn {
+            background: #15151b;
+            border: 1px solid var(--border-iron);
+            color: var(--text-muted);
+            padding: 6px 12px;
+            font-size: 0.7rem;
+            border-radius: 15px;
+            white-space: nowrap;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .filter-btn.active {
+            background: var(--arcane-violet);
+            color: white;
+            border-color: var(--arcane-violet);
+            box-shadow: 0 0 8px var(--glow-color);
+        }
+
+        .spell-search-box {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .spell-search-input {
+            width: 100%;
+            background: #0d0d12;
+            border: 1px solid var(--border-iron);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .spell-search-input:focus {
+            border-color: var(--arcane-violet);
+            box-shadow: 0 0 8px var(--glow-color);
+        }
+
+        .spell-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .spell-row-item {
+            background: #0d0d12;
+            border: 1px solid var(--border-iron);
+            border-radius: 6px;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .spell-row-item:hover {
+            border-color: var(--arcane-violet);
+        }
+
+        .spell-item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .spell-name-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .spell-meta-desc {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        .spell-item-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .badge-prep {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            border: 1.5px solid var(--border-iron);
+            background: #1a1a24;
+            color: var(--text-muted);
+        }
+
+        .badge-prep.prepared {
+            background-color: rgba(34, 197, 94, 0.15);
+            border-color: var(--success-green);
+            color: var(--success-green);
+        }
+
+        .btn-learn {
+            background: var(--arcane-violet);
+            color: white;
+            font-size: 0.65rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        /* Equipment / Armor and shields selection */
+        .equip-select-group {
+            margin-bottom: 12px;
+        }
+
+        .equip-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            display: block;
+            text-transform: uppercase;
+        }
+
+        .equip-dropdown {
+            width: 100%;
+            background: #0d0d12;
+            border: 1px solid var(--border-iron);
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .equip-dropdown:focus {
+            border-color: var(--arcane-violet);
+        }
+
+        .shield-toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #0d0d12;
+            border: 1px solid var(--border-iron);
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 15px;
+        }
+
+        /* Details list items */
+        .detail-item-card {
+            background: #0d0d12;
+            border: 1px solid var(--border-iron);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* Modals and Popups */
+        .overlay-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-body-container {
+            background: var(--shadow-card);
+            border: 1.5px solid var(--border-iron);
+            border-radius: 10px;
+            width: 100%;
+            max-width: 450px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 18px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        .modal-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-iron);
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+
+        .modal-title-header {
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+            color: var(--arcane-violet);
+        }
+
+        .btn-close-modal {
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* PWA Install Promo */
+        .pwa-shortcut-card {
+            background: linear-gradient(135deg, #1e1b4b, #111029);
+            border: 1.5px dashed var(--arcane-violet);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        /* Form Controls */
+        .toggle-switch-input {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+        }
+
+        .toggle-switch-input input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider-round-btn {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #27273a;
+            transition: .3s;
+            border-radius: 22px;
+        }
+
+        .slider-round-btn:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider-round-btn {
+            background-color: var(--arcane-violet);
+        }
+
+        input:checked + .slider-round-btn:before {
+            transform: translateX(22px);
+        }
+
+        /* Custom style presets box */
+        .theme-selector-flex {
+            display: flex;
+            gap: 8px;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+
+        .theme-preset-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.15s ease;
+        }
+
+        .theme-preset-circle:hover {
+            transform: scale(1.15);
+        }
+
+        .theme-preset-circle.active {
+            border-color: white;
+            box-shadow: 0 0 10px white;
+        }
+
+        /* Utility indicators */
+        .badge-exhaustion {
+            font-size: 0.65rem;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+            background-color: #3b0712;
+            color: #f87171;
+            border: 1px solid #7f1d1d;
+        }
+
+        /* Death Saves panel classes */
+        .ds-row-mini {
+            display: flex;
+            justify-content: space-around;
+            background: #0d0d12;
+            border: 1px solid var(--border-iron);
+            border-radius: 6px;
+            padding: 6px;
+            margin-top: 8px;
+        }
+
+        .ds-cell {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .ds-pips-mini {
+            display: flex;
+            gap: 4px;
+        }
+
+        .ds-pip-mini {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1.2px solid var(--text-muted);
+            cursor: pointer;
+        }
+
+        .ds-pip-mini.success-filled {
+            background-color: var(--success-green);
+            border-color: var(--success-green);
+        }
+
+        .ds-pip-mini.failure-filled {
+            background-color: var(--crimson-rage);
+            border-color: var(--crimson-rage);
+        }
+    </style>
+</head>
+<body class="theme-violet">
+
+    <!-- Concentration check warning popup -->
+    <div id="con-warning-popup" class="con-warning" style="position: fixed; top: 12px; left: 12px; right: 12px; background-color: var(--crimson-rage); color: white; border-radius: 6px; padding: 12px; z-index: 2500; display: none; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.8);">
+        <h3 style="font-family:'Cinzel', serif; font-size: 0.95rem; color: white; margin-bottom: 4px;">Concentration Check Needed</h3>
+        <p id="con-warning-desc" style="font-size: 0.75rem;">You took damage. Make a DC 10 Constitution Save to maintain your spell.</p>
+        <button onclick="dismissConWarning()" style="background: white; color: black; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; margin-top: 8px; border: none; cursor: pointer;">Dismiss</button>
+    </div>
+
+    <!-- Active turn notification -->
+    <div id="combat-turn-banner" class="turn-banner">
+        Its your turn in combat.
+    </div>
+
+    <!-- Sticky Main Header -->
+    <header>
+        <div id="char-avatar" class="char-avatar" style="background-image: url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400')"></div>
+        <div class="char-header-info">
+            <h1 id="char-name">Character Name</h1>
+            <div id="char-meta" class="char-meta">Level 7 Tiefling Bard</div>
+        </div>
+        <div style="display: flex; gap: 6px;">
+            <button onclick="openImportModal()" style="background: #2a6f97; color: white; padding: 5px 8px; font-size: 0.65rem; border-radius: 4px; text-transform: uppercase; font-family:'Cinzel', serif; letter-spacing: 0.5px;">Import 5e</button>
+            <button onclick="performLevelUp()" style="background: var(--success-green); color: white; padding: 5px 8px; font-size: 0.65rem; border-radius: 4px; text-transform: uppercase; font-family:'Cinzel', serif; letter-spacing: 0.5px;">Level Up</button>
+            <button onclick="openShortcutModal()" style="background: var(--arcane-violet); color: white; padding: 5px 8px; font-size: 0.65rem; border-radius: 4px; text-transform: uppercase; font-family:'Cinzel', serif; letter-spacing: 0.5px;">PWA Link</button>
+        </div>
+    </header>
+
+    <!-- Level-Up Preview Pending Gold Banner (Flashes when close to level up) -->
+    <div id="levelup-preview-banner" class="pwa-shortcut-card" style="padding: 12px; margin: 0 12px 10px 12px; font-size: 0.8rem; border-color: var(--gold-amber); border-style: solid; display: none; background: rgba(245, 158, 11, 0.08); box-shadow: 0 0 10px rgba(245, 158, 11, 0.15); border-radius: 6px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: bold; color: var(--gold-amber);">⭐ Level-Up Preview Available!</span>
+            <button onclick="openSandboxLevelUpPreview()" style="background: var(--gold-amber); color: black; border: none; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; cursor: pointer;">Plan Upgrade</button>
+        </div>
+    </div>
+
+    <!-- TAB 1: VITALS -->
+    <div id="tab-vitals" class="tab-content active">
+        <!-- Live Sync Status Notification Banner -->
+        <div class="pwa-shortcut-card" style="padding: 10px; margin-bottom: 10px; font-size: 0.75rem; border-style: solid;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span id="pwa-status-text" style="color: var(--text-main); font-weight: 600;">Status: Connecting to DM...</span>
+                <span id="pwa-mode-badge" style="background-color: var(--arcane-violet); color: white; font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; font-weight: bold;">LIVE MODE</span>
+            </div>
+        </div>
+
+        <!-- Combat Vitals -->
+        <div class="section-card">
+            <div class="section-title">Combat Vitals</div>
+            <div class="vitals-summary-grid">
+                <div class="vital-box">
+                    <div class="vital-label">Current HP</div>
+                    <div class="vital-value" id="hp-current-val">0</div>
+                    <div class="hp-adjust-row">
+                        <button class="hp-adjust-btn" onclick="adjustHPField('hp_current', -1)">-1</button>
+                        <button class="hp-adjust-btn" onclick="adjustHPField('hp_current', 1)">+1</button>
+                    </div>
+                </div>
+                <div class="vital-box">
+                    <div class="vital-label">Temp HP</div>
+                    <div class="vital-value" id="hp-temp-val">0</div>
+                    <div class="hp-adjust-row">
+                        <button class="hp-adjust-btn" onclick="adjustHPField('hp_temp', -1)">-1</button>
+                        <button class="hp-adjust-btn" onclick="adjustHPField('hp_temp', 1)">+1</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AC & Stat Details Block -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; margin-bottom: 12px;">
+                <div class="vital-box" style="padding: 6px;">
+                    <div class="vital-label" style="font-size: 0.65rem;">Armor Class</div>
+                    <div class="vital-value" id="ac-display-val" style="font-size: 1.3rem; margin: 2px 0;">10</div>
+                </div>
+                <div class="vital-box" style="padding: 6px;">
+                    <div class="vital-label" style="font-size: 0.65rem;">Max HP</div>
+                    <div class="vital-value" id="maxhp-display-val" style="font-size: 1.3rem; margin: 2px 0;">30</div>
+                </div>
+                <div class="vital-box" style="padding: 6px;">
+                    <div class="vital-label" style="font-size: 0.65rem;">Prof. Bonus</div>
+                    <div class="vital-value" id="prof-display-val" style="font-size: 1.3rem; margin: 2px 0;">+2</div>
+                </div>
+            </div>
+
+            <!-- Spell Slot Quick Display (Vitals tab helper) -->
+            <div id="spell-slots-compact-row" style="display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--border-iron); padding-top: 10px; margin-top: 10px;">
+                <!-- Dynamically generated list of slot pips -->
+            </div>
+
+            <!-- Mini Death Saves (Visible when down) -->
+            <div id="death-saves-mini-card" style="display: none; border-top: 1px solid var(--border-iron); padding-top: 10px; margin-top: 10px;">
+                <div class="vital-label" style="text-align: center; margin-bottom: 6px; color: var(--crimson-rage);">DOWN! Saving Throws Required</div>
+                <div class="ds-row-mini">
+                    <div class="ds-cell">
+                        <span style="font-size: 0.65rem; font-weight: bold; color: var(--success-green);">SUCC:</span>
+                        <div class="ds-pips-mini">
+                            <div class="ds-pip-mini" id="ds-mini-s-1" onclick="toggleDeathSaveMini('successes', 1)"></div>
+                            <div class="ds-pip-mini" id="ds-mini-s-2" onclick="toggleDeathSaveMini('successes', 2)"></div>
+                            <div class="ds-pip-mini" id="ds-mini-s-3" onclick="toggleDeathSaveMini('successes', 3)"></div>
+                        </div>
+                    </div>
+                    <div class="ds-cell">
+                        <span style="font-size: 0.65rem; font-weight: bold; color: var(--crimson-rage);">FAIL:</span>
+                        <div class="ds-pips-mini">
+                            <div class="ds-pip-mini" id="ds-mini-f-1" onclick="toggleDeathSaveMini('failures', 1)"></div>
+                            <div class="ds-pip-mini" id="ds-mini-f-2" onclick="toggleDeathSaveMini('failures', 2)"></div>
+                            <div class="ds-pip-mini" id="ds-mini-f-3" onclick="toggleDeathSaveMini('failures', 3)"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Sheet Theme Picker -->
+        <div class="section-card">
+            <div class="section-title">Visual Styling</div>
+            <p style="font-size: 0.7rem; color: var(--text-muted);">Choose a customized theme to color-code your character dashboard:</p>
+            <div class="theme-selector-flex">
+                <div class="theme-preset-circle" style="background: #8b5cf6;" id="theme-btn-violet" onclick="selectThemePreset('violet')"></div>
+                <div class="theme-preset-circle" style="background: #ef4444;" id="theme-btn-crimson" onclick="selectThemePreset('crimson')"></div>
+                <div class="theme-preset-circle" style="background: #fbbf24;" id="theme-btn-amber" onclick="selectThemePreset('amber')"></div>
+                <div class="theme-preset-circle" style="background: #10b981;" id="theme-btn-emerald" onclick="selectThemePreset('emerald')"></div>
+                <div class="theme-preset-circle" style="background: #3b82f6;" id="theme-btn-sapphire" onclick="selectThemePreset('sapphire')"></div>
+            </div>
+        </div>
+
+        <!-- Exhaustion Level Tracker -->
+        <div class="section-card">
+            <div class="section-title">Exhaustion Tracker</div>
+            <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">Apply exhaustion levels to track your roll penalties (-1 per level):</p>
+            <div style="display:flex; justify-content:space-around; align-items:center; margin-bottom:10px;">
+                <div onclick="setExhaustionLevelLocalSheet(1)" id="ex-sheet-pip-1" style="width:24px; height:24px; border-radius:50%; border:2px solid var(--border-iron); cursor:pointer; display:flex; justify-content:center; align-items:center; font-size:0.75rem; font-weight:bold; color:var(--text-muted); transition:0.2s;">1</div>
+                <div onclick="setExhaustionLevelLocalSheet(2)" id="ex-sheet-pip-2" style="width:24px; height:24px; border-radius:50%; border:2px solid var(--border-iron); cursor:pointer; display:flex; justify-content:center; align-items:center; font-size:0.75rem; font-weight:bold; color:var(--text-muted); transition:0.2s;">2</div>
+                <div onclick="setExhaustionLevelLocalSheet(3)" id="ex-sheet-pip-3" style="width:24px; height:24px; border-radius:50%; border:2px solid var(--border-iron); cursor:pointer; display:flex; justify-content:center; align-items:center; font-size:0.75rem; font-weight:bold; color:var(--text-muted); transition:0.2s;">3</div>
+                <div onclick="setExhaustionLevelLocalSheet(4)" id="ex-sheet-pip-4" style="width:24px; height:24px; border-radius:50%; border:2px solid var(--border-iron); cursor:pointer; display:flex; justify-content:center; align-items:center; font-size:0.75rem; font-weight:bold; color:var(--text-muted); transition:0.2s;">4</div>
+                <div onclick="setExhaustionLevelLocalSheet(5)" id="ex-sheet-pip-5" style="width:24px; height:24px; border-radius:50%; border:2px solid var(--border-iron); cursor:pointer; display:flex; justify-content:center; align-items:center; font-size:0.75rem; font-weight:bold; color:var(--text-muted); transition:0.2s;">5</div>
+                <div onclick="setExhaustionLevelLocalSheet(6)" id="ex-sheet-pip-6" style="width:24px; height:24px; border-radius:50%; border:2px solid var(--border-iron); cursor:pointer; display:flex; justify-content:center; align-items:center; font-size:0.75rem; font-weight:bold; color:var(--text-muted); transition:0.2s;">6</div>
+            </div>
+            <div id="exhaustion-penalty-text-sheet" style="font-size:0.75rem; color:#ef4444; text-align:center; font-style:italic;">Level 0: No exhaustion. Feeling healthy and strong!</div>
+        </div>
+    </div>
+
+    <!-- TAB 2: ABILITIES -->
+    <div id="tab-abilities" class="tab-content">
+        <!-- Direct Editable Ability Scores -->
+        <div class="section-card">
+            <div class="section-title">Ability Scores</div>
+            <p style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 10px;">Adjust your base ability scores directly below. Calculated values will update instantly:</p>
+            
+            <div id="abilities-list-container">
+                <!-- Dynamically generated list with + / - buttons -->
+            </div>
+        </div>
+
+        <!-- Class & Subclass Features parsed from SRD Classes database -->
+        <div class="section-card" id="class-features-srd-section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="section-title" style="color: var(--gold-amber); font-family: 'Cinzel', serif; margin: 0;">⭐ Class & Subclass Features</div>
+                <button class="filter-btn" style="padding: 2px 8px; font-size: 0.65rem;" onclick="openClassTableModal()">View Class Table</button>
+            </div>
+            <div id="class-features-srd-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                <!-- Populated dynamically with feature cards -->
+            </div>
+        </div>
+
+        <!-- Feats Section -->
+        <div class="section-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div class="section-title" style="color: var(--gold-amber); font-family: 'Cinzel', serif; margin: 0;"> Chosen Feats</div>
+                <button class="btn-primary" style="padding: 4px 10px; font-size: 0.75rem; background: var(--arcane-violet);" onclick="openFeatSelector()">+ Add Feat</button>
+            </div>
+            <div id="feats-list-container" style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 10px;">No feats selected yet.</div>
+            </div>
+        </div>
+
+        <!-- Background Section -->
+        <div class="section-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div class="section-title" style="color: var(--gold-amber); font-family: 'Cinzel', serif; margin: 0;"> Character Background</div>
+                <button id="add-background-btn" class="btn-primary" style="padding: 4px 10px; font-size: 0.75rem; background: var(--arcane-violet);" onclick="openBackgroundSelector()">Select Background</button>
+            </div>
+            <div id="background-details-container" style="font-size: 0.85rem; color: #cbd5e1; display: flex; flex-direction: column; gap: 6px;">
+                <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 10px;">No background selected yet.</div>
+            </div>
+        </div>
+
+        <!-- Languages Section -->
+        <div class="section-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div class="section-title" style="color: var(--gold-amber); font-family: 'Cinzel', serif; margin: 0;"> Languages Known</div>
+                <button class="btn-primary" style="padding: 4px 10px; font-size: 0.75rem; background: var(--arcane-violet);" onclick="openLanguageSelector()">+ Learn Language</button>
+            </div>
+            <div id="languages-list-container" style="display: flex; flex-wrap: wrap; gap: 6px;">
+                <!-- Languages badges -->
+            </div>
+        </div>
+
+        <!-- Passives & Saving Throws -->
+        <div class="section-card">
+            <div class="section-title">Passive Sensory & Saves</div>
+            <div style="display: flex; justify-content: space-around; font-size: 0.8rem; margin-bottom: 12px; border-bottom: 1px solid var(--border-iron); padding-bottom: 8px;">
+                <div>Perception: <strong id="pp-sheet-val" style="color: white;">10</strong></div>
+                <div>Insight: <strong id="pi-sheet-val" style="color: white;">10</strong></div>
+                <div>Investigation: <strong id="piv-sheet-val" style="color: white;">10</strong></div>
+            </div>
+            
+            <!-- Compact skills listing -->
+            <div class="skills-grid-compact" id="saves-skills-compact-grid">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: SPELLBOOK -->
+    <div id="tab-spellbook" class="tab-content">
+        <!-- Spells Panel -->
+        <div class="section-card">
+            <div class="section-title">Spells & Cantrips</div>
+            
+            <!-- Spell List Filters (Walter Kammerer style) -->
+            <div class="spellbook-filters">
+                <button class="filter-btn active" id="spell-filter-all" onclick="filterSpellbook('all')">All Spells</button>
+                <button class="filter-btn" id="spell-filter-known" onclick="filterSpellbook('known')">My Known</button>
+                <button class="filter-btn" id="spell-filter-prep" onclick="filterSpellbook('prep')">Prepared</button>
+            </div>
+
+            <!-- Spell Search -->
+            <div class="spell-search-box">
+                <input type="text" id="spell-search-input" class="spell-search-input" placeholder="Search spells in library..." onkeyup="searchSpellsInList()">
+            </div>
+
+            <!-- Spells Scroll Listing -->
+            <div class="spell-list-container" id="spells-main-list">
+                <div style="text-align:center; font-size:0.8rem; color:var(--text-muted); padding:20px;">Loading campaign spell libraries...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: EQUIPMENT -->
+    <div id="tab-equipment" class="tab-content">
+        <!-- Core Armor Equipment Selection -->
+        <div class="section-card">
+            <div class="section-title">Armor & Shields</div>
+            
+            <!-- Select armor -->
+            <div class="equip-select-group">
+                <label class="equip-label">Armor Equipped</label>
+                <select id="equip-armor-select" class="equip-dropdown" onchange="equipArmorOnSheet()">
+                    <option value="none">No Armor (10 + Dex Mod)</option>
+                    <option value="padded">Padded Armor (Light - 11 + Dex)</option>
+                    <option value="leather">Leather Armor (Light - 11 + Dex)</option>
+                    <option value="studded leather">Studded Leather (Light - 12 + Dex)</option>
+                    <option value="hide">Hide Armor (Medium - 12 + Dex [max 2])</option>
+                    <option value="chain shirt">Chain Shirt (Medium - 13 + Dex [max 2])</option>
+                    <option value="scale mail">Scale Mail (Medium - 14 + Dex [max 2])</option>
+                    <option value="breastplate">Breastplate (Medium - 14 + Dex [max 2])</option>
+                    <option value="half plate">Half Plate (Medium - 15 + Dex [max 2])</option>
+                    <option value="ring mail">Ring Mail (Heavy - 14 AC)</option>
+                    <option value="chain mail">Chain Mail (Heavy - 16 AC)</option>
+                    <option value="splint">Splint Armor (Heavy - 17 AC)</option>
+                    <option value="plate">Plate Armor (Heavy - 18 AC)</option>
+                </select>
+            </div>
+
+            <!-- Shield toggle -->
+            <div class="shield-toggle-row">
+                <span style="font-size: 0.85rem; font-weight: 600; color: white;">Equip Shield (+2 AC)</span>
+                <label class="toggle-switch-input">
+                    <input type="checkbox" id="equip-shield-checkbox" onchange="toggleShieldOnSheet()">
+                    <span class="slider-round-btn"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Attuned Magic Items Selection list -->
+        <div class="section-card">
+            <div class="section-title">Attuned Magic Items</div>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">Equip/Attune to items from the Campaign Bazaar database to apply automatic stat modifications:</p>
+            
+            <!-- Dropdown to select magic item from Bazaar -->
+            <div class="equip-select-group" style="display: flex; gap: 6px;">
+                <select id="bazaar-magic-item-dropdown" class="equip-dropdown" style="flex-grow: 1;">
+                    <option value="">-- Choose Item from Bazaar --</option>
+                </select>
+                <button onclick="attuneItemFromBazaar()" style="background: var(--arcane-violet); color: white; padding: 8px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: bold; cursor: pointer;">Attune</button>
+            </div>
+
+            <!-- Attuned list -->
+            <div id="attuned-items-container" style="display: flex; flex-direction: column; gap: 6px;">
+                <!-- Dynamically populated list -->
+            </div>
+
+            <!-- Bazaar Trends List (Sparklines) -->
+            <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px; margin-top: 12px;">
+                <div style="font-size: 0.75rem; font-weight: bold; color: var(--gold-amber); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>Active Grand Bazaar Trends</span>
+                    <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: normal;">Fluctuates live!</span>
+                </div>
+                <div id="bazaar-trends-list-container" style="display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto; padding-right: 4px;">
+                    <!-- Populated dynamically with item sparklines! -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Inventory Items -->
+        <div class="section-card">
+            <div class="section-title">Packs & General Gear</div>
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <input type="text" id="custom-inv-input" placeholder="Add rope, ration, weapon..." style="flex-grow:1; background:#0d0d12; border:1px solid var(--border-iron); color:white; border-radius:4px; padding:6px; font-size:0.85rem; outline:none;">
+                <button onclick="addCustomInventoryItemOnSheet()" style="background: var(--arcane-violet); color:white; border-radius:4px; font-weight:bold; font-size:0.8rem; padding:6px 12px;">Add</button>
+            </div>
+            <div id="custom-inventory-list" style="display:flex; flex-direction:column; gap:6px;">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 6: SANDBOX -->
+    <div id="tab-sandbox" class="tab-content">
+        <!-- Guided Level-Up Sandbox Workshop -->
+        <div id="levelup-guided-card" class="section-card" style="border-color: var(--gold-amber); display: none; background: rgba(245, 158, 11, 0.03); margin-bottom: 12px;">
+            <div class="section-title" style="color: var(--gold-amber); font-family: 'Cinzel', serif;">⭐ Level-Up Preview Workshop</div>
+            <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px;">
+                You are approaching a level milestone! Use this guided workspace to select your choices and submit them for the DM's review and final approval.
+            </p>
+            
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <div>
+                    <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:4px;">HP Increase for Next Level:</label>
+                    <div style="display:flex; gap:6px;">
+                        <input type="number" id="levelup-hp-input" placeholder="e.g. 6" class="equip-dropdown" style="flex:1; height:34px; box-sizing:border-box; background:#0d0d12; color:white;">
+                        <button class="filter-btn" style="padding:4px 8px; font-size:0.7rem;" onclick="suggestAverageHP()">Take Average</button>
+                    </div>
+                </div>
+
+                <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:8px;">
+                    <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:4px;">Core Stat Increase (ASI):</label>
+                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:6px;" id="levelup-asi-grid">
+                        <!-- Stat selectors populated dynamically -->
+                    </div>
+                    <span style="font-size:0.65rem; color:var(--text-muted); display:block; margin-top:2px;">ASI caps at +2 to one stat or +1 to two stats.</span>
+                </div>
+
+                <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:8px;">
+                    <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:4px;">Select a Feat Option (Instead of ASI):</label>
+                    <select id="levelup-feat-select" class="equip-dropdown" style="background:#0d0d12; color:white;">
+                        <option value="">-- No Feat Selected --</option>
+                        <option value="Alert">Alert (+5 Initiative, can't be surprised)</option>
+                        <option value="Tough">Tough (+2 HP per level)</option>
+                        <option value="Observant">Observant (+5 Passive Perception/Insight)</option>
+                        <option value="War Caster">War Caster (Advantage on Concentration, cast spells with shield/weapons)</option>
+                    </select>
+                </div>
+
+                <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:8px;">
+                    <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:4px;">Proposed Spell Preparations/Additions:</label>
+                    <div id="levelup-spells-container" style="max-height:120px; overflow-y:auto; background:#0d0d12; border:1px solid var(--border-iron); border-radius:4px; padding:6px; display:flex; flex-direction:column; gap:4px;">
+                        <!-- Checkboxes of spells populated dynamically -->
+                    </div>
+                </div>
+
+                <button onclick="submitLevelUpProposal()" style="background:var(--success-green); color:white; border:none; padding:10px; border-radius:6px; font-weight:bold; font-size:0.85rem; cursor:pointer; width:100%; margin-top:10px;">Submit Upgrades to DM</button>
+            </div>
+        </div>
+
+        <div class="section-card" style="border-color: var(--gold-amber);">
+            <div class="section-title" style="color: var(--gold-amber);">Theorycraft Sandbox Simulator</div>
+            <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px;">
+                Simulate temporary modifications (adding levels, items, feats, or stats) in real-time. Use the comparative view below to inspect exactly what changes would occur to your character!
+            </p>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom: 12px;">
+                <div>
+                    <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:2px;">Simulate Level Upgrade:</label>
+                    <select id="sandbox-level-select" class="equip-dropdown" onchange="calculateSandboxDetails()">
+                        <!-- Options 1 to 20 populated dynamically -->
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:2px;">Simulate Feat Addon:</label>
+                    <select id="sandbox-feat-select" class="equip-dropdown" onchange="calculateSandboxDetails()">
+                        <option value="">-- None --</option>
+                        <option value="Tough">Tough (+2 HP/level)</option>
+                        <option value="Alert">Alert (+5 Init)</option>
+                        <option value="Observant">Observant (+5 Perception)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Dynamic SRD Class / Subclass selector in Sandbox -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom: 12px; background: rgba(139, 92, 246, 0.05); padding: 8px; border-radius: 6px; border: 1px dashed var(--border-iron);">
+                <div>
+                    <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:2px;">Simulate SRD Class:</label>
+                    <select id="sandbox-class-select" class="equip-dropdown" onchange="onSandboxClassChange()">
+                        <!-- Filled dynamically -->
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:2px;">Simulate SRD Subclass:</label>
+                    <select id="sandbox-subclass-select" class="equip-dropdown" onchange="calculateSandboxDetails()">
+                        <!-- Filled dynamically -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- Simulated Custom Magic Items / Stat Modifiers -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom: 15px;">
+                <div>
+                    <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:2px;">Simulated Magic Item:</label>
+                    <select id="sandbox-item-select" class="equip-dropdown" onchange="calculateSandboxDetails()">
+                        <option value="">-- None --</option>
+                        <option value="Amulet of Health">Amulet of Health (Con = 19)</option>
+                        <option value="Belt of Hill Giant Strength">Belt of Hill Giant Strength (Str = 21)</option>
+                        <option value="Cloak of Protection">Cloak of Protection (+1 AC & Saves)</option>
+                        <option value="Ring of Protection">Ring of Protection (+1 AC & Saves)</option>
+                        <option value="Gauntlets of Ogre Power">Gauntlets of Ogre Power (Str = 19)</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:2px;">Simulate Custom Base AC:</label>
+                    <input type="number" id="sandbox-custom-ac-input" placeholder="e.g. 15" class="equip-dropdown" style="height:35px; box-sizing:border-box;" oninput="calculateSandboxDetails()">
+                </div>
+            </div>
+
+            <!-- COMPARATIVE BEFORE & AFTER MULTI-VIEW PANEL -->
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="font-family:'Cinzel', serif; color:var(--gold-amber); border-bottom:1px solid var(--border-iron); padding-bottom:4px; font-weight:bold; font-size:0.85rem; display:flex; justify-content:space-between;">
+                    <span>Metric Comparison</span>
+                    <span style="font-size:0.7rem; color:var(--text-muted);">Current → Simulated</span>
+                </div>
+                
+                <!-- AC Comparative Block -->
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#0d0d12; border:1px solid var(--border-iron); border-radius:6px; padding:8px 12px;">
+                    <div>
+                        <strong style="font-size:0.85rem; color:white;">Armor Class (AC)</strong>
+                        <div style="font-size:0.65rem; color:var(--text-muted);">Derived from armor, shield, & specs</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span id="sb-ac-current" style="font-weight:600; font-size:0.9rem; color:var(--text-muted); text-decoration:line-through;">10</span>
+                        <span style="color:var(--gold-amber); font-weight:bold;"></span>
+                        <span id="sb-ac-val" style="font-weight:bold; font-size:1.1rem; color:var(--success-green);">10</span>
+                    </div>
+                </div>
+
+                <!-- Max HP Comparative Block -->
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#0d0d12; border:1px solid var(--border-iron); border-radius:6px; padding:8px 12px;">
+                    <div>
+                        <strong style="font-size:0.85rem; color:white;">Max Hit Points (HP)</strong>
+                        <div style="font-size:0.65rem; color:var(--text-muted);">Calculated per class level + Constitution</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span id="sb-maxhp-current" style="font-weight:600; font-size:0.9rem; color:var(--text-muted); text-decoration:line-through;">30</span>
+                        <span style="color:var(--gold-amber); font-weight:bold;"></span>
+                        <span id="sb-maxhp-val" style="font-weight:bold; font-size:1.1rem; color:var(--success-green);">-</span>
+                    </div>
+                </div>
+
+                <!-- Initiative Comparative Block -->
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#0d0d12; border:1px solid var(--border-iron); border-radius:6px; padding:8px 12px;">
+                    <div>
+                        <strong style="font-size:0.85rem; color:white;">Initiative Bonus</strong>
+                        <div style="font-size:0.65rem; color:var(--text-muted);">Dexterity-based reaction bonus</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span id="sb-init-current" style="font-weight:600; font-size:0.9rem; color:var(--text-muted); text-decoration:line-through;">+0</span>
+                        <span style="color:var(--gold-amber); font-weight:bold;"></span>
+                        <span id="sb-init-val" style="font-weight:bold; font-size:1.1rem; color:var(--success-green);">-</span>
+                    </div>
+                </div>
+
+                <!-- Spell Save DC Comparative Block -->
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#0d0d12; border:1px solid var(--border-iron); border-radius:6px; padding:8px 12px;">
+                    <div>
+                        <strong style="font-size:0.85rem; color:white;">Spell Save DC</strong>
+                        <div style="font-size:0.65rem; color:var(--text-muted);">Arcane evasion difficulty threshold</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span id="sb-dc-current" style="font-weight:600; font-size:0.9rem; color:var(--text-muted); text-decoration:line-through;">10</span>
+                        <span style="color:var(--gold-amber); font-weight:bold;"></span>
+                        <span id="sb-dc-val" style="font-weight:bold; font-size:1.1rem; color:var(--success-green);">-</span>
+                    </div>
+                </div>
+
+                <!-- Ability Score Simulator Header -->
+                <div style="font-family:'Cinzel', serif; color:var(--gold-amber); border-bottom:1px solid var(--border-iron); padding-top:10px; padding-bottom:4px; font-weight:bold; font-size:0.85rem; margin-top:5px;">
+                    Simulate Custom Core Ability Scores
+                </div>
+                <p style="font-size:0.7rem; color:var(--text-muted); margin-bottom:2px;">
+                    Simulate raising or lowering base ability scores to test modifier shifts:
+                </p>
+
+                <!-- Dynamic Sandbox Ability Scores Grid -->
+                <div id="sandbox-abilities-scores-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                    <!-- Dynamically populated via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- TAB 7: CAMPFIRE HUB (Unified Between-Session Suite) -->
+    <div id="tab-campfire" class="tab-content">
+        <!-- Google Drive Integration & Auth Panel -->
+        <div class="section-card">
+            <div class="section-title">Campfire Hub Setup</div>
+            <div id="gdrive-settings-panel">
+                <!-- Populated dynamically by GDrive Auth UI script -->
+            </div>
+        </div>
+
+        <!-- Inner Segmented Tabs for Between-Session Subcategories -->
+        <div style="display: flex; background: #07070a; border: 1px solid var(--border-iron); border-radius: 6px; padding: 4px; gap: 4px; margin-bottom: 12px;">
+            <button class="filter-btn active" id="campfire-btn-sub-board" style="flex: 1; text-align: center; font-size: 0.65rem;" onclick="switchCampfireSubTab('board')">Tavern Board</button>
+            <button class="filter-btn" id="campfire-btn-sub-journal" style="flex: 1; text-align: center; font-size: 0.65rem;" onclick="switchCampfireSubTab('journal')">My Journal</button>
+            <button class="filter-btn" id="campfire-btn-sub-mail" style="flex: 1; text-align: center; font-size: 0.65rem;" onclick="switchCampfireSubTab('mail')">Parcel Mail</button>
+        </div>
+
+        <!-- SUBCATEGORY 1: TAVERN BOARD -->
+        <div id="campfire-sub-board" class="campfire-sub-content">
+            <div class="section-card">
+                <div class="section-title">Post Tavern Notice</div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <textarea id="campfire-tavern-new-post-input" placeholder="Draft a message for the Tavern Notice board..." style="width:100%; height:60px; background:#0d0d12; border:1px solid var(--border-iron); color:white; padding:8px; border-radius:4px; font-size:0.8rem; resize:none; outline:none; box-sizing:border-box;"></textarea>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <select id="campfire-tavern-style-select" class="equip-dropdown" style="width:140px; padding:4px;">
+                            <option value="handwritten">Handwritten Scroll</option>
+                            <option value="official_decree">Official Decree</option>
+                        </select>
+                        <button onclick="postNewTavernMessage()" style="background:var(--arcane-violet); color:white; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; font-size:0.75rem; cursor:pointer;">Post Notice</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="campfire-tavern-board-root">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+
+        <!-- SUBCATEGORY 2: CHARACTER JOURNAL -->
+        <div id="campfire-sub-journal" class="campfire-sub-content" style="display:none;">
+            <div id="campfire-journal-prompt-root">
+                <!-- Dynamic active Weekly Prompt Spotlight goes here -->
+            </div>
+            
+            <div class="journal-past-entries-header">Past Journal Archives</div>
+            <div id="campfire-journal-past-root">
+                <!-- Dynamically populated lists of past journals -->
+            </div>
+        </div>
+
+        <!-- SUBCATEGORY 3: PARCEL MAIL (Revealed envelopes) -->
+        <div id="campfire-sub-mail" class="campfire-sub-content" style="display:none;">
+            <div class="section-card">
+                <div class="section-title">Sealed Parcel Safe</div>
+                <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px;">Review current dreams, faction reports, and downtime updates revealed by your DM:</p>
+                <div id="campfire-mail-revealed-root" style="display:flex; flex-direction:column; gap:8px;">
+                    <!-- Dynamically populated list of revealed packages -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="tab-details" class="tab-content">
+        <!-- Character Secrets -->
+        <div class="section-card">
+            <div class="section-title">Character Secrets</div>
+            <div class="detail-item-card">
+                <p id="details-secrets-text" style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; font-style: italic;">No secrets logged in campaign dossiers.</p>
+            </div>
+        </div>
+
+        <!-- Sandbox What-If Simulator -->
+        <!-- Moved to the dedicated Sandbox Tab -->
+
+        <!-- Trophy Case & Milestone Badges -->
+        <div class="section-card">
+            <div class="section-title">My Trophy Case & Achievements</div>
+            <div id="trophy-case-grid-sheet" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+
+        <!-- Secret Adventure Wish List -->
+        <div class="section-card">
+            <div class="section-title">Secret Wish List</div>
+            <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">Whisper story objectives or item requests directly to the DM Console:</p>
+            <textarea id="wishlist-text-area-sheet" placeholder="What items, plots, or objectives do you wish to encounter?" style="width:100%; height:70px; background:#0d0d12; border:1px solid var(--border-iron); color:white; padding:8px; border-radius:6px; font-size:0.8rem; resize:none; outline:none; box-sizing:border-box;"></textarea>
+            <button onclick="saveWishlistOnSheet()" style="width:100%; margin-top:8px; background:var(--arcane-violet); border:none; color:white; padding:8px; font-weight:bold; border-radius:4px; font-size:0.8rem; cursor:pointer; font-family:'Cinzel', serif;">Save & Whisper to DM</button>
+        </div>
+    </div>
+
+    <!-- PERSISTENT APP OVERLAY MODAL FOR SPELL DETAILS -->
+    <div id="spell-detail-modal" class="overlay-modal" onclick="closeSpellDetailModal(event)">
+        <div class="modal-body-container" onclick="event.stopPropagation()">
+            <div class="modal-header-row">
+                <h3 id="modal-spell-title" class="modal-title-header">Spell Title</h3>
+                <button class="btn-close-modal" onclick="closeSpellDetailModal()"></button>
+            </div>
+            <div id="modal-spell-body" style="font-size: 0.85rem; line-height: 1.5; color: var(--text-main);">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- PERSISTENT APP OVERLAY MODAL FOR PWA SHORTCUT LINK & QR CODE -->
+    <div id="pwa-shortcut-modal" class="overlay-modal" onclick="closeShortcutModal(event)">
+        <div class="modal-body-container" onclick="event.stopPropagation()" style="text-align: center;">
+            <div class="modal-header-row">
+                <h3 class="modal-title-header">PWA Direct Link & QR</h3>
+                <button class="btn-close-modal" onclick="closeShortcutModal()"></button>
+            </div>
+            
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Scan this code with your phone/tablet's camera to open your interactive sheet instantly on any device!</p>
+            
+            <!-- QR Code container -->
+            <div style="background: white; padding: 10px; border-radius: 8px; width: 180px; height: 180px; margin: 0 auto 15px auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.6);">
+                <img id="pwa-qr-image" src="" alt="Direct Sheet QR Code" style="width:100%; height:100%;">
+            </div>
+
+            <!-- Install instruction details -->
+            <div style="text-align: left; background: #0d0d12; border: 1px solid var(--border-iron); border-radius: 6px; padding: 10px; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">
+                <strong style="color: white; display: block; margin-bottom: 4px;">Install as a Home Screen App:</strong>
+                <span style="display: block; margin-bottom: 2px;">• <strong>iOS Safari:</strong> Tap the Share button at the bottom and select "Add to Home Screen".</span>
+                <span style="display: block;">• <strong>Android Chrome:</strong> Tap the options menu and select "Install App" or "Add to Home Screen".</span>
+            </div>
+
+            <button onclick="closeShortcutModal()" style="background: var(--arcane-violet); color: white; width: 100%; padding: 8px; font-weight: bold; border-radius: 4px; cursor: pointer; font-family:'Cinzel', serif;">Close Guide</button>
+        </div>
+    </div>
+
+    <!-- PERSISTENT APP OVERLAY MODAL FOR IMPORTING 5E CHARACTER JSON -->
+    <div id="import-char-modal" class="overlay-modal" onclick="closeImportModal(event)">
+        <div class="modal-body-container" onclick="event.stopPropagation()" style="text-align: center; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header-row">
+                <h3 class="modal-title-header">Import 5e Character</h3>
+                <button class="btn-close-modal" onclick="closeImportModal()"></button>
+            </div>
+            
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">
+                Upload a character JSON file exported from the <strong>Fifth Edition Character Sheet app</strong> by Walter Kammerer or any standard 5e JSON format. This will merge stats, equipment, and spells into your sheet.
+            </p>
+            
+            <!-- File Selector Input -->
+            <label for="import-file-input" style="background: #0d0d12; border: 2px dashed var(--border-iron); color: var(--text-main); display: block; padding: 18px; text-align: center; border-radius: 6px; cursor: pointer; margin-bottom: 15px; font-family: 'Cinzel', serif; font-size: 0.8rem; transition: border-color 0.2s;">
+                <span id="import-placeholder-text"> Tap to Select JSON File</span>
+                <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="handleImportFileSelect(event)">
+            </label>
+
+            <!-- Preview panel (revealed when file parsed) -->
+            <div id="import-preview-box" style="display: none; background: #07070a; border: 1px solid var(--border-iron); border-radius: 6px; padding: 12px; margin-bottom: 15px; font-size: 0.75rem; text-align: left; max-height: 250px; overflow-y: auto;">
+                <h4 style="font-family: 'Cinzel', serif; color: var(--gold-amber); margin-top: 0; margin-bottom: 8px; border-bottom: 1px solid #222; padding-bottom: 4px; font-size: 0.8rem; text-transform: uppercase;">Character Found</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
+                    <div><span style="color: var(--text-muted);">Name:</span> <strong id="prev-name">-</strong></div>
+                    <div><span style="color: var(--text-muted);">Race:</span> <strong id="prev-race">-</strong></div>
+                    <div><span style="color: var(--text-muted);">Class:</span> <strong id="prev-class">-</strong></div>
+                    <div><span style="color: var(--text-muted);">Level:</span> <strong id="prev-level">-</strong></div>
+                    <div><span style="color: var(--text-muted);">Max HP:</span> <strong id="prev-hp">-</strong></div>
+                    <div><span style="color: var(--text-muted);">AC:</span> <strong id="prev-ac">-</strong></div>
+                </div>
+                
+                <div style="border-top: 1px solid #222; padding-top: 6px; margin-bottom: 6px;">
+                    <span style="color: var(--text-muted); display: block; margin-bottom: 2px;">Ability Scores:</span>
+                    <span id="prev-stats" style="font-family: monospace; font-weight: bold; color: var(--text-main);">STR: - | DEX: - | CON: - | INT: - | WIS: - | CHA: -</span>
+                </div>
+                
+                <div style="border-top: 1px solid #222; padding-top: 6px; display: flex; justify-content: space-between; color: var(--text-muted);">
+                    <div>Equipment: <strong id="prev-eq-count" style="color: var(--text-main);">0</strong> items</div>
+                    <div>Known Spells: <strong id="prev-sp-count" style="color: var(--text-main);">0</strong> spells</div>
+                    <div>Feats: <strong id="prev-ft-count" style="color: var(--text-main);">0</strong></div>
+                </div>
+            </div>
+
+            <!-- Validation/Message area -->
+            <div id="import-msg" style="display: none; padding: 8px; border-radius: 4px; font-size: 0.75rem; margin-bottom: 12px; text-align: left;"></div>
+
+            <!-- Control Buttons -->
+            <div style="display: flex; gap: 8px;">
+                <button id="import-confirm-btn" onclick="commitImportedCharacter()" style="background: var(--success-green); color: white; flex: 1; padding: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; font-family:'Cinzel', serif; display: none; text-transform: uppercase; font-size: 0.75rem; border: none; letter-spacing: 0.5px;">Confirm & Import</button>
+                <button onclick="closeImportModal()" style="background: #2a2a2e; color: #ccc; flex: 1; padding: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; font-family:'Cinzel', serif; text-transform: uppercase; font-size: 0.75rem; border: none; letter-spacing: 0.5px;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CLASS TABLE DETAILS MODAL -->
+    <div id="class-table-modal" class="overlay-modal" style="display: none; z-index: 10000; padding: 15px;" onclick="closeClassTableModalOnOuterClick(event)">
+        <div class="modal-body-container" style="max-width: 600px; max-height: 85vh; width: 100%; overflow-y: auto; background: var(--shadow-card); border: 2px solid var(--gold-amber); border-radius: 8px; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.8); box-sizing: border-box;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--gold-amber); padding-bottom:10px; margin-bottom:15px;">
+                <h3 id="class-table-title" style="font-family:'Cinzel', serif; color:var(--gold-amber); margin:0; font-size: 1.1rem;">Class Progression Table</h3>
+                <button onclick="closeClassTableModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer; line-height: 1;">&times;</button>
+            </div>
+            <div id="class-table-content" style="overflow-x:auto;">
+                <!-- Dynamically populated table -->
+            </div>
+            <div class="btn-row" style="margin-top:20px; text-align:right;">
+                <button class="btn-secondary" onclick="closeClassTableModal()" style="padding: 6px 12px; font-size: 0.8rem; background: var(--bg-abyss); border: 1px solid var(--border-iron); color: white; border-radius: 4px; cursor: pointer;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM APP NAVIGATION BAR (Walter Kammerer style) -->
+    <div class="bottom-tabs">
+        <button class="tab-btn active" id="btn-tab-vitals" onclick="switchActiveTab('vitals')">
+            <span style="font-size:1.1rem; font-weight:bold;">VIT</span>
+            <span>Vitals</span>
+        </button>
+        <button class="tab-btn" id="btn-tab-abilities" onclick="switchActiveTab('abilities')">
+            <span style="font-size:1.1rem; font-weight:bold;">ABL</span>
+            <span>Abilities</span>
+        </button>
+        <button class="tab-btn" id="btn-tab-spellbook" onclick="switchActiveTab('spellbook')">
+            <span style="font-size:1.1rem; font-weight:bold;">SPL</span>
+            <span>Spells</span>
+        </button>
+        <button class="tab-btn" id="btn-tab-equipment" onclick="switchActiveTab('equipment')">
+            <span style="font-size:1.1rem; font-weight:bold;">EQP</span>
+            <span>Equip</span>
+        </button>
+        <button class="tab-btn" id="btn-tab-details" onclick="switchActiveTab('details')">
+            <span style="font-size:1.1rem; font-weight:bold;">DET</span>
+            <span>Details</span>
+        </button>
+        <button class="tab-btn" id="btn-tab-campfire" onclick="switchActiveTab('campfire')">
+            <span id="campfire-tab-badge-indicator" style="font-size:1.1rem; font-weight:bold; color: #a78bfa;">CAMP</span>
+            <span style="color: #a78bfa;">Campfire</span>
+        </button>
+        <button class="tab-btn" id="btn-tab-sandbox" onclick="switchActiveTab('sandbox')">
+            <span style="font-size:1.1rem; font-weight:bold; color: var(--gold-amber);">SND</span>
+            <span style="color: var(--gold-amber);">Sandbox</span>
+        </button>
+    </div>
+
+    <script>
+        function formatGpToDisplay(gpValue) {
+            if (gpValue <= 0) return '0 gp';
+            const gold = Math.floor(gpValue);
+            const silver = Math.round((gpValue - gold) * 10);
+            const parts = [];
+            if (gold > 0) parts.push(`${gold} gp`);
+            if (silver > 0) parts.push(`${silver} sp`);
+            return parts.length > 0 ? parts.join(', ') : '0 gp';
+        }
+
+        const charId = window.location.pathname.split('/').pop();
+        let character = {};
+        let socket = null;
+        let campaignSpells = [];
+        let campaignMagicItems = [];
+        let currentSpellFilter = 'all';
+
+        // JSON Character Import (Walter Kammerer's 5e App)
+        let parsedImportedChar = null;
+
+        function openImportModal() {
+            document.getElementById('import-char-modal').style.display = 'block';
+            resetImportModal();
+        }
+
+        function closeImportModal(e) {
+            if (!e || e.target.id === 'import-char-modal' || e.target.className === 'btn-close-modal' || e.target.onclick) {
+                document.getElementById('import-char-modal').style.display = 'none';
+            }
+        }
+
+        function resetImportModal() {
+            parsedImportedChar = null;
+            document.getElementById('import-file-input').value = "";
+            document.getElementById('import-placeholder-text').innerText = "Tap to Select JSON File";
+            document.getElementById('import-preview-box').style.display = 'none';
+            document.getElementById('import-confirm-btn').style.display = 'none';
+            
+            const msgBox = document.getElementById('import-msg');
+            msgBox.style.display = 'none';
+            msgBox.style.backgroundColor = 'transparent';
+            msgBox.innerText = "";
+        }
+
+        function handleImportFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('import-placeholder-text').innerText = file.name;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const jsonObj = JSON.parse(e.target.result);
+                    parsedImportedChar = parseCharacterJson(jsonObj);
+                    showImportPreview(parsedImportedChar);
+                } catch (err) {
+                    console.error("Failed to parse import file:", err);
+                    showImportError("Invalid JSON file. Please ensure this is a valid JSON file.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCharacterJson(jsonObj) {
+            let result = {
+                name: jsonObj.name || jsonObj.characterName || (jsonObj.header && jsonObj.header.characterName) || character.name || "Unknown",
+                race: jsonObj.race || jsonObj.raceName || (jsonObj.header && jsonObj.header.raceName) || character.race || "Human",
+                class: "Fighter",
+                level: 1,
+                hp_max: 30,
+                ac: 10,
+                stats: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+                inventory: [],
+                known_spells: [],
+                feats: []
+            };
+
+            // Parse Class and Level
+            if (jsonObj.class && typeof jsonObj.class === 'object' && !Array.isArray(jsonObj.class)) {
+                const classes = Object.keys(jsonObj.class);
+                if (classes.length > 0) {
+                    result.class = classes[0];
+                    let totalLvl = 0;
+                    const classList = [];
+                    classes.forEach(c => {
+                        const lvl = parseInt(jsonObj.class[c]) || 1;
+                        totalLvl += lvl;
+                        classList.push({ class: c, level: lvl });
+                    });
+                    result.level = totalLvl;
+                    result.classes = classList;
+                } else {
+                    result.class = character.class || "Fighter";
+                    result.level = character.level || 1;
+                    result.classes = [{ class: result.class, level: result.level }];
+                }
+            } else {
+                result.class = jsonObj.class || jsonObj.className || (jsonObj.header && jsonObj.header.className) || character.class || "Fighter";
+                result.level = parseInt(jsonObj.level || jsonObj.characterLevel || (jsonObj.header && jsonObj.header.characterLevel)) || character.level || 1;
+                result.classes = [{ class: result.class, level: result.level }];
+            }
+
+            // Parse Ability Scores (Stats)
+            let rawScores = jsonObj.abilityScores || jsonObj.baseAbilityScores || jsonObj.stats;
+            if (Array.isArray(rawScores) && rawScores.length >= 6) {
+                result.stats.str = parseInt(rawScores[0]) || 10;
+                result.stats.dex = parseInt(rawScores[1]) || 10;
+                result.stats.con = parseInt(rawScores[2]) || 10;
+                result.stats.int = parseInt(rawScores[3]) || 10;
+                result.stats.wis = parseInt(rawScores[4]) || 10;
+                result.stats.cha = parseInt(rawScores[5]) || 10;
+            } else {
+                const sObj = rawScores || jsonObj;
+                result.stats.str = parseInt(sObj.str || sObj.strength || sObj.Strength || sObj.STR || 10);
+                result.stats.dex = parseInt(sObj.dex || sObj.dexterity || sObj.Dexterity || sObj.DEX || 10);
+                result.stats.con = parseInt(sObj.con || sObj.constitution || sObj.Constitution || sObj.CON || 10);
+                result.stats.int = parseInt(sObj.int || sObj.intelligence || sObj.Intelligence || sObj.INT || 10);
+                result.stats.wis = parseInt(sObj.wis || sObj.wisdom || sObj.Wisdom || sObj.WIS || 10);
+                result.stats.cha = parseInt(sObj.cha || sObj.charisma || sObj.Charisma || sObj.CHA || 10);
+            }
+
+            // Hit points & Armor Class
+            result.hp_max = parseInt(jsonObj.hitPoints || jsonObj.maxHp || jsonObj.hp_max || jsonObj.hp || 30);
+            result.ac = parseInt(jsonObj.armorClass || jsonObj.ac || jsonObj.ac_display_val || 10);
+
+            // Inventory
+            const rawEquipment = jsonObj.equipment || jsonObj.inventory || jsonObj.items || [];
+            if (Array.isArray(rawEquipment)) {
+                result.inventory = rawEquipment.map(item => {
+                    if (typeof item === 'string') return { name: item, count: 1 };
+                    if (typeof item === 'object' && item !== null) {
+                        return { name: item.name || item.itemName || "Item", count: parseInt(item.count || item.quantity) || 1 };
+                    }
+                    return null;
+                }).filter(Boolean);
+            }
+
+            // Spells
+            const rawSpells = jsonObj.spells || jsonObj.spellbook || jsonObj.knownSpells || [];
+            if (Array.isArray(rawSpells)) {
+                result.known_spells = rawSpells.map(sp => {
+                    if (typeof sp === 'string') return sp;
+                    if (typeof sp === 'object' && sp !== null) return sp.name || sp.spellName;
+                    return null;
+                }).filter(Boolean);
+            }
+
+            // Feats
+            const rawFeats = jsonObj.feats || jsonObj.featList || [];
+            if (Array.isArray(rawFeats)) {
+                result.feats = rawFeats.map(f => {
+                    if (typeof f === 'string') return f;
+                    if (typeof f === 'object' && f !== null) return f.name || f.featName;
+                    return null;
+                }).filter(Boolean);
+            }
+
+            return result;
+        }
+
+        function showImportPreview(charData) {
+            document.getElementById('prev-name').innerText = charData.name;
+            document.getElementById('prev-race').innerText = charData.race;
+            document.getElementById('prev-class').innerText = charData.class;
+            document.getElementById('prev-level').innerText = charData.level;
+            document.getElementById('prev-hp').innerText = charData.hp_max;
+            document.getElementById('prev-ac').innerText = charData.ac;
+
+            const st = charData.stats;
+            document.getElementById('prev-stats').innerText = `STR: ${st.str} | DEX: ${st.dex} | CON: ${st.con} | INT: ${st.int} | WIS: ${st.wis} | CHA: ${st.cha}`;
+            document.getElementById('prev-eq-count').innerText = charData.inventory.length;
+            document.getElementById('prev-sp-count').innerText = charData.known_spells.length;
+            document.getElementById('prev-ft-count').innerText = charData.feats.length;
+
+            document.getElementById('import-preview-box').style.display = 'block';
+
+            const msgBox = document.getElementById('import-msg');
+            msgBox.style.display = 'block';
+            msgBox.style.backgroundColor = 'rgba(40, 167, 69, 0.15)';
+            msgBox.style.border = '1px solid var(--success-green)';
+            msgBox.style.color = '#fff';
+            msgBox.innerHTML = "<strong>Character file parsed successfully!</strong> Press 'Confirm & Import' to apply. If stats require DM approval, they will queue as pending proposals on the DM dashboard.";
+
+            document.getElementById('import-confirm-btn').style.display = 'block';
+        }
+
+        function showImportError(msg) {
+            document.getElementById('import-preview-box').style.display = 'none';
+            document.getElementById('import-confirm-btn').style.display = 'none';
+
+            const msgBox = document.getElementById('import-msg');
+            msgBox.style.display = 'block';
+            msgBox.style.backgroundColor = 'rgba(220, 53, 69, 0.15)';
+            msgBox.style.border = '1px solid var(--crimson-rage)';
+            msgBox.style.color = '#fff';
+            msgBox.innerText = msg;
+        }
+
+        async function commitImportedCharacter() {
+            if (!parsedImportedChar) return;
+
+            const edits = [];
+
+            // Helper to queue edit if changed
+            const queueIfChanged = (field, oldVal, newVal) => {
+                if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
+                    edits.push({ field, oldValue: oldVal, newValue: newVal });
+                }
+            };
+
+            queueIfChanged('name', character.name, parsedImportedChar.name);
+            queueIfChanged('race', character.race, parsedImportedChar.race);
+            queueIfChanged('class', character.class, parsedImportedChar.class);
+            queueIfChanged('classes', character.classes, parsedImportedChar.classes);
+            queueIfChanged('level', character.level, parsedImportedChar.level);
+            queueIfChanged('hp_max', character.hp_max, parsedImportedChar.hp_max);
+            queueIfChanged('ac', character.ac, parsedImportedChar.ac);
+            queueIfChanged('stats', character.stats, parsedImportedChar.stats);
+            queueIfChanged('inventory', character.inventory, parsedImportedChar.inventory);
+            queueIfChanged('known_spells', character.known_spells, parsedImportedChar.known_spells);
+            queueIfChanged('feats', character.feats, parsedImportedChar.feats);
+
+            // Also reset current resources for the fresh imported sheet
+            queueIfChanged('hp_current', character.hp_current, parsedImportedChar.hp_max);
+            queueIfChanged('hp_temp', character.hp_temp, 0);
+
+            if (edits.length > 0) {
+                await recordBulkEdits(edits);
+            }
+
+            document.getElementById('import-char-modal').style.display = 'none';
+        }
+
+        async function recordBulkEdits(editsList) {
+            if (!editsList || editsList.length === 0) return;
+
+            let modified = false;
+            for (const edit of editsList) {
+                character[edit.field] = edit.newValue;
+                
+                // Add pending change to Offline Store
+                await window.offlineStore.addPendingChange({
+                    charId: charId,
+                    field: edit.field,
+                    oldValue: edit.oldValue,
+                    newValue: edit.newValue,
+                    timestamp: Date.now()
+                });
+                modified = true;
+            }
+
+            if (modified) {
+                // Instantly recalculate derived sheets (e.g. mods, proficiency, passive values, hit points, spell slot limits)
+                character = window.characterEngine.calculate(character);
+                
+                // Set current spell slots to full charges
+                if (character.spell_slots) {
+                    character.spell_slots_current = [...character.spell_slots];
+                }
+
+                // Put in IndexedDB locally
+                await window.offlineStore.put('characters', character);
+
+                // Re-render UI
+                renderCharacterSheet();
+
+                // Trigger network background sync
+                if (window.syncEngine) {
+                    await window.syncEngine.checkAndSync();
+                }
+            }
+        }
+
+        function getAbilityModifier(score) {
+            const mod = Math.floor((score - 10) / 2);
+            return mod >= 0 ? `+${mod}` : `${mod}`;
+        }
+
+        // Connect to real-time sync with DM Console
+        function connectSocket() {
+            if (typeof io === 'undefined') {
+                console.warn("Socket.io is not available (offline). Skipping connection.");
+                return;
+            }
+            socket = io();
+            window.socket = socket;
+
+            socket.emit('join-room', `player:${charId}`);
+
+            socket.on('connect', async () => {
+                console.log("Socket.io connected to game server.");
+                // Execute local hybrid sync merge logic on reconnection!
+                if (typeof handleSessionReconnect === 'function') {
+                    await handleSessionReconnect();
+                }
+            });
+
+            socket.on('disconnect', () => {
+                console.warn("Socket.io disconnected from server.");
+                showBanner('offline');
+            });
+
+            socket.on('character-updated', (data) => {
+                if (data.id === charId) {
+                    console.log("Real-time sync from DM console:", data);
+                    detectAndAlertConcentrationDamage(character, data);
+                    character = data;
+                    renderCharacterSheet();
+                }
+            });
+
+            socket.on('board-state-updated', (data) => {
+                updateCombatTurnBanner(data);
+            });
+
+            socket.on('economy-updated', (data) => {
+                console.log("Real-time Economy update received on player sheet!");
+                fetchBazaarAndPopulate();
+            });
+
+            socket.on('level-up-approved', (data) => {
+                if (data.charId === charId) {
+                    alert(`Congratulations! The DM approved your Level ${data.character.level} upgrade choices!`);
+                    character = data.character;
+                    renderCharacterSheet();
+                    checkLevelUpProximity();
+                }
+            });
+
+            // Init Sealed Envelope push receiver
+            if (typeof initEnvelopeReceiver === 'function') {
+                initEnvelopeReceiver(socket);
+            }
+        }
+
+        function updateCombatTurnBanner(data) {
+            const banner = document.getElementById('combat-turn-banner');
+            if (!data || !data.encounter || data.encounter.length === 0) {
+                banner.style.display = 'none';
+                return;
+            }
+
+            const activeIndex = data.activeCombatIndex || 0;
+            const currentCombatant = data.encounter[activeIndex];
+
+            if (currentCombatant) {
+                banner.style.display = 'block';
+                if (currentCombatant.id === charId) {
+                    banner.innerText = "YOUR TURN! Strike fast and maintain glory!";
+                    banner.className = "turn-banner active-turn";
+                } else {
+                    banner.innerText = `Current Turn: ${currentCombatant.name}`;
+                    banner.className = "turn-banner";
+                }
+            } else {
+                banner.style.display = 'none';
+            }
+        }
+
+        function detectAndAlertConcentrationDamage(oldChar, newChar) {
+            if (oldChar && oldChar.conditions && oldChar.conditions.includes('Concentrating')) {
+                const oldHp = parseInt(oldChar.hp_current) || 0;
+                const newHp = parseInt(newChar.hp_current) || 0;
+                if (newHp < oldHp) {
+                    const dmg = oldHp - newHp;
+                    const dc = Math.max(10, Math.floor(dmg / 2));
+                    const spellName = oldChar.concentration_spell || 'your spell';
+                    
+                    const popup = document.getElementById('con-warning-popup');
+                    const desc = document.getElementById('con-warning-desc');
+                    desc.innerText = `You took ${dmg} damage while concentrating on "${spellName}". Make a DC ${dc} Constitution saving throw to maintain concentration!`;
+                    popup.style.display = 'block';
+                }
+            }
+        }
+
+        function dismissConWarning() {
+            document.getElementById('con-warning-popup').style.display = 'none';
+        }
+
+        // Fetch initial sheet and library references
+        async function fetchInitialCharacterData() {
+            try {
+                // Initialize local offline store
+                await window.offlineStore.init();
+
+                // Fetch full campaign spells database (offline-resilient)
+                try {
+                    const spellsRes = await fetch('/api/spells');
+                    if (spellsRes.ok) {
+                        campaignSpells = await spellsRes.json();
+                        campaignSpells.sort((a,b) => a.name.localeCompare(b.name));
+                    }
+                } catch (e) {
+                    console.log("[IndexedDB fallback] Offline - trying to read campaignSpells from local cache");
+                    campaignSpells = await window.offlineStore.getAll('spells') || [];
+                    campaignSpells.sort((a,b) => a.name.localeCompare(b.name));
+                }
+
+                // Fetch magic items library (offline-resilient)
+                await fetchBazaarAndPopulate();
+
+                // Fetch Classes/Subclasses for Sandbox dropdowns
+                await fetchSandboxSrdData();
+
+                // Try IndexedDB first
+                let matched = await window.offlineStore.get('characters', charId);
+                if (matched) {
+                    console.log("[IndexedDB] Loaded character:", matched);
+                    character = matched;
+                    renderCharacterSheet();
+                    checkLevelUpProximity();
+                    connectSocket();
+
+                    // Sync up in background
+                    await window.syncEngine.init(charId);
+                    window.onSyncComplete = (syncedChar) => {
+                        character = syncedChar;
+                        renderCharacterSheet();
+                        checkLevelUpProximity();
+                    };
+                    return;
+                }
+
+                // Fallback to Server Fetch
+                const res = await fetch(`/api/party`);
+                const party = await res.json();
+                matched = party.find(c => c.id === charId);
+
+                if (!matched) {
+                    alert("Character not found.");
+                    window.location.href = "/join";
+                    return;
+                }
+
+                character = matched;
+                initializeCharacterFields();
+
+                character = window.characterEngine.calculate(character);
+                await window.offlineStore.put('characters', character);
+
+                renderCharacterSheet();
+                connectSocket();
+
+                await window.syncEngine.init(charId);
+                window.onSyncComplete = (syncedChar) => {
+                    character = syncedChar;
+                    renderCharacterSheet();
+                };
+
+            } catch (err) {
+                console.error("Failed to initialize sheet:", err);
+                
+                // Absolute offline fallback
+                try {
+                    let matchedOffline = await window.offlineStore.get('characters', charId);
+                    if (matchedOffline) {
+                        console.log("[Offline Critical Fallback] Initializing sheet using cached data only.");
+                        character = matchedOffline;
+                        renderCharacterSheet();
+                        connectSocket();
+                        await window.syncEngine.init(charId);
+                    } else {
+                        alert("No offline character data found. Please connect to the DM's network first to load your character.");
+                        window.location.href = "/join";
+                    }
+                } catch (criticalErr) {
+                    console.error("Critical fallback failed:", criticalErr);
+                }
+            }
+        }
+
+        function initializeCharacterFields() {
+            if (character.hp_max === undefined) character.hp_max = character.hp || 30;
+            if (character.hp_current === undefined) character.hp_current = character.hp || 30;
+            if (character.hp_temp === undefined) character.hp_temp = 0;
+            if (character.conditions === undefined) character.conditions = [];
+            if (character.death_saves === undefined) character.death_saves = { successes: 0, failures: 0 };
+            if (character.inventory === undefined) character.inventory = [];
+            if (character.magic_items === undefined) character.magic_items = [];
+            if (character.known_spells === undefined) character.known_spells = [];
+            if (character.prepared_spells === undefined) character.prepared_spells = [];
+            if (character.equipped_armor === undefined) character.equipped_armor = 'none';
+            if (character.equipped_shield === undefined) character.equipped_shield = false;
+            if (character.theme === undefined) character.theme = 'violet';
+        }
+
+        // Switch Tabs (Walter Kammerer App-like UX)
+        function switchActiveTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            const targetBtn = document.getElementById(`btn-tab-${tabName}`);
+            if (targetBtn) targetBtn.classList.add('active');
+
+            if (tabName === 'sandbox') {
+                initSandboxDropdowns();
+                calculateSandboxDetails();
+            } else if (tabName === 'campfire') {
+                initCampfireHub();
+            }
+        }
+
+        // --- CAMPFIRE HUB BETWEEN-SESSION FUNCTIONS ---
+        function switchCampfireSubTab(subTabName) {
+            document.querySelectorAll('.campfire-sub-content').forEach(el => el.style.display = 'none');
+            
+            // Unhighlight filter buttons
+            document.getElementById('campfire-btn-sub-board').classList.remove('active');
+            document.getElementById('campfire-btn-sub-journal').classList.remove('active');
+            document.getElementById('campfire-btn-sub-mail').classList.remove('active');
+
+            document.getElementById(`campfire-sub-${subTabName}`).style.display = 'block';
+            document.getElementById(`campfire-btn-sub-${subTabName}`).classList.add('active');
+
+            if (subTabName === 'board') {
+                renderTavernBoard();
+            } else if (subTabName === 'journal') {
+                renderJournalPanel();
+            } else if (subTabName === 'mail') {
+                renderCampfireMailBox();
+            }
+        }
+
+        async function initCampfireHub() {
+            // Render OAuth UI
+            const settingsContainer = document.getElementById('gdrive-settings-panel');
+            if (settingsContainer && window.gdriveClient) {
+                renderGDriveSettings(settingsContainer);
+            }
+
+            // Bind sync event listener
+            document.addEventListener('sync-done', (e) => {
+                showToast("Campfire synchronized successfully!");
+                renderTavernBoard();
+                renderJournalPanel();
+                renderCampfireMailBox();
+                updateCampfireBadge();
+            });
+
+            // Default to Tavern Board
+            switchCampfireSubTab('board');
+            updateCampfireBadge();
+        }
+
+        async function updateCampfireBadge() {
+            const count = await window.offlineStore.getUnrevealedCount();
+            const badge = document.getElementById('campfire-tab-badge-indicator');
+            if (badge) {
+                if (count > 0) {
+                    badge.innerHTML = `CAMP <span style="background:var(--crimson-rage); color:white; border-radius:50%; width:14px; height:14px; font-size:0.55rem; display:inline-flex; align-items:center; justify-content:center; margin-left:2px; font-weight:900;">${count}</span>`;
+                } else {
+                    badge.innerHTML = "CAMP";
+                }
+            }
+        }
+
+        async function renderCampfireMailBox() {
+            const root = document.getElementById('campfire-mail-revealed-root');
+            if (!root) return;
+
+            const envelopes = await window.offlineStore.getAllEnvelopes();
+            const now = new Date().toISOString();
+            const dueAndRevealed = envelopes.filter(env => env.reveal_after <= now);
+
+            if (dueAndRevealed.length === 0) {
+                root.innerHTML = `<div style="text-align:center; padding:20px; font-style:italic; color:var(--text-muted); font-size:0.75rem;">No parcels or reports arrived yet...</div>`;
+                return;
+            }
+
+            // Sort newest first
+            dueAndRevealed.sort((a,b) => b.reveal_after.localeCompare(a.reveal_after));
+
+            let html = '';
+            dueAndRevealed.forEach(env => {
+                const unreadDot = !env.revealed ? `<span style="width:8px; height:8px; background:var(--crimson-rage); border-radius:50%; display:inline-block; margin-right:6px;"></span>` : '';
+                const titleText = env.content.title || env.content.faction || env.type.replace('_', ' ').toUpperCase();
+                
+                html += `
+                    <div style="background:#0d0d12; border:1px solid ${!env.revealed ? 'var(--arcane-violet)' : 'var(--border-iron)'}; border-radius:6px; padding:10px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-weight:bold; font-size:0.8rem; color:white; display:flex; align-items:center;">
+                                ${unreadDot} ${titleText}
+                            </div>
+                            <span style="font-size:0.65rem; color:var(--text-muted); display:block; margin-top:2px; text-transform:uppercase;">Parcel: ${env.type.replace('_', ' ')}</span>
+                        </div>
+                        <button onclick="triggerCampfireEnvelopeOpen('${env.id}')" style="background:${!env.revealed ? 'var(--arcane-violet)' : '#1a1a24'}; border:none; color:white; font-size:0.7rem; font-weight:bold; padding:6px 12px; border-radius:4px; cursor:pointer;">
+                            ${!env.revealed ? 'Open' : 'Review'}
+                        </button>
+                    </div>
+                `;
+            });
+
+            root.innerHTML = html;
+        }
+
+        async function triggerCampfireEnvelopeOpen(envId) {
+            const envelopes = await window.offlineStore.getAllEnvelopes();
+            const env = envelopes.find(e => e.id === envId);
+            if (!env) return;
+
+            // Mark revealed
+            await window.offlineStore.markRevealed(envId);
+            await renderCampfireMailBox();
+            await updateCampfireBadge();
+
+            // Trigger taker presentation
+            switch (env.type) {
+                case 'dream':
+                    await presentDreamSequence(env);
+                    break;
+                case 'faction_intel':
+                    await presentFactionIntel(env);
+                    break;
+                case 'session_recap':
+                    await presentSessionRecap(env);
+                    break;
+                case 'skill_challenge':
+                    await presentSkillChallenge(env);
+                    break;
+                case 'announcement':
+                    await presentAnnouncement(env);
+                    break;
+                case 'downtime_progress':
+                    await presentDowntimeUpdate(env);
+                    break;
+                default:
+                    alert(`Opened: ${JSON.stringify(env.content)}`);
+            }
+        }
+
+        // Render functions
+        function renderCharacterSheet() {
+            window.character = character;
+            // Setup Visual Style Preset
+            const activeTheme = character.theme || 'violet';
+            document.body.className = `theme-${activeTheme}`;
+            document.querySelectorAll('.theme-preset-circle').forEach(btn => {
+                if (btn.id === `theme-btn-${activeTheme}`) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // Header Elements
+            document.getElementById('char-name').innerText = character.name;
+            document.getElementById('char-meta').innerText = `Level ${character.level} ${character.race} ${character.class}`;
+            const defaultArt = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400';
+            document.getElementById('char-avatar').style.backgroundImage = `url('${character.art || defaultArt}')`;
+
+            // Combat Vitals
+            document.getElementById('hp-current-val').innerText = character.hp_current;
+            document.getElementById('hp-temp-val').innerText = character.hp_temp;
+            document.getElementById('ac-display-val').innerText = character.ac || 10;
+            document.getElementById('maxhp-display-val').innerText = character.hp_max;
+
+            const prof = character.level >= 17 ? 6 : (character.level >= 13 ? 5 : (character.level >= 9 ? 4 : (character.level >= 5 ? 3 : 2)));
+            document.getElementById('prof-display-val').innerText = `+${prof}`;
+
+            // Mini Death Saves
+            const dsMiniCard = document.getElementById('death-saves-mini-card');
+            if (character.hp_current <= 0) {
+                dsMiniCard.style.display = 'block';
+                renderDeathSavesMini();
+            } else {
+                dsMiniCard.style.display = 'none';
+            }
+
+            // Compact Spell slots in Vitals
+            renderCompactSpellSlots();
+
+            // Exhaustion
+            highlightExhaustionPipsSheet(character.exhaustion || 0);
+
+            // TAB 2: ABILITIES
+            renderAbilitiesList();
+            renderSkillsAndSavesGrid();
+            renderClassFeaturesSrdList();
+
+            // TAB 3: SPELLBOOK
+            renderSpellsList();
+
+            // TAB 4: EQUIPMENT
+            document.getElementById('equip-armor-select').value = character.equipped_armor || 'none';
+            document.getElementById('equip-shield-checkbox').checked = !!character.equipped_shield;
+            renderAttunedItems();
+            renderCustomInventoryList();
+
+            // TAB 5: DETAILS
+            document.getElementById('details-secrets-text').innerText = character.secrets || 'No dark secrets recorded in campaign files.';
+            renderTrophyCaseListSheet(character.badges || []);
+            
+            const wishlistArea = document.getElementById('wishlist-text-area-sheet');
+            if (wishlistArea && !window.wishlistEditedOnSheet) {
+                wishlistArea.value = character.wishlist ? character.wishlist.join('\n') : '';
+            }
+
+            // Populate current stats comparison for Sandbox tab initially
+            const sbAcCurr = document.getElementById('sb-ac-current');
+            if (sbAcCurr) {
+                sbAcCurr.innerText = character.ac || 10;
+                document.getElementById('sb-maxhp-current').innerText = character.hp_max || 30;
+                document.getElementById('sb-init-current').innerText = (character.initiative_bonus >= 0 ? '+' : '') + (character.initiative_bonus || 0);
+                document.getElementById('sb-dc-current').innerText = character.spell_save_dc || 10;
+            }
+
+            // Sync proximity check for guided level up
+            checkLevelUpProximity();
+        }
+
+        // Render death saves
+        function renderDeathSavesMini() {
+            const saves = character.death_saves || { successes: 0, failures: 0 };
+            for (let i = 1; i <= 3; i++) {
+                const sPip = document.getElementById(`ds-mini-s-${i}`);
+                const fPip = document.getElementById(`ds-mini-f-${i}`);
+                if (sPip) sPip.className = saves.successes >= i ? 'ds-pip-mini success-filled' : 'ds-pip-mini';
+                if (fPip) fPip.className = saves.failures >= i ? 'ds-pip-mini failure-filled' : 'ds-pip-mini';
+            }
+        }
+
+        function toggleDeathSaveMini(type, num) {
+            if (!character.death_saves) character.death_saves = { successes: 0, failures: 0 };
+            const currentVal = character.death_saves[type];
+            character.death_saves[type] = currentVal === num ? num - 1 : num;
+            renderDeathSavesMini();
+            queueUpdateAndSync();
+        }
+
+        // Render Compact Spell slots
+        function renderCompactSpellSlots() {
+            const container = document.getElementById('spell-slots-compact-row');
+            container.innerHTML = '';
+            
+            const slots = character.spell_slots || [];
+            const maxSlots = character.spell_slots || []; // Max defined by level
+            
+            let hasAnySlots = false;
+            for (let lvl = 1; lvl <= 5; lvl++) {
+                const max = maxSlots[lvl - 1] || 0;
+                const current = character.spell_slots_current ? (character.spell_slots_current[lvl - 1] !== undefined ? character.spell_slots_current[lvl - 1] : max) : max;
+
+                if (max > 0) {
+                    hasAnySlots = true;
+                    const div = document.createElement('div');
+                    div.style = "display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; background:#0d0d12; border:1px solid var(--border-iron); padding:6px; border-radius:4px;";
+                    
+                    let pipsHtml = '';
+                    for (let p = 1; p <= max; p++) {
+                        const isSpent = p > current;
+                        pipsHtml += `<div class="slot-pip ${!isSpent ? 'active' : ''}" style="width:14px; height:14px; border:1.5px solid var(--border-iron); background:#15151b; border-radius:3px; cursor:pointer;" onclick="event.stopPropagation(); toggleCompactSpellSlot(${lvl}, ${p})"></div>`;
+                    }
+                    
+                    div.innerHTML = `
+                        <span style="color:#a78bfa; font-weight:600;">Lvl ${lvl} Slots</span>
+                        <div style="display:flex; gap:5px;">${pipsHtml}</div>
+                    `;
+                    container.appendChild(div);
+                }
+            }
+            if (!hasAnySlots) {
+                container.innerHTML = `<span style="font-size:0.7rem; color:var(--text-muted); font-style:italic; text-align:center;">No spellcasting abilities unlocked...</span>`;
+            }
+        }
+
+        function toggleCompactSpellSlot(lvl, pipIndex) {
+            if (!character.spell_slots_current) {
+                character.spell_slots_current = [...(character.spell_slots || [0,0,0,0,0,0,0,0,0])];
+            }
+            const current = character.spell_slots_current[lvl - 1];
+            if (current === pipIndex) {
+                character.spell_slots_current[lvl - 1] = pipIndex - 1;
+            } else {
+                character.spell_slots_current[lvl - 1] = pipIndex;
+            }
+            renderCompactSpellSlots();
+            queueUpdateAndSync();
+        }
+
+        // Adjust HP field by delta (+1 / -1)
+        function adjustHPField(field, delta) {
+            let currentVal = parseInt(character[field]) || 0;
+            if (field === 'hp_current') {
+                character[field] = Math.max(0, Math.min(character.hp_max || 30, currentVal + delta));
+            } else {
+                character[field] = Math.max(0, currentVal + delta);
+            }
+            renderCharacterSheet();
+            queueUpdateAndSync();
+        }
+
+        // Exhaustion Level Local Handler
+        function highlightExhaustionPipsSheet(level) {
+            const penalties = {
+                0: "Level 0: No exhaustion. Feeling healthy and strong!",
+                1: "Level 1: -1 to all dice rolls.",
+                2: "Level 2: -2 to all dice rolls.",
+                3: "Level 3: -3 to all dice rolls.",
+                4: "Level 4: -4 to all dice rolls.",
+                5: "Level 5: -5 to all dice rolls.",
+                6: "Level 6: Player Dies."
+            };
+            document.getElementById('exhaustion-penalty-text-sheet').innerText = penalties[level] || penalties[0];
+
+            for (let i = 1; i <= 6; i++) {
+                const pip = document.getElementById(`ex-sheet-pip-${i}`);
+                if (pip) {
+                    if (i <= level) {
+                        pip.style.background = "#ef4444";
+                        pip.style.borderColor = "#ef4444";
+                        pip.style.color = "white";
+                    } else {
+                        pip.style.background = "transparent";
+                        pip.style.borderColor = "var(--border-iron)";
+                        pip.style.color = "var(--text-muted)";
+                    }
+                }
+            }
+        }
+
+        function setExhaustionLevelLocalSheet(level) {
+            const currentLevel = character.exhaustion || 0;
+            character.exhaustion = currentLevel === level ? level - 1 : level;
+            if (character.exhaustion === 6) {
+                character.hp_current = 0;
+                character.death_saves = { successes: 0, failures: 3 };
+            }
+            renderCharacterSheet();
+            queueUpdateAndSync();
+        }
+
+        // TAB 2: RENDER ABILITIES LIST
+        function renderAbilitiesList() {
+            const container = document.getElementById('abilities-list-container');
+            container.innerHTML = '';
+
+            const stats = character.stats || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
+            const namesMapping = {
+                str: "Strength", dex: "Dexterity", con: "Constitution",
+                int: "Intelligence", wis: "Wisdom", cha: "Charisma"
+            };
+
+            Object.keys(namesMapping).forEach(key => {
+                const baseScore = stats[key] || 10;
+                const modText = getAbilityModifier(baseScore);
+
+                const div = document.createElement('div');
+                div.className = 'ability-row-item';
+                div.innerHTML = `
+                    <div class="ability-info">
+                        <div class="ability-badge-circle">
+                            <span style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase;">${key}</span>
+                            <span style="font-size:0.85rem; font-weight:bold; color:white; margin-top:-2px;">${modText}</span>
+                        </div>
+                        <div class="ability-names">
+                            <span class="ability-full-name">${namesMapping[key]}</span>
+                            <span class="ability-short-name">Base Core Score: ${baseScore}</span>
+                        </div>
+                    </div>
+                    <div class="ability-edit-controls" onclick="event.stopPropagation()">
+                        <button class="btn-edit-score" onclick="event.stopPropagation(); adjustBaseAbilityScore('${key}', -1)">-</button>
+                        <span class="ability-score-display">${baseScore}</span>
+                        <button class="btn-edit-score" onclick="event.stopPropagation(); adjustBaseAbilityScore('${key}', 1)">+</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function adjustBaseAbilityScore(ability, delta) {
+            if (!character.stats) character.stats = { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
+            const curVal = character.stats[ability] || 10;
+            character.stats[ability] = Math.max(1, Math.min(30, curVal + delta));
+            
+            // Recalculate derived statistics
+            character = window.characterEngine.calculate(character);
+            renderCharacterSheet();
+            queueUpdateAndSync();
+        }
+
+        // Parse 5etools entries and sub-entries to clean HTML
+        function formatEntries(entries) {
+            if (!entries) return '';
+            if (typeof entries === 'string') {
+                return cleanMarkdown(entries);
+            }
+            if (Array.isArray(entries)) {
+                return entries.map(entry => {
+                    if (typeof entry === 'string') {
+                        return `<p>${cleanMarkdown(entry)}</p>`;
+                    } else if (typeof entry === 'object' && entry !== null) {
+                        if (entry.type === 'list' && entry.items) {
+                            const itemsHtml = entry.items.map(item => `<li>${formatEntries(item)}</li>`).join('');
+                            return `<ul>${itemsHtml}</ul>`;
+                        } else if (entry.type === 'entries' && entry.entries) {
+                            const titleHtml = entry.name ? `<strong style="color:var(--gold-amber);">${entry.name}:</strong> ` : '';
+                            return `<div>${titleHtml}${formatEntries(entry.entries)}</div>`;
+                        } else if (entry.type === 'table') {
+                            let tableHtml = '<table class="srd-table" style="width:100%; border-collapse:collapse; margin:8px 0; font-size:0.75rem; border:1px solid var(--border-iron);">';
+                            if (entry.caption) {
+                                tableHtml += `<caption><strong>${entry.caption}</strong></caption>`;
+                            }
+                            if (entry.colLabels) {
+                                tableHtml += '<thead style="background:rgba(255,255,255,0.02);"><tr>' + entry.colLabels.map(lbl => `<th style="border-bottom:1px solid var(--border-iron); padding:4px; text-align:left;">${cleanMarkdown(lbl)}</th>`).join('') + '</tr></thead>';
+                            }
+                            if (entry.rows) {
+                                tableHtml += '<tbody>' + entry.rows.map(row => '<tr>' + row.map(cell => `<td style="padding:4px; border-bottom:1px solid rgba(255,255,255,0.05);">${formatEntries(cell)}</td>`).join('') + '</tr>').join('') + '</tbody>';
+                            }
+                            tableHtml += '</table>';
+                            return tableHtml;
+                        } else {
+                            const titleHtml = entry.name ? `<strong>${entry.name}</strong>` : '';
+                            const bodyHtml = entry.entries ? formatEntries(entry.entries) : '';
+                            return `<div>${titleHtml}${bodyHtml}</div>`;
+                        }
+                    }
+                    return '';
+                }).join('');
+            }
+            return '';
+        }
+
+        function cleanMarkdown(str) {
+            if (typeof str !== 'string') return '';
+            return str
+                .replace(/{@i ([^}]+)}/g, '<em>$1</em>')
+                .replace(/{@b ([^}]+)}/g, '<strong>$1</strong>')
+                .replace(/{@condition ([^}]+)}/g, '<span class="condition-tag" style="background:rgba(239, 68, 68, 0.15); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.3); padding:1px 4px; border-radius:3px; font-size:0.65rem;">$1</span>')
+                .replace(/{@skill ([^}]+)}/g, '$1')
+                .replace(/{@spell ([^}]+)}/g, '<em>$1</em>')
+                .replace(/{@item ([^}]+)}/g, '<strong>$1</strong>')
+                .replace(/{@dice ([^}|]+)\|?([^}]+)?}/g, '$2')
+                .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                .replace(/_([^_]+)_/g, '<em>$1</em>');
+        }
+
+        function getSubclassFeatureLevels(clsObj) {
+            const levels = [];
+            if (!clsObj || !Array.isArray(clsObj.classFeatures)) return levels;
+            clsObj.classFeatures.forEach((lvlFeats, idx) => {
+                if (Array.isArray(lvlFeats)) {
+                    const hasSubFeature = lvlFeats.some(f => f.gainSubclassFeature === true);
+                    if (hasSubFeature) {
+                        levels.push(idx + 1); // 1-based level
+                    }
+                }
+            });
+            return levels;
+        }
+
+        function getDynamicClassFeatures(charObj) {
+            const features = [];
+            if (!charObj) return features;
+
+            const charClass = charObj.class || 'Fighter';
+            const charLevel = charObj.level || 1;
+            const charSubclass = charObj.subclass || '';
+
+            const clsKey = Object.keys(sandboxClasses).find(k => k.toLowerCase() === charClass.toLowerCase());
+            if (!clsKey) {
+                return charObj.class_features_srd || [];
+            }
+
+            const clsObj = sandboxClasses[clsKey];
+            if (clsObj && Array.isArray(clsObj.classFeatures)) {
+                clsObj.classFeatures.forEach((lvlFeats, idx) => {
+                    const level = idx + 1;
+                    if (level <= charLevel && Array.isArray(lvlFeats)) {
+                        lvlFeats.forEach(feat => {
+                            if (feat && feat.name && !feat.gainSubclassFeature) {
+                                features.push({
+                                    name: feat.name,
+                                    entries: feat.entries || [],
+                                    level: level,
+                                    isSubclass: false
+                                });
+                            }
+                        });
+                    }
+                });
+
+                if (charSubclass) {
+                    const subObj = sandboxSubclasses.find(sc => 
+                        sc.name.toLowerCase() === charSubclass.toLowerCase() &&
+                        sc.class && sc.class.name.toLowerCase() === charClass.toLowerCase()
+                    );
+                    if (subObj && Array.isArray(subObj.subclassFeatures)) {
+                        const levelsGained = getSubclassFeatureLevels(clsObj);
+                        subObj.subclassFeatures.forEach((featuresAtIdx, idx) => {
+                            const levelGained = levelsGained[idx];
+                            if (levelGained && levelGained <= charLevel) {
+                                if (Array.isArray(featuresAtIdx)) {
+                                    featuresAtIdx.forEach(f => {
+                                        if (f) {
+                                            features.push({
+                                                name: f.name || subObj.name,
+                                                entries: f.entries || (f.type === 'entries' ? f.entries : []),
+                                                level: levelGained,
+                                                isSubclass: true,
+                                                subclassName: subObj.name
+                                            });
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+
+            return features;
+        }
+
+        // Render Class & Subclass Features from SRD data if present on the character
+        function renderClassFeaturesSrdList() {
+            const section = document.getElementById('class-features-srd-section');
+            const container = document.getElementById('class-features-srd-container');
+            if (!section || !container) return;
+
+            let features = [];
+            if (Object.keys(sandboxClasses).length > 0) {
+                features = getDynamicClassFeatures(character);
+            } else {
+                features = character.class_features_srd || [];
+            }
+
+            if (features.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            container.innerHTML = '';
+
+            features.forEach(feat => {
+                const card = document.createElement('div');
+                card.className = 'detail-item-card';
+                card.style.background = 'rgba(255,255,255,0.02)';
+                card.style.border = '1px solid var(--border-iron)';
+                card.style.padding = '12px';
+                card.style.borderRadius = '6px';
+                card.style.marginBottom = '6px';
+
+                const badgeLabel = feat.level ? `Lvl ${feat.level} ${feat.isSubclass ? 'Subclass' : 'Class'}` : 'Feature';
+                const badgeColor = feat.isSubclass ? 'var(--arcane-violet)' : 'var(--gold-amber)';
+
+                let htmlDesc = '';
+                if (feat.entries) {
+                    htmlDesc = formatEntries(feat.entries);
+                } else if (feat.desc) {
+                    htmlDesc = formatEntries(feat.desc);
+                } else {
+                    htmlDesc = 'No description provided.';
+                }
+
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span style="font-family: 'Cinzel', serif; color: var(--gold-amber); font-size: 0.85rem; font-weight: bold;">${feat.name}</span>
+                        <span style="font-size:0.6rem; background:${badgeColor}22; color:${badgeColor}; border:1px solid ${badgeColor}44; padding:2px 6px; border-radius:10px; font-weight:bold; text-transform:uppercase;">${badgeLabel}</span>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; display:flex; flex-direction:column; gap:6px;">
+                        ${htmlDesc}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderSkillsAndSavesGrid() {
+            const grid = document.getElementById('saves-skills-compact-grid');
+            grid.innerHTML = '';
+
+            // Render Passives values in header
+            const passives = character.passives || { perception: 10, insight: 10, investigation: 10 };
+            document.getElementById('pp-sheet-val').innerText = passives.perception;
+            document.getElementById('pi-sheet-val').innerText = passives.insight;
+            document.getElementById('piv-sheet-val').innerText = passives.investigation || 10;
+
+            const skillsList = [
+                { name: "Athletics", stat: "str" },
+                { name: "Acrobatics", stat: "dex" },
+                { name: "Sleight of Hand", stat: "dex" },
+                { name: "Stealth", stat: "dex" },
+                { name: "Arcana", stat: "int" },
+                { name: "History", stat: "int" },
+                { name: "Investigation", stat: "int" },
+                { name: "Nature", stat: "int" },
+                { name: "Religion", stat: "int" },
+                { name: "Animal Handling", stat: "wis" },
+                { name: "Insight", stat: "wis" },
+                { name: "Medicine", stat: "wis" },
+                { name: "Perception", stat: "wis" },
+                { name: "Survival", stat: "wis" },
+                { name: "Deception", stat: "cha" },
+                { name: "Intimidation", stat: "cha" },
+                { name: "Performance", stat: "cha" },
+                { name: "Persuasion", stat: "cha" }
+            ];
+
+            skillsList.forEach(s => {
+                const statMod = character.ability_modifiers ? (character.ability_modifiers[s.stat] || 0) : 0;
+                let finalVal = statMod;
+                
+                // Add proficiency bonus if listed
+                const isProf = character.proficiencies && character.proficiencies.skills && character.proficiencies.skills.some(pk => pk.toLowerCase() === s.name.toLowerCase());
+                if (isProf) {
+                    const level = character.level || 1;
+                    const profBonus = Math.ceil(level / 4) + 1;
+                    finalVal += profBonus;
+                }
+
+                const displayStr = finalVal >= 0 ? `+${finalVal}` : `${finalVal}`;
+
+                const div = document.createElement('div');
+                div.className = 'skill-compact-row';
+                if (isProf) {
+                    div.style.borderColor = 'var(--arcane-violet)';
+                }
+                div.innerHTML = `
+                    <span style="${isProf ? 'color: var(--arcane-violet); font-weight:600;' : 'color: var(--text-muted);'}">${s.name}</span>
+                    <strong style="color:white;">${displayStr}</strong>
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        // TAB 3: SPELLBOOK MANAGER
+        function filterSpellbook(mode) {
+            currentSpellFilter = mode;
+            document.querySelectorAll('.spellbook-filters .filter-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            document.getElementById(`spell-filter-${mode}`).classList.add('active');
+            renderSpellsList();
+        }
+
+        function renderSpellsList() {
+            const container = document.getElementById('spells-main-list');
+            container.innerHTML = '';
+
+            let filteredList = [];
+            if (currentSpellFilter === 'all') {
+                filteredList = campaignSpells;
+            } else if (currentSpellFilter === 'known') {
+                filteredList = campaignSpells.filter(s => character.known_spells && character.known_spells.includes(s.name));
+            } else if (currentSpellFilter === 'prep') {
+                filteredList = campaignSpells.filter(s => character.prepared_spells && character.prepared_spells.includes(s.name));
+            }
+
+            const searchInput = document.getElementById('spell-search-input').value.toLowerCase().trim();
+            if (searchInput) {
+                filteredList = filteredList.filter(s => s.name.toLowerCase().includes(searchInput));
+            }
+
+            if (filteredList.length === 0) {
+                container.innerHTML = `<div style="text-align:center; font-size:0.8rem; color:var(--text-muted); padding:30px; font-style:italic;">No matching spells found in library...</div>`;
+                return;
+            }
+
+            filteredList.forEach(spell => {
+                const isKnown = character.known_spells && character.known_spells.includes(spell.name);
+                const isPrep = character.prepared_spells && character.prepared_spells.includes(spell.name);
+
+                const div = document.createElement('div');
+                div.className = 'spell-row-item';
+                div.onclick = () => openSpellDetailModal(spell);
+
+                let badgeHtml = '';
+                if (isKnown) {
+                    badgeHtml += `<button class="badge-prep ${isPrep ? 'prepared' : ''}" onclick="event.stopPropagation(); togglePrepareSpell('${spell.name}')">${isPrep ? 'Prepared' : 'Known'}</button>`;
+                    badgeHtml += `<button style="background:transparent; color:var(--crimson-rage); font-size:0.6rem; font-weight:bold; margin-left:8px; border:none;" onclick="event.stopPropagation(); unlearnSpell('${spell.name}')"></button>`;
+                } else {
+                    badgeHtml += `<button class="btn-learn" onclick="event.stopPropagation(); learnSpell('${spell.name}')">Learn</button>`;
+                }
+
+                div.innerHTML = `
+                    <div class="spell-item-info">
+                        <span class="spell-name-title">${spell.name}</span>
+                        <span class="spell-meta-desc">Lvl ${spell.level} ${spell.school} | Time: ${spell.casting_time || '1 action'}</span>
+                    </div>
+                    <div class="spell-item-actions">
+                        ${badgeHtml}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function searchSpellsInList() {
+            renderSpellsList();
+        }
+
+        function learnSpell(spellName) {
+            if (!character.known_spells) character.known_spells = [];
+            if (!character.known_spells.includes(spellName)) {
+                character.known_spells.push(spellName);
+            }
+            renderSpellsList();
+            queueUpdateAndSync();
+        }
+
+        function unlearnSpell(spellName) {
+            if (character.known_spells) {
+                character.known_spells = character.known_spells.filter(n => n !== spellName);
+            }
+            if (character.prepared_spells) {
+                character.prepared_spells = character.prepared_spells.filter(n => n !== spellName);
+            }
+            renderSpellsList();
+            queueUpdateAndSync();
+        }
+
+        function togglePrepareSpell(spellName) {
+            if (!character.prepared_spells) character.prepared_spells = [];
+            const idx = character.prepared_spells.indexOf(spellName);
+            if (idx === -1) {
+                character.prepared_spells.push(spellName);
+            } else {
+                character.prepared_spells.splice(idx, 1);
+            }
+            renderSpellsList();
+            queueUpdateAndSync();
+        }
+
+        // Spell Detail pop-up details
+        function openSpellDetailModal(spell) {
+            document.getElementById('modal-spell-title').innerText = spell.name;
+            
+            let descriptionHTML = spell.description || 'No detailed description available.';
+            // Parse common simple markdown headers
+            descriptionHTML = descriptionHTML
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
+
+            document.getElementById('modal-spell-body').innerHTML = `
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; border-bottom:1px solid var(--border-iron); padding-bottom:8px; margin-bottom:10px; font-size:0.75rem; color:var(--text-muted);">
+                    <div><strong>Level:</strong> <span style="color:white;">${spell.level}</span></div>
+                    <div><strong>School:</strong> <span style="color:white;">${spell.school}</span></div>
+                    <div><strong>Casting Time:</strong> <span style="color:white;">${spell.casting_time || '1 action'}</span></div>
+                    <div><strong>Range:</strong> <span style="color:white;">${spell.range || 'Self'}</span></div>
+                    <div><strong>Components:</strong> <span style="color:white;">${spell.components || 'V, S'}</span></div>
+                    <div><strong>Duration:</strong> <span style="color:white;">${spell.duration || 'Instantaneous'}</span></div>
+                </div>
+                <div class="spell-markdown-description-panel" style="font-size:0.8rem; line-height:1.4;">
+                    ${descriptionHTML}
+                </div>
+            `;
+            document.getElementById('spell-detail-modal').style.display = 'flex';
+        }
+
+        function closeSpellDetailModal(e) {
+            if (!e || e.target.id === 'spell-detail-modal' || e.target.className === 'btn-close-modal') {
+                document.getElementById('spell-detail-modal').style.display = 'none';
+            }
+        }
+
+        // TAB 4: EQUIPMENT Recalculations
+        function equipArmorOnSheet() {
+            const select = document.getElementById('equip-armor-select');
+            character.equipped_armor = select.value;
+            character = window.characterEngine.calculate(character);
+            renderCharacterSheet();
+            queueUpdateAndSync();
+        }
+
+        function toggleShieldOnSheet() {
+            const checkbox = document.getElementById('equip-shield-checkbox');
+            character.equipped_shield = checkbox.checked;
+            character = window.characterEngine.calculate(character);
+            renderCharacterSheet();
+            queueUpdateAndSync();
+        }
+
+        function populateBazaarDropdown() {
+            const select = document.getElementById('bazaar-magic-item-dropdown');
+            select.innerHTML = '<option value="">-- Choose Item from Bazaar --</option>';
+            campaignMagicItems.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.name;
+                opt.innerText = `[${item.rarity || 'None'}] ${item.name} - ${formatGpToDisplay(item.price)}`;
+                select.appendChild(opt);
+            });
+        }
+
+        function attuneItemFromBazaar() {
+            const dropdown = document.getElementById('bazaar-magic-item-dropdown');
+            const itemName = dropdown.value;
+            if (!itemName) return;
+
+            if (!character.magic_items) character.magic_items = [];
+            if (character.magic_items.includes(itemName)) {
+                alert("You are already attuned / equipped with this item!");
+                return;
+            }
+
+            character.magic_items.push(itemName);
+            dropdown.value = '';
+
+            // Auto Recalculate Base Stats using character engine!
+            character = window.characterEngine.calculate(character);
+            renderCharacterSheet();
+            queueUpdateAndSync();
+        }
+
+        function unattuneItemFromSheet(itemName) {
+            if (character.magic_items) {
+                character.magic_items = character.magic_items.filter(i => i !== itemName);
+            }
+            character = window.characterEngine.calculate(character);
+            renderCharacterSheet();
+            queueUpdateAndSync();
+        }
+
+        function renderAttunedItems() {
+            const container = document.getElementById('attuned-items-container');
+            container.innerHTML = '';
+
+            const items = character.magic_items || [];
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.style = "display:flex; justify-content:space-between; align-items:center; background:#0d0d12; border:1px solid var(--gold-amber); padding:8px 12px; border-radius:6px; font-size:0.8rem;";
+                div.innerHTML = `
+                    <span style="color:var(--gold-amber); font-weight:600;">[Attuned] ${item}</span>
+                    <button style="color:var(--crimson-rage); background:transparent; font-weight:bold; cursor:pointer;" onclick="unattuneItemFromSheet('${item}')">Unattune</button>
+                `;
+                container.appendChild(div);
+            });
+
+            if (items.length === 0) {
+                container.innerHTML = `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic; text-align:center; display:block; padding:8px;">No attuned magic items active...</span>`;
+            }
+        }
+
+        function addCustomInventoryItemOnSheet() {
+            const input = document.getElementById('custom-inv-input');
+            const val = input.value.trim();
+            if (!val) return;
+
+            if (!character.inventory) character.inventory = [];
+            character.inventory.push(val);
+            input.value = '';
+            renderCustomInventoryList();
+            queueUpdateAndSync();
+        }
+
+        function removeCustomInventoryItemOnSheet(idx) {
+            if (character.inventory) {
+                character.inventory.splice(idx, 1);
+            }
+            renderCustomInventoryList();
+            queueUpdateAndSync();
+        }
+
+        function renderCustomInventoryList() {
+            const container = document.getElementById('custom-inventory-list');
+            container.innerHTML = '';
+
+            const list = character.inventory || [];
+            list.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.style = "display:flex; justify-content:space-between; align-items:center; background:#0d0d12; border:1px solid var(--border-iron); padding:6px 10px; border-radius:4px; font-size:0.8rem;";
+                div.innerHTML = `
+                    <span style="color:var(--text-main);">${item}</span>
+                    <button style="color:var(--crimson-rage); background:transparent; font-weight:bold; cursor:pointer;" onclick="removeCustomInventoryItemOnSheet(${idx})"></button>
+                `;
+                container.appendChild(div);
+            });
+
+            if (list.length === 0) {
+                container.innerHTML = `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic; text-align:center; display:block; padding:8px;">No custom backpack gear carried...</span>`;
+            }
+        }
+
+        // TAB 5: DETAILS ACHIEVEMENTS & SECRETS
+        function renderTrophyCaseListSheet(badges) {
+            const container = document.getElementById('trophy-case-grid-sheet');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            const allBadges = {
+                first_blood: { name: "First Blood", desc: "Scored first kill of the campaign!", rarity: "Common" },
+                nat_20_club: { name: "Nat 20 Club", desc: "Rolled a nat 20 in a key moment!", rarity: "Common" },
+                down_but_not_out: { name: "Down But Not Out", desc: "Stabilized from death saves!", rarity: "Uncommon" },
+                dragon_slayer: { name: "Dragon Slayer", desc: "Helped slay an ancient wyrm!", rarity: "Legendary" },
+                silver_tongue: { name: "Silver Tongue", desc: "Talked out of lethal combat!", rarity: "Rare" },
+                leeroy_jenkins: { name: "Leeroy Jenkins", desc: "Charged in alone and survived!", rarity: "Epic" }
+            };
+            
+            badges.forEach(bId => {
+                const b = allBadges[bId];
+                if (b) {
+                    const card = document.createElement('div');
+                    card.style = "background:#0d0d12; border:1px solid var(--gold-amber); border-radius:4px; padding:8px; font-size:0.75rem;";
+                    card.innerHTML = `
+                        <strong style="color:var(--gold-amber); display:block;">${b.name}</strong>
+                        <span style="color:var(--text-muted); font-size:0.65rem; display:block; margin-top:2px;">${b.desc}</span>
+                        <span style="color:#a78bfa; font-size:0.6rem; font-weight:bold; text-transform:uppercase; display:block; margin-top:4px;">${b.rarity}</span>
+                    `;
+                    container.appendChild(card);
+                }
+            });
+            
+            if (badges.length === 0) {
+                container.innerHTML = `<div style="grid-column:1/3; text-align:center; font-size:0.75rem; color:var(--text-muted); font-style:italic; padding:10px;">No trophies earned yet. Keep adventuring!</div>`;
+            }
+        }
+
+        function saveWishlistOnSheet() {
+            const val = document.getElementById('wishlist-text-area-sheet').value.trim();
+            const lines = val.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            
+            character.wishlist = lines;
+            window.wishlistEditedOnSheet = true;
+            queueUpdateAndSync();
+
+            // Notify DM in real-time via WebSocket
+            if (socket && socket.connected) {
+                socket.emit('whisper-to-dm', {
+                    characterId: charId,
+                    characterName: character.name || "A player",
+                    message: `updated their Secret Adventure Wish List: "${val}"`
+                });
+            }
+
+            alert("Secret Wish List saved & whispered to the DM Dashboard!");
+        }
+
+        // LEVEL UP FEATURE
+        function performLevelUp() {
+            character.level = (parseInt(character.level) || 1) + 1;
+            
+            // Set Instant Level Up + DM audit tags
+            character.level_up_audit = true;
+            character.unapproved_level = character.level;
+            
+            if (character.classes && character.classes.length > 0) {
+                character.classes[0].level = character.level;
+            } else {
+                character.classes = [{ class: character.class || 'Fighter', level: character.level }];
+            }
+
+            // Recalculate derived slots & HP using the engine!
+            character = window.characterEngine.calculate(character);
+            renderCharacterSheet();
+            queueUpdateAndSync();
+
+            alert(`LEVEL UP! You are now Level ${character.level}. The DM dashboard has been notified to audit your sheet.`);
+        }
+
+        // PWA INTERACTIVE MODAL AND QR CODE GENERATION
+        function openShortcutModal() {
+            const loc = window.location;
+            const fullUrl = `${loc.protocol}//${loc.host}/sheet/${charId}`;
+            
+            // Use standard Google Charts QR code API
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(fullUrl)}`;
+            document.getElementById('pwa-qr-image').src = qrUrl;
+
+            document.getElementById('pwa-shortcut-modal').style.display = 'flex';
+        }
+
+        function closeShortcutModal(e) {
+            if (!e || e.target.id === 'pwa-shortcut-modal' || e.target.className === 'btn-close-modal') {
+                document.getElementById('pwa-shortcut-modal').style.display = 'none';
+            }
+        }
+
+        // Styling Custom Theme selectors
+        function selectThemePreset(themeName) {
+            character.theme = themeName;
+            document.body.className = `theme-${themeName}`;
+            
+            document.querySelectorAll('.theme-preset-circle').forEach(btn => {
+                if (btn.id === `theme-btn-${themeName}`) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            queueUpdateAndSync();
+        }
+
+        // Sandbox What-If Simulator on details
+        let sandboxCustomStats = null;
+
+        function initSandboxDropdowns() {
+            const select = document.getElementById('sandbox-level-select');
+            if (select && select.options.length === 0) {
+                for (let i = 1; i <= 20; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.innerText = `Level ${i}`;
+                    select.appendChild(opt);
+                }
+                select.value = character.level || 1;
+            }
+
+            // Populate current stats comparison initially
+            document.getElementById('sb-ac-current').innerText = character.ac || 10;
+            document.getElementById('sb-maxhp-current').innerText = character.hp_max || 30;
+            document.getElementById('sb-init-current').innerText = (character.initiative_bonus >= 0 ? '+' : '') + (character.initiative_bonus || 0);
+            document.getElementById('sb-dc-current').innerText = character.spell_save_dc || 10;
+
+            // Generate Sandbox custom abilities adjuster grid
+            const grid = document.getElementById('sandbox-abilities-scores-grid');
+            if (grid && grid.innerHTML.trim() === '') {
+                const stats = character.stats || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
+                if (!sandboxCustomStats) {
+                    sandboxCustomStats = JSON.parse(JSON.stringify(stats));
+                }
+                const keys = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+                grid.innerHTML = '';
+                keys.forEach(k => {
+                    const div = document.createElement('div');
+                    div.style = "background:#0d0d12; border:1px solid var(--border-iron); border-radius:6px; padding:6px 10px; display:flex; justify-content:space-between; align-items:center;";
+                    div.innerHTML = `
+                        <strong style="text-transform:uppercase; font-size:0.75rem; color:#a78bfa;">${k}</strong>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <button class="btn-edit-score" onclick="adjustSandboxStat('${k}', -1)" style="width:20px; height:20px; font-size:0.7rem;">-</button>
+                            <span id="sb-stat-${k}" style="font-size:0.8rem; font-weight:bold; color:white;">${sandboxCustomStats[k]}</span>
+                            <button class="btn-edit-score" onclick="adjustSandboxStat('${k}', 1)" style="width:20px; height:20px; font-size:0.7rem;">+</button>
+                        </div>
+                    `;
+                    grid.appendChild(div);
+                });
+            }
+        }
+
+        function adjustSandboxStat(stat, delta) {
+            if (!sandboxCustomStats) {
+                sandboxCustomStats = JSON.parse(JSON.stringify(character.stats || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 }));
+            }
+            sandboxCustomStats[stat] = Math.max(1, Math.min(30, (sandboxCustomStats[stat] || 10) + delta));
+            const displayEl = document.getElementById(`sb-stat-${stat}`);
+            if (displayEl) displayEl.innerText = sandboxCustomStats[stat];
+            calculateSandboxDetails();
+        }
+
+        // Global reference variables for class simulation
+        let sandboxClasses = {};
+        let sandboxSubclasses = [];
+
+        async function fetchSandboxSrdData() {
+            try {
+                const classRes = await fetch('/api/classes');
+                sandboxClasses = await classRes.json();
+
+                const subRes = await fetch('/api/subclasses');
+                sandboxSubclasses = await subRes.json();
+
+                populateSandboxClassDropdown();
+            } catch (err) {
+                console.error("Failed to load SRD databases:", err);
+            }
+        }
+
+        function populateSandboxClassDropdown() {
+            const clsSelect = document.getElementById('sandbox-class-select');
+            if (!clsSelect) return;
+
+            clsSelect.innerHTML = '';
+            
+            // Add current class as default
+            const curClass = character.class || 'Fighter';
+            const optCurrent = document.createElement('option');
+            optCurrent.value = curClass;
+            optCurrent.innerText = `Current (${curClass})`;
+            clsSelect.appendChild(optCurrent);
+
+            Object.keys(sandboxClasses).forEach(clsName => {
+                if (clsName !== curClass) {
+                    const opt = document.createElement('option');
+                    opt.value = clsName;
+                    opt.innerText = clsName;
+                    clsSelect.appendChild(opt);
+                }
+            });
+
+            onSandboxClassChange();
+        }
+
+        function onSandboxClassChange() {
+            const clsSelect = document.getElementById('sandbox-class-select');
+            const subSelect = document.getElementById('sandbox-subclass-select');
+            if (!clsSelect || !subSelect) return;
+
+            const selectedClass = clsSelect.value;
+            subSelect.innerHTML = '';
+
+            const optNone = document.createElement('option');
+            optNone.value = '';
+            optNone.innerText = '-- None --';
+            subSelect.appendChild(optNone);
+
+            let filtered = sandboxSubclasses.filter(sc => {
+                const cName = sc.class && sc.class.name;
+                return cName && cName.toLowerCase() === selectedClass.toLowerCase();
+            });
+
+            // Filter standard core subclasses
+            filtered = filtered.filter(sc => {
+                if (!sc || !sc.name) return false;
+                const name = sc.name;
+                const source = sc.source || '';
+                if (name.includes('UA') || name.includes('(UA)') || name.includes('Playtest') || name.includes('Sidekick')) {
+                    return false;
+                }
+                if (source.startsWith('UA') || source.includes('Modern') || source.includes('Mystic')) {
+                    return false;
+                }
+                return true;
+            });
+
+            filtered.forEach(sc => {
+                const opt = document.createElement('option');
+                opt.value = sc.name;
+                opt.innerText = sc.name;
+                subSelect.appendChild(opt);
+            });
+
+            calculateSandboxDetails();
+        }
+
+        function calculateSandboxDetails() {
+            if (!character || !character.id) return;
+
+            const sbLvl = parseInt(document.getElementById('sandbox-level-select').value) || character.level;
+            const sbFeat = document.getElementById('sandbox-feat-select').value;
+            const sbItem = document.getElementById('sandbox-item-select').value;
+            const sbCustomAc = parseInt(document.getElementById('sandbox-custom-ac-input').value) || null;
+
+            const sbClassSelect = document.getElementById('sandbox-class-select');
+            const sbSubclassSelect = document.getElementById('sandbox-subclass-select');
+            const sbClass = sbClassSelect ? sbClassSelect.value : (character.class || 'Fighter');
+            const sbSubclass = sbSubclassSelect ? sbSubclassSelect.value : '';
+
+            // Mock simulate calculations
+            const mock = JSON.parse(JSON.stringify(character));
+            mock.level = sbLvl;
+            mock.class = sbClass;
+            mock.subclass = sbSubclass;
+
+            if (mock.classes && mock.classes.length > 0) {
+                mock.classes[0].class = sbClass;
+                mock.classes[0].level = sbLvl;
+            } else {
+                mock.classes = [{ class: sbClass, level: sbLvl }];
+            }
+
+            if (sbFeat) {
+                mock.feats = mock.feats || [];
+                if (!mock.feats.includes(sbFeat)) {
+                    mock.feats.push(sbFeat);
+                }
+            }
+
+            if (sandboxCustomStats) {
+                mock.stats = JSON.parse(JSON.stringify(sandboxCustomStats));
+            }
+
+            if (sbItem) {
+                mock.magic_items = mock.magic_items || [];
+                if (!mock.magic_items.includes(sbItem)) {
+                    mock.magic_items.push(sbItem);
+                }
+            }
+
+            // Apply custom AC mock simulation override
+            let calculated = window.characterEngine.calculate(mock);
+            if (sbCustomAc !== null && !isNaN(sbCustomAc)) {
+                calculated.ac = sbCustomAc;
+                if (mock.equipped_shield) {
+                    calculated.ac += 2;
+                }
+            }
+
+            document.getElementById('sb-maxhp-val').innerText = calculated.hp_max;
+            document.getElementById('sb-ac-val').innerText = calculated.ac;
+            document.getElementById('sb-init-val').innerText = (calculated.initiative_bonus >= 0 ? '+' : '') + calculated.initiative_bonus;
+            document.getElementById('sb-dc-val').innerText = calculated.spell_save_dc;
+
+            // Highlight green if simulated > current, red if less, gray if equal
+            compareAndStyle('sb-ac-val', character.ac || 10, calculated.ac);
+            compareAndStyle('sb-maxhp-val', character.hp_max || 30, calculated.hp_max);
+            compareAndStyle('sb-init-val', character.initiative_bonus || 0, calculated.initiative_bonus, true);
+            compareAndStyle('sb-dc-val', character.spell_save_dc || 10, calculated.spell_save_dc);
+        }
+
+        function compareAndStyle(elementId, current, simulated, formatInit = false) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            if (simulated > current) {
+                el.style.color = 'var(--success-green)';
+            } else if (simulated < current) {
+                el.style.color = 'var(--crimson-rage)';
+            } else {
+                el.style.color = 'var(--gold-amber)';
+            }
+        }
+
+        // Sync with local db and push updates
+        async function queueUpdateAndSync() {
+            const prevChar = await window.offlineStore.get('characters', charId);
+            
+            // Auto Recalculate
+            character = window.characterEngine.calculate(character);
+
+            // Record changes
+            const trackedFields = [
+                'hp_current', 'hp_temp', 'hp_max', 'ac', 'conditions', 
+                'inventory', 'death_saves', 'spell_slots_current', 'known_spells', 
+                'prepared_spells', 'equipped_armor', 'equipped_shield', 'theme', 
+                'stats', 'level', 'level_up_audit', 'unapproved_level', 'exhaustion', 
+                'wishlist', 'magic_items'
+            ];
+
+            if (prevChar) {
+                for (const field of trackedFields) {
+                    const oldVal = prevChar[field];
+                    const newVal = character[field];
+
+                    const stringifyIfObject = (val) => (typeof val === 'object' && val !== null) ? JSON.stringify(val) : val;
+
+                    if (stringifyIfObject(oldVal) !== stringifyIfObject(newVal)) {
+                        await window.offlineStore.addPendingChange({
+                            charId: charId,
+                            field: field,
+                            oldValue: oldVal,
+                            newValue: newVal,
+                            timestamp: Date.now()
+                        });
+                    }
+                }
+            }
+
+            // Save to IndexedDB
+            await window.offlineStore.put('characters', character);
+
+            // Real-time Emit
+            if (socket && socket.connected) {
+                console.log("[Socket] Sending real-time update:", character);
+                socket.emit('player-update', {
+                    charId: charId,
+                    updatedData: character
+                });
+            }
+
+            // Check sync status
+            if (window.syncEngine) {
+                await window.syncEngine.checkAndSync();
+            }
+        }
+
+        async function fetchInitialCharacterData() {
+            // Initialize Offline Database
+            await window.offlineStore.init();
+
+            // Load Campaign Spells reference cache from IndexedDB
+            campaignSpells = await window.offlineStore.getAll('spells') || [];
+            if (campaignSpells.length === 0) {
+                console.warn("Spells database empty. Syncing from live server...");
+            }
+
+            // Fetch magic items library (offline-resilient)
+            if (typeof fetchBazaarAndPopulate === 'function') {
+                try { await fetchBazaarAndPopulate(); } catch(e) { console.warn(e); }
+            }
+
+            // Fetch Classes/Subclasses for Sandbox dropdowns
+            if (typeof fetchSandboxSrdData === 'function') {
+                try { await fetchSandboxSrdData(); } catch(e) { console.warn(e); }
+            }
+
+            // Check if GDrive client should init
+            if (window.gdriveClient) {
+                // Initialize Google Drive sync suite
+                const rootFolderId = "YOUR_SHARED_ROOT_FOLDER_ID_PLACEHOLDER";
+                const clientId = "YOUR_OAUTH_CLIENT_ID_PLACEHOLDER.apps.googleusercontent.com";
+                
+                try {
+                    const isAuthed = await window.gdriveClient.init(clientId, rootFolderId);
+                    window.syncEngineV2 = new BetweenSessionSync(window.offlineStore, window.gdriveClient, charId);
+                    if (isAuthed) {
+                        window.syncEngineV2.startPeriodicSync();
+                    }
+                } catch(e) {
+                    console.error("GDrive client initialization failed:", e);
+                }
+            }
+
+            // Bind socket reconnection handlers
+            connectSocket();
+
+            let matched = await window.offlineStore.get('characters', charId);
+            if (matched) {
+                character = matched;
+                initializeCharacterFields();
+                renderCharacterSheet();
+            } else {
+                console.warn("Character details not found inside IndexedDB. Downloading from live server...");
+                try {
+                    const res = await fetch(`/api/party`);
+                    if (res.ok) {
+                        const fullParty = await res.json();
+                        const found = fullParty.find(c => c.id === charId);
+                        if (found) {
+                            character = found;
+                            initializeCharacterFields();
+                            renderCharacterSheet();
+                            // Cache locally
+                            await window.offlineStore.put('characters', character);
+                        } else {
+                            showBanner('offline', "Connect to DM WiFi for initial setup.");
+                        }
+                    } else {
+                        showBanner('offline', "Connect to DM WiFi for initial setup.");
+                    }
+                } catch (err) {
+                    showBanner('offline', "Connect to DM WiFi for initial setup.");
+                }
+            }
+
+            // Auto Present due sealed envelopes on boot
+            if (typeof triggerCampfireEnvelopeOpen === 'function') {
+                try {
+                    const due = await window.offlineStore.getDueEnvelopes();
+                    if (due.length > 0) {
+                        triggerCampfireEnvelopeOpen(due[0].id);
+                    }
+                } catch (e) {
+                    console.warn(e);
+                }
+            }
+        }
+
+        // --- LEVEL-UP PREVIEW PROXIMITY & WORKSPACE HANDLERS ---
+            function checkLevelUpProximity() {
+                const banner = document.getElementById('levelup-preview-banner');
+                if (!banner || !character || !character.level) return;
+
+                const thresholds = [
+                    0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000,
+                    100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000
+                ];
+                const currentLvl = character.level;
+                if (currentLvl >= 20) {
+                    banner.style.display = 'none';
+                    return;
+                }
+                const nextThreshold = thresholds[currentLvl];
+                const currentXp = character.xp || 0;
+                
+                const near = (nextThreshold - currentXp <= 500 && nextThreshold - currentXp > 0) || character.levelUpPending === true;
+                if (near) {
+                    banner.style.display = 'block';
+                } else {
+                    banner.style.display = 'none';
+                }
+            }
+            window.checkLevelUpProximity = checkLevelUpProximity;
+
+            window.openSandboxLevelUpPreview = function() {
+                switchActiveTab('sandbox');
+                const card = document.getElementById('levelup-guided-card');
+                if (card) card.style.display = 'block';
+
+                const select = document.getElementById('sandbox-level-select');
+                if (select) {
+                    select.value = character.level + 1;
+                    calculateSandboxDetails();
+                }
+
+                suggestAverageHP();
+                populateLevelUpASISelector();
+                populateLevelUpSpells();
+            };
+
+            window.suggestAverageHP = function() {
+                const hpInput = document.getElementById('levelup-hp-input');
+                if (!hpInput) return;
+
+                const cls = character.class || 'Fighter';
+                let die = 8;
+                const lower = cls.toLowerCase();
+                if (lower.includes('wizard') || lower.includes('sorcerer')) die = 6;
+                else if (lower.includes('cleric') || lower.includes('bard') || lower.includes('druid') || lower.includes('monk') || lower.includes('rogue') || lower.includes('warlock')) die = 8;
+                else if (lower.includes('fighter') || lower.includes('paladin') || lower.includes('ranger')) die = 10;
+                else if (lower.includes('barbarian')) die = 12;
+
+                const avg = (die / 2) + 1;
+                hpInput.value = avg;
+            };
+
+            window.populateLevelUpASISelector = function() {
+                const grid = document.getElementById('levelup-asi-grid');
+                if (!grid) return;
+
+                grid.innerHTML = '';
+                const stats = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+                stats.forEach(stat => {
+                    const box = document.createElement('div');
+                    box.style.cssText = 'background: #0d0d12; border: 1px solid var(--border-iron); border-radius: 4px; padding: 6px; text-align: center; display:flex; flex-direction:column; gap:4px;';
+                    
+                    box.innerHTML = `
+                        <span style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; font-weight:bold;">${stat.toUpperCase()}</span>
+                        <strong style="color:white; font-size:0.85rem;">${character.stats ? character.stats[stat] || 10 : 10}</strong>
+                        <select class="equip-dropdown" id="asi-select-${stat}" style="padding: 2px; font-size: 0.7rem; height: 24px;" onchange="calculateAsiSum()">
+                            <option value="0">+0</option>
+                            <option value="1">+1</option>
+                            <option value="2">+2</option>
+                        </select>
+                    `;
+                    grid.appendChild(box);
+                });
+            };
+
+            window.calculateAsiSum = function() {
+                let total = 0;
+                const stats = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+                stats.forEach(s => {
+                    total += parseInt(document.getElementById(`asi-select-${s}`).value) || 0;
+                });
+
+                if (total > 2) {
+                    alert("Core Stat Increases (ASI) are capped at a maximum of +2 total points!");
+                    if (event && event.target) event.target.value = "0";
+                }
+            };
+
+            window.populateLevelUpSpells = function() {
+                const container = document.getElementById('levelup-spells-container');
+                if (!container) return;
+
+                container.innerHTML = '';
+                const lowerClass = (character.class || 'Bard').toLowerCase();
+                const relevantSpells = campaignSpells.filter(sp => {
+                    const clsList = sp.classes ? sp.classes.toLowerCase() : '';
+                    return clsList.includes(lowerClass);
+                });
+
+                if (relevantSpells.length === 0) {
+                    container.innerHTML = `<span style="font-size:0.7rem; color:var(--text-muted); font-style:italic;">No spell additions available for this class.</span>`;
+                    return;
+                }
+
+                relevantSpells.forEach(sp => {
+                    const row = document.createElement('label');
+                    row.style.cssText = 'display:flex; align-items:center; gap:6px; font-size:0.75rem; color:white; cursor:pointer; margin-bottom: 2px;';
+                    row.innerHTML = `
+                        <input type="checkbox" name="levelup-sp" value="${sp.name}" style="accent-color: var(--arcane-violet);">
+                        <span>${sp.name}</span>
+                    `;
+                    container.appendChild(row);
+                });
+            };
+
+            window.submitLevelUpProposal = async function() {
+                const hpIncrease = parseInt(document.getElementById('levelup-hp-input').value) || 0;
+                if (hpIncrease <= 0) {
+                    alert("Please specify a valid HP increase for leveling up!");
+                    return;
+                }
+
+                const chosenFeat = document.getElementById('levelup-feat-select').value;
+                const chosenAsi = {};
+                let asiCount = 0;
+                const stats = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+                stats.forEach(s => {
+                    const val = parseInt(document.getElementById(`asi-select-${s}`).value) || 0;
+                    if (val > 0) {
+                        chosenAsi[s] = val;
+                        asiCount += val;
+                    }
+                });
+
+                if (chosenFeat && asiCount > 0) {
+                    alert("Rules Violation: You cannot take BOTH a Feat and an ASI (Ability Score Increase) for a single level up! Please choose one.");
+                    return;
+                }
+
+                if (asiCount > 2) {
+                    alert("Core Stat Increases (ASI) are capped at +2 total points!");
+                    return;
+                }
+
+                const selectedSpells = [];
+                const checkboxes = document.querySelectorAll('input[name="levelup-sp"]:checked');
+                checkboxes.forEach(cb => selectedSpells.push(cb.value));
+
+                const proposal = {
+                    charId: character.id,
+                    name: character.name,
+                    choices: {
+                        newLevel: character.level + 1,
+                        hpIncrease,
+                        chosenFeat,
+                        chosenAsi,
+                        selectedSpells
+                    }
+                };
+
+                try {
+                    const res = await fetch('/api/level-up/submit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(proposal)
+                    });
+                    if (res.ok) {
+                        alert("Your level-up choices have been submitted for DM approval!");
+                        document.getElementById('levelup-guided-card').style.display = 'none';
+                    }
+                } catch(e) {
+                    alert("Local sandbox proposal saved. Changes will sync next time you are online at the table.");
+                    await window.offlineStore.addPendingChange({
+                        charId: charId,
+                        field: 'level_up_proposal',
+                        newValue: proposal,
+                        timestamp: Date.now()
+                    });
+                }
+            };
+
+            // --- GRAND BAZAAR SPARKLINE PRICE TREND HANDLERS ---
+            window.fetchBazaarAndPopulate = async function() {
+                try {
+                    const bazaarRes = await fetch('/api/bazaar');
+                    if (bazaarRes.ok) {
+                        campaignMagicItems = await bazaarRes.json();
+                        campaignMagicItems.sort((a,b) => a.name.localeCompare(b.name));
+                        populateBazaarDropdown();
+                        renderBazaarTrends();
+                    }
+                } catch (e) {
+                    console.log("[IndexedDB fallback] Offline - loaded magic items from local storage if any exist");
+                }
+            };
+
+            window.renderBazaarTrends = function() {
+                const trendsContainer = document.getElementById('bazaar-trends-list-container');
+                if (!trendsContainer) return;
+
+                trendsContainer.innerHTML = '';
+                campaignMagicItems.slice(0, 10).forEach((item, index) => { // show top 10 trends for a beautiful compact view
+                    const row = document.createElement('div');
+                    row.style.cssText = 'background: #0d0d12; border: 1px solid var(--border-iron); border-radius: 4px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 0.75rem;';
+                    
+                    const canvasId = `sparkline-player-${index}`;
+                    row.innerHTML = `
+                        <div style="flex: 1.2;">
+                            <div style="font-weight: bold; color: white;">${item.name}</div>
+                            <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">${item.rarity}</div>
+                        </div>
+                        <canvas id="${canvasId}" width="80" height="22" style="background: rgba(255,255,255,0.01); border-radius: 2px;"></canvas>
+                        <div style="text-align: right; font-weight: bold; color: #fbbf24; font-family: 'Cinzel', serif;">
+                            ${formatGpToDisplay(item.price)}
+                        </div>
+                    `;
+                    trendsContainer.appendChild(row);
+
+                    // Draw Sparkline Graph!
+                    setTimeout(() => {
+                        if (window.drawSparkline && item.priceTrend) {
+                            window.drawSparkline(canvasId, item.priceTrend);
+                        }
+                    }, 50);
+                });
+            };
+
+            window.drawSparkline = function(canvasId, dataPoints) {
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width;
+                const h = canvas.height;
+
+                ctx.clearRect(0, 0, w, h);
+                if (!dataPoints || dataPoints.length < 2) return;
+
+                const min = Math.min(...dataPoints);
+                const max = Math.max(...dataPoints);
+                const range = (max - min) === 0 ? 1 : (max - min);
+
+                ctx.beginPath();
+                ctx.lineWidth = 1.3;
+                
+                const grad = ctx.createLinearGradient(0, 0, w, 0);
+                grad.addColorStop(0, '#a78bfa');
+                grad.addColorStop(1, '#ec4899');
+                ctx.strokeStyle = grad;
+
+                for (let i = 0; i < dataPoints.length; i++) {
+                    const x = (i / (dataPoints.length - 1)) * w;
+                    const y = h - ((dataPoints[i] - min) / range) * h * 0.7 - (h * 0.15);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+
+                const lastX = w;
+                const lastY = h - ((dataPoints[dataPoints.length - 1] - min) / range) * h * 0.7 - (h * 0.15);
+                ctx.fillStyle = '#10b981';
+                ctx.beginPath();
+                ctx.arc(lastX - 2, lastY, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+            };
+
+        // --- CLASS TABLE DETAILS MODAL ---
+        window.openClassTableModal = function() {
+            const charClass = character.class || 'Fighter';
+            const clsKey = Object.keys(sandboxClasses).find(k => k.toLowerCase() === charClass.toLowerCase());
+            if (!clsKey) {
+                alert("Class progression table not available for " + charClass);
+                return;
+            }
+
+            const clsObj = sandboxClasses[clsKey];
+            document.getElementById('class-table-title').innerText = `${clsKey} Progression Table`;
+            
+            let html = '';
+            if (Array.isArray(clsObj.classTableGroups)) {
+                clsObj.classTableGroups.forEach(group => {
+                    if (group.title) {
+                        html += `<h4 style="font-family:'Cinzel', serif; color:var(--gold-amber); margin-top:15px; margin-bottom:5px; font-size:0.85rem;">${group.title}</h4>`;
+                    }
+                    html += `<table class="srd-table" style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:0.75rem; border:1px solid var(--border-iron);">`;
+                    
+                    // Header
+                    html += `<thead style="background:rgba(255,255,255,0.02);"><tr><th style="border:1px solid var(--border-iron); padding:6px; text-align:center;">Level</th>`;
+                    if (Array.isArray(group.colLabels)) {
+                        group.colLabels.forEach(lbl => {
+                            html += `<th style="border:1px solid var(--border-iron); padding:6px; text-align:center;">${cleanMarkdown(lbl)}</th>`;
+                        });
+                    }
+                    html += `</tr></thead><tbody>`;
+
+                    // Rows
+                    if (Array.isArray(group.rows)) {
+                        group.rows.forEach((row, rIdx) => {
+                            // Highlight character's current level
+                            const isCurrentLvl = (rIdx + 1) === character.level;
+                            const rowStyle = isCurrentLvl ? `background:rgba(139, 92, 246, 0.15); font-weight:bold;` : '';
+                            html += `<tr style="${rowStyle}"><td style="border:1px solid var(--border-iron); padding:6px; text-align:center; color:${isCurrentLvl ? 'var(--gold-amber)' : 'white'};">${rIdx + 1}${isCurrentLvl ? ' (Current)' : ''}</td>`;
+                            if (Array.isArray(row)) {
+                                row.forEach(cell => {
+                                    let cellText = '';
+                                    if (typeof cell === 'object' && cell !== null) {
+                                        if (cell.type === 'bonus' && cell.value !== undefined) {
+                                            cellText = (cell.value >= 0 ? '+' : '') + cell.value;
+                                        } else if (cell.entries) {
+                                            cellText = formatEntries(cell.entries);
+                                        } else {
+                                            cellText = JSON.stringify(cell);
+                                        }
+                                    } else {
+                                        cellText = cleanMarkdown(String(cell));
+                                    }
+                                    html += `<td style="border:1px solid var(--border-iron); padding:6px; text-align:center;">${cellText}</td>`;
+                                });
+                            }
+                            html += `</tr>`;
+                        });
+                    }
+                    html += `</tbody></table>`;
+                });
+            } else {
+                html = '<p style="font-size:0.8rem; color:var(--text-muted);">No progression table available.</p>';
+            }
+
+            document.getElementById('class-table-content').innerHTML = html;
+            document.getElementById('class-table-modal').style.display = 'flex';
+        };
+
+        window.closeClassTableModal = function() {
+            document.getElementById('class-table-modal').style.display = 'none';
+        };
+
+        window.closeClassTableModalOnOuterClick = function(e) {
+            if (e.target.id === 'class-table-modal') {
+                closeClassTableModal();
+            }
+        };
+
+        window.onload = fetchInitialCharacterData;
+    </script>
+
+    <!-- FEAT SELECTOR MODAL -->
+    <div id="feat-selector-modal" class="overlay-modal" style="display: none; z-index: 10000;" onclick="closeFeatSelectorOnOuterClick(event)">
+        <div class="modal-content" style="width: 500px; max-height: 80vh; display: flex; flex-direction: column; padding: 20px; background: #15151c; border: 2px solid var(--border-iron); border-radius: 8px;" onclick="event.stopPropagation()">
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-iron); padding-bottom: 10px; margin-bottom: 12px;">
+                <h3 style="color: var(--gold-amber); font-family: 'Cinzel'; margin: 0; font-size: 1.2rem;">Choose a Feat</h3>
+                <button class="btn-close-modal" onclick="closeFeatSelector()" style="background: none; border: none; color: #ef4444; font-size: 1.2rem; cursor: pointer;">X</button>
+            </div>
+            
+            <div id="feat-search-and-list" style="display: flex; flex-direction: column; gap: 10px; flex: 1; overflow: hidden;">
+                <input type="text" id="feat-search-input" placeholder="Search feats..." oninput="filterFeatsList()" style="padding: 8px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px; font-size: 0.85rem;">
+                <div id="feat-scroll-list" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
+                    <!-- List of feats -->
+                </div>
+            </div>
+
+            <div id="feat-detail-view" style="display: none; flex-direction: column; gap: 12px; flex: 1; overflow: hidden;">
+                <div style="flex: 1; overflow-y: auto; padding-right: 4px;">
+                    <h4 id="feat-detail-name" style="color: var(--gold-amber); font-family: 'Cinzel'; margin: 0 0 4px 0; font-size: 1.1rem;">Feat Name</h4>
+                    <div id="feat-detail-prereq" style="font-size: 0.75rem; color: var(--text-muted); font-style: italic; margin-bottom: 8px;">Prerequisites</div>
+                    <div id="feat-detail-desc" style="font-size: 0.85rem; line-height: 1.4; color: #cbd5e1;">Description</div>
+                </div>
+                
+                <div id="feat-stat-choice-container" style="display: none; background: #0c0c12; border: 1px solid var(--border-iron); padding: 10px; border-radius: 4px;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Choose Ability score to increase (+1):</label>
+                    <select id="feat-stat-choice-select" style="width: 100%; padding: 6px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px; font-size: 0.85rem;"></select>
+                </div>
+
+                <div style="display: flex; gap: 8px; border-top: 1px solid var(--border-iron); padding-top: 10px; margin-top: 5px;">
+                    <button class="btn-secondary" onclick="showFeatList()" style="flex: 1; padding: 8px; font-size: 0.85rem; border-radius: 4px; background: #374151; color: white; border: none; cursor: pointer;">Go Back</button>
+                    <button class="btn-primary" onclick="applySelectedFeat()" style="flex: 1; padding: 8px; font-size: 0.85rem; border-radius: 4px; background: #10b981; color: white; border: none; cursor: pointer; font-weight: bold;">Apply Feat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BACKGROUND SELECTOR MODAL -->
+    <div id="background-selector-modal" class="overlay-modal" style="display: none; z-index: 10000;" onclick="closeBackgroundSelectorOnOuterClick(event)">
+        <div class="modal-content" style="width: 500px; max-height: 80vh; display: flex; flex-direction: column; padding: 20px; background: #15151c; border: 2px solid var(--border-iron); border-radius: 8px;" onclick="event.stopPropagation()">
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-iron); padding-bottom: 10px; margin-bottom: 12px;">
+                <h3 style="color: var(--gold-amber); font-family: 'Cinzel'; margin: 0; font-size: 1.2rem;">Choose a Background</h3>
+                <button class="btn-close-modal" onclick="closeBackgroundSelector()" style="background: none; border: none; color: #ef4444; font-size: 1.2rem; cursor: pointer;">X</button>
+            </div>
+            
+            <div id="background-search-and-list" style="display: flex; flex-direction: column; gap: 10px; flex: 1; overflow: hidden;">
+                <input type="text" id="background-search-input" placeholder="Search backgrounds..." oninput="filterBackgroundsList()" style="padding: 8px; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); border-radius: 4px; font-size: 0.85rem;">
+                <div id="background-scroll-list" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
+                    <!-- List of backgrounds -->
+                </div>
+            </div>
+
+            <div id="background-detail-view" style="display: none; flex-direction: column; gap: 12px; flex: 1; overflow: hidden;">
+                <div style="flex: 1; overflow-y: auto; padding-right: 4px;">
+                    <h4 id="background-detail-name" style="color: var(--gold-amber); font-family: 'Cinzel'; margin: 0 0 4px 0; font-size: 1.1rem;">Background Name</h4>
+                    <div id="background-detail-desc" style="font-size: 0.85rem; line-height: 1.4; color: #cbd5e1;">Description</div>
+                </div>
+
+                <div style="display: flex; gap: 8px; border-top: 1px solid var(--border-iron); padding-top: 10px; margin-top: 5px;">
+                    <button class="btn-secondary" onclick="showBackgroundList()" style="flex: 1; padding: 8px; font-size: 0.85rem; border-radius: 4px; background: #374151; color: white; border: none; cursor: pointer;">Go Back</button>
+                    <button class="btn-primary" onclick="applySelectedBackground()" style="flex: 1; padding: 8px; font-size: 0.85rem; border-radius: 4px; background: #10b981; color: white; border: none; cursor: pointer; font-weight: bold;">Apply Background</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LANGUAGE SELECTOR MODAL -->
+    <div id="language-selector-modal" class="overlay-modal" style="display: none; z-index: 10000;" onclick="closeLanguageSelectorOnOuterClick(event)">
+        <div class="modal-content" style="width: 400px; max-height: 60vh; display: flex; flex-direction: column; padding: 20px; background: #15151c; border: 2px solid var(--border-iron); border-radius: 8px;" onclick="event.stopPropagation()">
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-iron); padding-bottom: 10px; margin-bottom: 12px;">
+                <h3 style="color: var(--gold-amber); font-family: 'Cinzel'; margin: 0; font-size: 1.1rem;">Learn a Language</h3>
+                <button class="btn-close-modal" onclick="closeLanguageSelector()" style="background: none; border: none; color: #ef4444; font-size: 1.2rem; cursor: pointer;">X</button>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">Select a language from the official list below:</div>
+            
+            <div id="languages-scroll-list" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px;">
+                <!-- List of languages -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/app_player_extensions.js"></script>
+    </script>
+</body>
+</html>

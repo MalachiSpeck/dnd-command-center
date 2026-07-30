@@ -1,0 +1,20 @@
+{
+  "name": "LEVIATHAN",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 17,
+  "hp": 328,
+  "speed": "40 ft., swim 120 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "20",
+  "actions": [],
+  "raw_extracted": "STR \n30 (+10) \nDEX \n24 (+7) \nCON \n30 (+10) \nSaving Throws Wis +10, Cha +9 \nINT \n2 (-4) \nWIS \n18 (+4) \nCHA \n17 {+3) \nDamage Resistances bludgeoning, piercing, and slashing from \nnonmagical attacks \nDamage Immunities acid, poison \nCondition Immunities exhaustion, grappled, paralyzed, \npetrified, poisoned, prone, restrained, stunned \nSenses darkvision 60 ft., passive Perception 14 \nLanguages -\n\u2022 , \\. \nChallenge 20 (25,000 XP) \n\u2022 \n\u2022 \nLegendary Resistance (3/Day). If the leviathan fails a saving \nthrow, it can choose to succeed instead. \nPartial Freeze. If the leviathan takes 50 cold damage or more \nduring a single turn, the leviathan partially freezes; until the \nend of its next turn, its speeds are reduced to 20 feet, and it \nmakes attack rolls with disadvantage. \nSiege Monster. The leviathan deals double damage to objects \nand structures (included in Tidal Wave). \nWater Form. The leviathan can enter a hostile creature's space \nand stop there. It can move through a space as narrow as 1 \ni"
+}

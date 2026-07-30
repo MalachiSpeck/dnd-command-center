@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Table Projector - Tactical Overlay</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --grid-color: rgba(255, 255, 255, 0.15);
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: transparent;
+            font-family: 'Inter', sans-serif;
+        }
+        #map-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-color: #030305;
+            overflow: hidden;
+        }
+        #grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background-image: 
+                linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+        }
+        /* Grid Alignment calibration target lines (Monitor 3) */
+        #calibration-grid-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: none;
+            border: 4px dashed #fbbf24;
+            box-sizing: border-box;
+        }
+        .calibration-line-h {
+            position: absolute;
+            width: 100%; height: 2px;
+            background: rgba(251, 191, 36, 0.4);
+        }
+        .calibration-line-v {
+            position: absolute;
+            height: 100%; width: 2px;
+            background: rgba(251, 191, 36, 0.4);
+        }
+        .calibration-marker {
+            position: absolute;
+            width: 20px; height: 20px;
+            border: 2px solid #fbbf24;
+            border-radius: 50%;
+            background: transparent;
+            transform: translate(-50%, -50%);
+        }
+        .calibration-label {
+            position: absolute;
+            color: #fbbf24;
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            font-weight: bold;
+            text-shadow: 0 0 6px black;
+            transform: translate(-50%, -100%);
+        }
+        /* AoE Template Styles */
+        .aoe-template {
+            position: absolute;
+            border: 2px dashed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 0 4px black;
+            font-size: 0.9rem;
+            cursor: move;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        .aoe-circle {
+            border-radius: 50%;
+        }
+        .aoe-square {
+            border-radius: 0;
+        }
+        .aoe-cone {
+            /* Cone templates drawn as elegant wedges targeting downward directions */
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            border-radius: 0;
+        }
+        .template-label {
+            position: absolute;
+            background: rgba(0,0,0,0.65);
+            padding: 2px 6px;
+            border-radius: 4px;
+            pointer-events: none;
+            font-family: 'Cinzel', serif;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+        #calibration-notice {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(10, 10, 12, 0.9);
+            border: 1px solid #2a2438;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            max-width: 300px;
+            z-index: 1000;
+            pointer-events: auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        #calibration-notice h3 {
+            margin-top: 0;
+            color: #8b5cf6;
+            font-family: 'Cinzel', serif;
+        }
+        #calibration-notice button {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        #calibration-notice button:hover {
+            background: #7c3aed;
+        }
+        
+        /* Day/Night, Spotlight & Weather Overlays */
+        #daynight-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            mix-blend-mode: multiply;
+            transition: background 10s ease;
+            z-index: 2900;
+            background: rgba(255, 255, 255, 0); /* Day default */
+        }
+        #weather-canvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 3100;
+        }
+        #cinematic-spotlight {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 3200;
+            opacity: 0;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.8s ease;
+            background: radial-gradient(circle at 50% 50%, transparent 100px, rgba(3, 3, 5, 0.9) 150px);
+        }
+        
+        /* Cinematic Camera Wrapper */
+        #camera-wrapper {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            transform-origin: center center;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: transform 3s cubic-bezier(0.25, 1, 0.5, 1), background-image 0.5s ease;
+        }
+        
+        /* Screen shake keyframes */
+        @keyframes shake-anim {
+            0% { transform: translate(2px, 2px) rotate(0deg); }
+            10% { transform: translate(-2px, -3px) rotate(-1deg); }
+            20% { transform: translate(-4px, 0px) rotate(1deg); }
+            30% { transform: translate(0px, 3px) rotate(0deg); }
+            40% { transform: translate(2px, -2px) rotate(1deg); }
+            50% { transform: translate(-2px, 3px) rotate(-1deg); }
+            60% { transform: translate(-4px, 2px) rotate(0deg); }
+            70% { transform: translate(3px, 2px) rotate(-1deg); }
+            80% { transform: translate(-2px, -2px) rotate(1deg); }
+            90% { transform: translate(3px, 3px) rotate(0deg); }
+            100% { transform: translate(2px, -3px) rotate(-1deg); }
+        }
+        .camera-shake {
+            animation: shake-anim 0.15s infinite;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map-container">
+        <!-- Everything inside camera-wrapper will move together during Panning, Zooming, and Shaking -->
+        <div id="camera-wrapper">
+            <div id="grid-overlay"></div>
+            <!-- Render active AoE templates here -->
+            <div id="template-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+        </div>
+        
+        <!-- Day/Night, Weather overlays sit on top of the map but under Fog of War -->
+        <div id="daynight-overlay"></div>
+        <canvas id="weather-canvas"></canvas>
+        <div id="cinematic-spotlight"></div>
+        
+        <!-- Calibration Assist Grid Lines layer -->
+        <div id="calibration-grid-layer">
+            <div class="calibration-line-h" style="top: 25%;"></div>
+            <div class="calibration-line-h" style="top: 50%;"></div>
+            <div class="calibration-line-h" style="top: 75%;"></div>
+            <div class="calibration-line-v" style="left: 25%;"></div>
+            <div class="calibration-line-v" style="left: 50%;"></div>
+            <div class="calibration-line-v" style="left: 75%;"></div>
+            
+            <div class="calibration-marker" style="top: 50%; left: 50%;"></div>
+            <div class="calibration-label" style="top: 50%; left: 50%;">Physical Table Center Target</div>
+        </div>
+
+        <div id="calibration-notice">
+            <h3>Projector Overlay Ready</h3>
+            <p>Align this window to your physical game table. You can toggle the calibration grid and drag spell templates from the DM console.</p>
+            <button onclick="document.getElementById('calibration-notice').style.display='none'">Dismiss Notice</button>
+        </div>
+
+        <!-- Render Fog of War absolute divs overlays -->
+        <div id="fog-overlay-layer" style="position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; display:grid; grid-template-columns: repeat(12, 1fr); grid-template-rows: repeat(12, 1fr); z-index:35000;"></div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/procedural-music.js"></script>
+    <script src="/app_wave4.js"></script>
+    <script>
+        let currentGridScale = 50; 
+        let activeTemplates = [];
+        let currentFogGrid = [];
+
+        const socket = io();
+        socket.emit('join-room', 'projector');
+
+        // Sync projector UI state
+        function syncProjectorUI(state) {
+            if (!state) return;
+
+            // Map Image URL updater on camera-wrapper instead of map-container (crucial for smooth pan/zoom)
+            const cameraWrapper = document.getElementById('camera-wrapper');
+            if (state.mapUrl) {
+                cameraWrapper.style.backgroundImage = `url('${state.mapUrl}')`;
+            } else {
+                cameraWrapper.style.backgroundImage = 'none';
+            }
+
+            // Sync Day/Night mode
+            const dnOverlay = document.getElementById('daynight-overlay');
+            if (dnOverlay && state.dayNightMode) {
+                if (state.dayNightMode === 'Day') {
+                    dnOverlay.style.background = 'rgba(255, 255, 255, 0)';
+                } else if (state.dayNightMode === 'Dawn') {
+                    dnOverlay.style.background = 'rgba(251, 146, 60, 0.25)'; // Warm Orange
+                } else if (state.dayNightMode === 'Dusk') {
+                    dnOverlay.style.background = 'rgba(167, 139, 250, 0.2)'; // Deep Violet
+                } else if (state.dayNightMode === 'Night') {
+                    dnOverlay.style.background = 'rgba(15, 23, 42, 0.45)'; // Moonlight dark blue
+                    triggerFlickeringTorches(true);
+                } else if (state.dayNightMode === 'Midnight') {
+                    dnOverlay.style.background = 'rgba(3, 7, 18, 0.7)'; // Midnight pitch blue
+                    triggerFlickeringTorches(true);
+                } else {
+                    triggerFlickeringTorches(false);
+                }
+                
+                if (state.dayNightMode !== 'Night' && state.dayNightMode !== 'Midnight') {
+                    triggerFlickeringTorches(false);
+                }
+            }
+
+            // Sync Weather mode
+            if (state.weatherMode && window.WeatherSystem) {
+                window.WeatherSystem.setMode(state.weatherMode);
+            }
+
+            // Grid scale pixel slider sync
+            if (state.gridScale && state.gridScale !== currentGridScale) {
+                currentGridScale = state.gridScale;
+                const gridOverlay = document.getElementById('grid-overlay');
+                gridOverlay.style.backgroundSize = `${currentGridScale}px ${currentGridScale}px`;
+            }
+
+            // Sync Calibration guide mode status
+            const calLayer = document.getElementById('calibration-grid-layer');
+            if (state.calibrationMode) {
+                calLayer.style.display = 'block';
+            } else {
+                calLayer.style.display = 'none';
+            }
+
+            // Sync draggable templates
+            if (JSON.stringify(activeTemplates) !== JSON.stringify(state.templates)) {
+                activeTemplates = state.templates || [];
+                renderTemplates();
+            }
+
+            // Render Fog of War absolute divs overlays
+            if (JSON.stringify(currentFogGrid) !== JSON.stringify(state.fogGrid || [])) {
+                currentFogGrid = state.fogGrid || [];
+                renderFogOfWar();
+            }
+        }
+
+        // Listen for real-time projector changes!
+        socket.on('projector-state-updated', (state) => {
+            console.log("Real-time projector update received!");
+            syncProjectorUI(state);
+        });
+
+        async function fetchProjectorState() {
+            try {
+                const response = await fetch('/api/projector-state');
+                const state = await response.json();
+                syncProjectorUI(state);
+            } catch (err) {
+                console.error("Failed to fetch projector state.", err);
+            }
+        }
+
+        // --------------------------------------------------------------------
+        // CINEMATIC CAMERA SYSTEM
+        // --------------------------------------------------------------------
+        let currentZoom = 1.0;
+        let currentPanX = 0;
+        let currentPanY = 0;
+        let isRevealingFogSlowly = false;
+        let slowRevealDirection = 'down';
+
+        function updateCameraTransform() {
+            const wrapper = document.getElementById('camera-wrapper');
+            if (wrapper) {
+                wrapper.style.transform = `translate(${currentPanX}px, ${currentPanY}px) scale(${currentZoom})`;
+            }
+        }
+
+        // Socket listener for DM cinematic camera triggers
+        socket.on('projector-camera-action', (action) => {
+            console.log("Cinematic camera action received:", action);
+            if (!action) return;
+
+            const wrapper = document.getElementById('camera-wrapper');
+            if (!wrapper) return;
+
+            if (action.type === 'pan') {
+                currentPanX = action.targetX || 0;
+                currentPanY = action.targetY || 0;
+                updateCameraTransform();
+            } else if (action.type === 'zoom') {
+                currentZoom = action.scale || 1.0;
+                updateCameraTransform();
+            } else if (action.type === 'shake') {
+                wrapper.classList.add('camera-shake');
+                setTimeout(() => {
+                    wrapper.classList.remove('camera-shake');
+                }, action.durationMs || 1000);
+            } else if (action.type === 'spotlight') {
+                const spotlight = document.getElementById('cinematic-spotlight');
+                if (spotlight) {
+                    if (action.active) {
+                        const x = action.x !== undefined ? action.x : '50%';
+                        const y = action.y !== undefined ? action.y : '50%';
+                        spotlight.style.background = `radial-gradient(circle at ${x}px ${y}px, transparent 100px, rgba(3, 3, 5, 0.93) 140px)`;
+                        spotlight.style.opacity = '1';
+                    } else {
+                        spotlight.style.opacity = '0';
+                    }
+                }
+            } else if (action.type === 'slow-reveal') {
+                isRevealingFogSlowly = true;
+                slowRevealDirection = action.direction || 'down';
+                renderFogOfWar();
+            } else if (action.type === 'reset') {
+                currentZoom = 1.0;
+                currentPanX = 0;
+                currentPanY = 0;
+                updateCameraTransform();
+                const spotlight = document.getElementById('cinematic-spotlight');
+                if (spotlight) spotlight.style.opacity = '0';
+                isRevealingFogSlowly = false;
+                renderFogOfWar();
+            }
+        });
+
+        // --------------------------------------------------------------------
+        // PROCEDURAL MUSIC DYNAMIC CONTROL
+        // --------------------------------------------------------------------
+        socket.on('music-state-change', (data) => {
+            console.log("Procedural music command received:", data);
+            if (!data) return;
+
+            // Make sure music engine is initialized and running
+            if (data.action === 'start') {
+                window.ProceduralMusicEngine.init().then(() => {
+                    if (data.preset) window.ProceduralMusicEngine.setPreset(data.preset);
+                    if (data.intensity) window.ProceduralMusicEngine.setIntensity(data.intensity);
+                    window.ProceduralMusicEngine.start();
+                });
+            } else if (data.action === 'stop') {
+                window.ProceduralMusicEngine.stop();
+            } else if (data.action === 'set-intensity') {
+                window.ProceduralMusicEngine.setIntensity(data.intensity || 1);
+            } else if (data.action === 'set-preset') {
+                window.ProceduralMusicEngine.setPreset(data.preset);
+            } else if (data.action === 'resolve-victory') {
+                window.ProceduralMusicEngine.playTriumphantMajorResolution();
+            }
+        });
+
+        // --------------------------------------------------------------------
+        // DYNAMIC LIGHTING: FLICKERING TORCHES (NIGHT / MIDNIGHT MODES)
+        // --------------------------------------------------------------------
+        let torchInterval = null;
+        function triggerFlickeringTorches(active) {
+            if (torchInterval) {
+                clearInterval(torchInterval);
+                torchInterval = null;
+            }
+
+            const canvas = document.getElementById('weather-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            if (!active) {
+                return;
+            }
+
+            // Draw 3-4 fixed torch flickers on map layout to make it feel super alive!
+            torchInterval = setInterval(() => {
+                // If weather system is running, it clears and draws anyway.
+                // We'll let weather rendering draw torches if dayNightMode is Night.
+            }, 100);
+        }
+
+        // --------------------------------------------------------------------
+        // DYNAMIC WEATHER particle generator & ambient audio synthesizer
+        // --------------------------------------------------------------------
+        class WeatherSystemClass {
+            constructor() {
+                this.canvas = document.getElementById('weather-canvas');
+                this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
+                this.mode = 'Clear';
+                this.particles = [];
+                this.accumulatedSnow = 0;
+                this.puddles = []; // Low spots on map
+                this.audioCtx = null;
+                this.rainVolume = null;
+                this.windVolume = null;
+                this.thunderTimer = null;
+                this.pinkNoiseNode = null;
+                this.windNoiseNode = null;
+                this.activeAudio = false;
+
+                window.addEventListener('resize', () => this.resize());
+                this.resize();
+                this.initLoop();
+            }
+
+            resize() {
+                if (this.canvas) {
+                    this.canvas.width = window.innerWidth;
+                    this.canvas.height = window.innerHeight;
+                }
+            }
+
+            setMode(mode) {
+                if (this.mode === mode) return;
+                this.mode = mode;
+                this.particles = [];
+                console.log(`Weather mode set to: ${mode}`);
+
+                // Initialize audio context on first connection / weather change
+                if (!this.audioCtx) {
+                    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    this.rainVolume = this.audioCtx.createGain();
+                    this.windVolume = this.audioCtx.createGain();
+                    
+                    this.rainVolume.gain.setValueAtTime(0, this.audioCtx.currentTime);
+                    this.windVolume.gain.setValueAtTime(0, this.audioCtx.currentTime);
+
+                    this.rainVolume.connect(this.audioCtx.destination);
+                    this.windVolume.connect(this.audioCtx.destination);
+                    
+                    this.setupPinkNoise();
+                    this.setupWindSynth();
+                }
+
+                if (this.audioCtx && this.audioCtx.state === 'suspended') {
+                    this.audioCtx.resume();
+                }
+
+                // Adjust synthesizers
+                const now = this.audioCtx.currentTime;
+                if (mode === 'Heavy Rain') {
+                    this.rainVolume.gain.linearRampToValueAtTime(0.12, now + 3);
+                    this.windVolume.gain.linearRampToValueAtTime(0.04, now + 3);
+                    this.triggerThunderTicks(true);
+                } else if (mode === 'Heavy Snow') {
+                    this.rainVolume.gain.linearRampToValueAtTime(0, now + 3);
+                    this.windVolume.gain.linearRampToValueAtTime(0.08, now + 3);
+                    this.triggerThunderTicks(false);
+                } else if (mode === 'Sandstorm') {
+                    this.rainVolume.gain.linearRampToValueAtTime(0, now + 3);
+                    this.windVolume.gain.linearRampToValueAtTime(0.20, now + 3);
+                    this.triggerThunderTicks(false);
+                } else {
+                    // Clear
+                    this.rainVolume.gain.linearRampToValueAtTime(0, now + 3);
+                    this.windVolume.gain.linearRampToValueAtTime(0, now + 3);
+                    this.triggerThunderTicks(false);
+                }
+            }
+
+            // Synth pink noise for organic rain patter
+            setupPinkNoise() {
+                const bufferSize = 2 * this.audioCtx.sampleRate;
+                const noiseBuffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                
+                let b0, b1, b2, b3, b4, b5, b6;
+                b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0;
+                
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    b0 = 0.99886 * b0 + white * 0.0555179;
+                    b1 = 0.99332 * b1 + white * 0.0750759;
+                    b2 = 0.96900 * b2 + white * 0.1538520;
+                    b3 = 0.86650 * b3 + white * 0.3104856;
+                    b4 = 0.55000 * b4 + white * 0.5329522;
+                    b5 = -0.7616 * b5 - white * 0.0168980;
+                    output[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+                    output[i] *= 0.11; // normalise
+                    b6 = white * 0.115926;
+                }
+
+                this.pinkNoiseNode = this.audioCtx.createBufferSource();
+                this.pinkNoiseNode.buffer = noiseBuffer;
+                this.pinkNoiseNode.loop = true;
+
+                // Connect through a bandpass filter to sound like droplets hit surfaces
+                const filter = this.audioCtx.createBiquadFilter();
+                filter.type = 'peaking';
+                filter.frequency.setValueAtTime(1200, this.audioCtx.currentTime);
+                filter.Q.setValueAtTime(1, this.audioCtx.currentTime);
+
+                this.pinkNoiseNode.connect(filter);
+                filter.connect(this.rainVolume);
+                this.pinkNoiseNode.start(0);
+            }
+
+            // Synth resonant howling wind
+            setupWindSynth() {
+                // White noise base
+                const bufferSize = 2 * this.audioCtx.sampleRate;
+                const noiseBuffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+
+                this.windNoiseNode = this.audioCtx.createBufferSource();
+                this.windNoiseNode.buffer = noiseBuffer;
+                this.windNoiseNode.loop = true;
+
+                // highly resonant bandpass filter
+                const windFilter = this.audioCtx.createBiquadFilter();
+                windFilter.type = 'bandpass';
+                windFilter.Q.setValueAtTime(8, this.audioCtx.currentTime); // high resonance makes it whistle!
+                windFilter.frequency.setValueAtTime(400, this.audioCtx.currentTime);
+
+                // Add an LFO oscillator to modulate the wind frequency (howling sweeps!)
+                const lfo = this.audioCtx.createOscillator();
+                lfo.frequency.setValueAtTime(0.08, this.audioCtx.currentTime); // very slow 12-second wave
+                
+                const lfoGain = this.audioCtx.createGain();
+                lfoGain.gain.setValueAtTime(180, this.audioCtx.currentTime); // sweeps between 220Hz and 580Hz
+
+                lfo.connect(lfoGain);
+                lfoGain.connect(windFilter.frequency);
+
+                this.windNoiseNode.connect(windFilter);
+                windFilter.connect(this.windVolume);
+
+                lfo.start(0);
+                this.windNoiseNode.start(0);
+            }
+
+            // Random interval thunder booms
+            triggerThunderTicks(active) {
+                if (this.thunderTimer) {
+                    clearInterval(this.thunderTimer);
+                    this.thunderTimer = null;
+                }
+
+                if (!active) return;
+
+                // Check for lightning every 15-25 seconds
+                this.thunderTimer = setInterval(() => {
+                    if (Math.random() > 0.4) {
+                        this.triggerLightningFlash();
+                    }
+                }, 18000);
+            }
+
+            triggerLightningFlash() {
+                // Flash overlay brightness
+                const overlay = document.getElementById('daynight-overlay');
+                if (overlay) {
+                    const originalBg = overlay.style.background;
+                    overlay.style.transition = 'background 0.05s ease';
+                    overlay.style.background = 'rgba(255, 255, 255, 0.95)'; // Blinding flash!
+                    
+                    setTimeout(() => {
+                        overlay.style.background = originalBg;
+                        overlay.style.transition = 'background 10s ease';
+                        
+                        // Boom after a slight speed-of-sound delay!
+                        setTimeout(() => this.playThunderSynthBoom(), 1200);
+                    }, 80);
+                }
+            }
+
+            // Synth organic low-frequency decaying rumble
+            playThunderSynthBoom() {
+                if (!this.audioCtx) return;
+                const now = this.audioCtx.currentTime;
+
+                const osc = this.audioCtx.createOscillator();
+                const gain = this.audioCtx.createGain();
+                const filter = this.audioCtx.createBiquadFilter();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(70, now);
+                osc.frequency.exponentialRampToValueAtTime(15, now + 2.5); // long sweeping pitch drop
+
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(120, now);
+                filter.frequency.exponentialRampToValueAtTime(30, now + 2.0);
+
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.35, now + 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 3.0); // long decay rumble
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 3.1);
+            }
+
+            initLoop() {
+                const tick = () => {
+                    this.updateAndRender();
+                    requestAnimationFrame(tick);
+                };
+                tick();
+            }
+
+            updateAndRender() {
+                if (!this.canvas || !this.ctx) return;
+                const ctx = this.ctx;
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+
+                ctx.clearRect(0, 0, w, h);
+
+                // --- 1. RENDERING FLICKERING TORCHES (If night/midnight lighting)
+                const isNight = document.getElementById('daynight-overlay')?.style.background.includes('15, 23') || 
+                                document.getElementById('daynight-overlay')?.style.background.includes('3, 7');
+                if (isNight) {
+                    ctx.save();
+                    // Draw 4 warm ambient flickers representing lanterns/torches on physical table
+                    const torchPositions = [
+                        { x: w * 0.25, y: h * 0.3 },
+                        { x: w * 0.75, y: h * 0.25 },
+                        { x: w * 0.3, y: h * 0.75 },
+                        { x: w * 0.7, y: h * 0.7 }
+                    ];
+                    torchPositions.forEach(pos => {
+                        const pulse = 1.0 + (Math.sin(Date.now() * 0.01 + pos.x) * 0.06) + (Math.random() * 0.03);
+                        const radius = 60 * pulse;
+                        const grad = ctx.createRadialGradient(pos.x, pos.y, 2, pos.x, pos.y, radius);
+                        grad.addColorStop(0, 'rgba(251, 191, 36, 0.45)');
+                        grad.addColorStop(0.3, 'rgba(239, 68, 68, 0.15)');
+                        grad.addColorStop(1, 'rgba(0,0,0,0)');
+                        
+                        ctx.fillStyle = grad;
+                        ctx.beginPath();
+                        ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    ctx.restore();
+                }
+
+                // --- 2. WEATHER CANVAS PARTICLE EMITTERS
+                if (this.mode === 'Heavy Rain') {
+                    // Emit rain particles
+                    if (this.particles.length < 130) {
+                        this.particles.push({
+                            x: Math.random() * w,
+                            y: -20,
+                            vy: 12 + Math.random() * 5,
+                            length: 15 + Math.random() * 10,
+                            alpha: 0.15 + Math.random() * 0.15
+                        });
+                    }
+
+                    ctx.strokeStyle = 'rgba(174, 207, 238, 0.4)';
+                    ctx.lineWidth = 1.5;
+                    this.particles.forEach((p, idx) => {
+                        p.y += p.vy;
+                        // Draw falling drop streak
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p.x, p.y + p.length);
+                        ctx.stroke();
+
+                        // Drop splashes at map bottom
+                        if (p.y > h - 50) {
+                            if (Math.random() > 0.88) {
+                                // Splash ring
+                                ctx.strokeStyle = `rgba(255,255,255,0.18)`;
+                                ctx.beginPath();
+                                ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+                                ctx.stroke();
+                            }
+                            // Reset particle
+                            p.y = -20;
+                            p.x = Math.random() * w;
+                        }
+                    });
+
+                } else if (this.mode === 'Heavy Snow') {
+                    if (this.particles.length < 100) {
+                        this.particles.push({
+                            x: Math.random() * w,
+                            y: -10,
+                            vy: 1.5 + Math.random() * 1.5,
+                            vx: -1.0 + Math.random() * 2.0,
+                            r: 2 + Math.random() * 4,
+                            alpha: 0.2 + Math.random() * 0.4
+                        });
+                    }
+
+                    // Accumulate thin white snow glow
+                    this.accumulatedSnow = Math.min(0.22, this.accumulatedSnow + 0.00001);
+                    if (this.accumulatedSnow > 0) {
+                        ctx.fillStyle = `rgba(255,255,255,${this.accumulatedSnow})`;
+                        ctx.fillRect(0, 0, w, h);
+                    }
+
+                    ctx.fillStyle = 'white';
+                    this.particles.forEach(p => {
+                        p.y += p.vy;
+                        p.x += p.vx + Math.sin(Date.now() * 0.002 + p.x) * 0.2; // drifting oscillation!
+                        
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        if (p.y > h) {
+                            p.y = -10;
+                            p.x = Math.random() * w;
+                        }
+                    });
+
+                } else if (this.mode === 'Fog') {
+                    if (this.particles.length < 12) {
+                        this.particles.push({
+                            x: -200,
+                            y: Math.random() * h,
+                            vx: 0.15 + Math.random() * 0.25,
+                            r: 120 + Math.random() * 80,
+                            alpha: 0.05 + Math.random() * 0.06
+                        });
+                    }
+
+                    this.particles.forEach(p => {
+                        p.x += p.vx;
+                        
+                        const grad = ctx.createRadialGradient(p.x, p.y, p.r * 0.1, p.x, p.y, p.r);
+                        grad.addColorStop(0, `rgba(200, 210, 220, ${p.alpha})`);
+                        grad.addColorStop(0.5, `rgba(180, 190, 200, ${p.alpha * 0.5})`);
+                        grad.addColorStop(1, 'rgba(0,0,0,0)');
+                        
+                        ctx.fillStyle = grad;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        if (p.x - p.r > w) {
+                            p.x = -p.r;
+                            p.y = Math.random() * h;
+                        }
+                    });
+
+                } else if (this.mode === 'Sandstorm') {
+                    if (this.particles.length < 90) {
+                        this.particles.push({
+                            x: -100,
+                            y: Math.random() * h,
+                            vx: 14 + Math.random() * 8,
+                            vy: 1 + Math.random() * 2,
+                            length: 40 + Math.random() * 30,
+                            alpha: 0.1 + Math.random() * 0.18
+                        });
+                    }
+
+                    ctx.lineWidth = 1.0;
+                    this.particles.forEach(p => {
+                        p.x += p.vx;
+                        p.y += p.vy;
+
+                        ctx.strokeStyle = `rgba(224, 182, 137, ${p.alpha})`;
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p.x + p.length, p.y + p.vy * 2);
+                        ctx.stroke();
+
+                        if (p.x > w) {
+                            p.x = -p.length;
+                            p.y = Math.random() * h;
+                        }
+                    });
+                } else {
+                    this.accumulatedSnow = 0;
+                }
+            }
+        }
+
+        window.WeatherSystem = new WeatherSystemClass();
+
+        // --------------------------------------------------------------------
+        // SLOW DIRECTIONAL REVEAL OVERRIDE FOR FOG
+        // --------------------------------------------------------------------
+        function renderFogOfWar() {
+            const overlay = document.getElementById('fog-overlay-layer');
+            if (!overlay) return;
+            overlay.innerHTML = '';
+
+            for (let r = 0; r < 12; r++) {
+                for (let c = 0; c < 12; c++) {
+                    const isHidden = currentFogGrid[r] ? currentFogGrid[r][c] : true;
+                    const block = document.createElement('div');
+                    block.style.cssText = "width:100%; height:100%; background:black; transition: opacity 0.8s;";
+                    
+                    if (isRevealingFogSlowly) {
+                        // Calculate delay based on reveal direction
+                        let delayMs = 0;
+                        if (slowRevealDirection === 'down') delayMs = r * 150;
+                        else if (slowRevealDirection === 'up') delayMs = (11 - r) * 150;
+                        else if (slowRevealDirection === 'right') delayMs = c * 150;
+                        else if (slowRevealDirection === 'left') delayMs = (11 - c) * 150;
+
+                        block.style.transitionDelay = `${delayMs}ms`;
+                    }
+
+                    block.style.opacity = isHidden ? "1" : "0";
+                    overlay.appendChild(block);
+                }
+            }
+        }
+
+        function renderTemplates() {
+            const canvas = document.getElementById('template-canvas');
+            canvas.innerHTML = '';
+
+            activeTemplates.forEach(template => {
+                const el = document.createElement('div');
+                el.className = `aoe-template aoe-${template.type}`;
+                el.id = template.id;
+
+                // Radius represents size in feet. Pixels: (sizeInFeet / 5) * currentGridScale
+                const sizeInPx = (template.radius * 2 / 5) * currentGridScale;
+
+                el.style.width = `${sizeInPx}px`;
+                el.style.height = `${sizeInPx}px`;
+                el.style.borderColor = template.color;
+                el.style.backgroundColor = hexToRgba(template.color, 0.35);
+                
+                el.style.left = `${template.x}px`;
+                el.style.top = `${template.y}px`;
+
+                const label = document.createElement('span');
+                label.className = 'template-label';
+                label.innerText = `${template.name} (${template.radius}ft)`;
+                el.appendChild(label);
+
+                makeDraggable(el, template);
+                canvas.appendChild(el);
+            });
+        }
+
+        function hexToRgba(hex, alpha) {
+            let c;
+            if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
+                c= hex.substring(1).split('');
+                if(c.length== 3){
+                    c= [c[0], c[0], c[1], c[1], c[2], c[2]];
+                }
+                c= '0x' + c.join('');
+                return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+alpha+')';
+            }
+            return 'rgba(139, 92, 246, 0.35)';
+        }
+
+        function makeDraggable(element, templateData) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            element.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+
+                let newTop = element.offsetTop - pos2;
+                let newLeft = element.offsetLeft - pos1;
+
+                element.style.top = newTop + "px";
+                element.style.left = newLeft + "px";
+
+                templateData.x = newLeft;
+                templateData.y = newTop;
+            }
+
+            async function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+                try {
+                    await fetch('/api/projector-state', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ templates: activeTemplates })
+                    });
+                } catch(e) {
+                    console.error("Failed to sync template drag position.", e);
+                }
+            }
+        }
+
+        const gridOverlay = document.getElementById('grid-overlay');
+        gridOverlay.style.backgroundSize = `${currentGridScale}px ${currentGridScale}px`;
+        
+        async function fetchInitialFog() {
+            try {
+                const res = await fetch('/api/projector/fog');
+                const data = await res.json();
+                currentFogGrid = data.fogGrid || [];
+                renderFogOfWar();
+            } catch (e) {}
+        }
+
+        fetchInitialFog();
+        fetchProjectorState();
+        // Socket.io handles real-time updates. No more aggressive fetch interval needed!
+    </script>
+</body>
+</html>

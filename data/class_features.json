@@ -1,0 +1,20 @@
+[
+  {
+    "className": "Fighter",
+    "level": 1,
+    "featureName": "Second Wind",
+    "description": "You can use a bonus action to regain hit points equal to 1d10 + your fighter level."
+  },
+  {
+    "className": "Fighter",
+    "level": 2,
+    "featureName": "Action Surge",
+    "description": "You can take one additional action on your turn."
+  },
+  {
+    "className": "Fighter",
+    "level": 5,
+    "featureName": "Extra Attack",
+    "description": "You can attack twice, instead of once, whenever you take the Attack action on your turn."
+  }
+]

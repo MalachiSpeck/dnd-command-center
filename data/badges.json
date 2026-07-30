@@ -1,0 +1,44 @@
+[
+  {
+    "id": "first_blood",
+    "name": "First Blood",
+    "emoji": "",
+    "description": "Scored the first kill of the campaign!",
+    "rarity": "Common"
+  },
+  {
+    "id": "nat_20_club",
+    "name": "Nat 20 Club",
+    "emoji": "",
+    "description": "Rolled a natural 20 in a crucial moment!",
+    "rarity": "Common"
+  },
+  {
+    "id": "down_but_not_out",
+    "name": "Down But Not Out",
+    "emoji": "",
+    "description": "Successfully stabilized from death saves!",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "dragon_slayer",
+    "name": "Dragon Slayer",
+    "emoji": "",
+    "description": "Helped slay an ancient wyrm!",
+    "rarity": "Legendary"
+  },
+  {
+    "id": "silver_tongue",
+    "name": "Silver Tongue",
+    "emoji": "",
+    "description": "Talked the party out of a lethal combat encounter!",
+    "rarity": "Rare"
+  },
+  {
+    "id": "leeroy_jenkins",
+    "name": "Leeroy Jenkins",
+    "emoji": "",
+    "description": "Charged in alone... and somehow survived!",
+    "rarity": "Epic"
+  }
+]

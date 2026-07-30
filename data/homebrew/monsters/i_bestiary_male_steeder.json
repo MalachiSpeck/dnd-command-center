@@ -1,0 +1,20 @@
+{
+  "name": "I BESTIARY \nMALE STEEDER",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 12,
+  "hp": 13,
+  "speed": "30 ft., climb 30 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "1/4",
+  "actions": [],
+  "raw_extracted": "STR \n15 (+2) \nDEX \n12 (+ l) \nCON \n14 {+2) \nSkills Stealth +5, Perception +4 \nINT \n2 (- 4) \nWIS \n10 (+0) \nSenses darkvision 120 ft., passive Perception 14 \nLanguages -\nChallenge 1/4 (SO XP) \nCHA \n3 (- 4) \nSpider Climb. The steed er can climb difficult surfaces, including upside down on ceilings, without needing to make an \nability check. \nExtraordinary Leap. The distance of the steeder's long jumps \nis tripled; every foot of its walking speed that it spends on the \njump allows it to jump 3 feet. \nACTIONS \nBite. Melee Weapon Attack: +4 to hit, reach 5 ft., one target. \nHit: 6 (ld8 + 2) piercing damage plus 4 (ld8) poison damage. \nSticky Leg. Melee Weapon Attack: +4 to hit, reach 5 ft., one \nSmall or Tiny creature. Hit: The target is stuck to the steeder's \nleg and grappled until it escapes (escape DC 12). The steeder \ncan have only one creature grappled at a time."
+}

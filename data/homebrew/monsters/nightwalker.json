@@ -1,0 +1,20 @@
+{
+  "name": "NIGHTWALKER",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 14,
+  "hp": 297,
+  "speed": "40 ft., fly 40 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "20",
+  "actions": [],
+  "raw_extracted": "STR \n22 (+6) \nDEX \n19 (+4) \nCON \n24 (+7) \nSaving Throws Con + 13 \nINT \n6 (- 2) \nWIS \n9 (- 1) \nCHA \n8 (-1) \nDamage Resistances acid, cold, fire, lightning, thunder; \nbludgeoning, piercing, and slashing from nonmagical attacks \nDamage Immunities necrotic, poison \nCondition Immunities exhaustion, frightened, grappled, \nparalyzed, petrified, poisoned, prone, restrained \nSenses darkvision 120 ft., passive Perception 9 \nLanguagesChallenge 20 (25,000 XP) \nAnnihilating Aura. Any creature that starts its turn within 30 \nfeet of the nightwalker must succeed on a DC 21 Constitution \nsaving throw or take 14 (4d6) necrotic damage and grant the \nnightwalker advantage on attack rolls against it until the start \nof the creature's next turn. Undead are immune to this aura. \nCHAPTER 6 I BESTIARY \nN IGHTWALK ER \nThe Negative Plane is a place of darkness and death, \nanathema to all living things. Yet there are those who \nwould tap into its fell power. to use its energy for sinister \nends. Most often, when"
+}

@@ -1,0 +1,20 @@
+{
+  "name": "lawful neutral",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 18,
+  "hp": 112,
+  "speed": "30 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "10",
+  "actions": [],
+  "raw_extracted": "STR \n14 (+2) \nDEX \n19 (+4) \nCON \n16 (+3) \nINT \n17 (+3) \nWIS \n19 (+4) \nSaving Throws Str +6, Dex +8, Int +7, Wis +8 \nSkills Arcana +7, Insight +8, Perception +8 \nSenses passive Perception 18 \nLanguages Gith \nChallenge 10 (5,900 XP) \nCHA \n13 (+l) \nInnate Spel/casting (Psionics). The githzerai's innate spellcasting ability is Wisdom (spell save DC 16, +8 to hit with spell \nattacks). It can innately cast the following spells, requiring no \ncomponents: \nCHAPTER 6 I BESTIARY \n\u2022 \n\u2022 \nG IT M1.ERAI ANARCM \nGITHZERAI ENLIGHTENED \nGithzerai never stop training. They spend long hours in \nmeditation to transcend the limits of their forms and to \napprehend the nature of reality. Zerths who complete \nthe next tier of their training become one of the githzerai known as the enlightened. \nAt will: mage hand (the hand is invisible) \n3/day each: blur, expeditious retreat.feather fall, jump, see invisibility, shield \n1/day each: haste, plane shift, teleport \nPsychic Defense. While the githzerai is wearing n"
+}

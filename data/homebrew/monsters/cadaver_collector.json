@@ -1,0 +1,19 @@
+{
+  "name": "CADAVER COLLECTOR",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 17,
+  "hp": 189,
+  "speed": "30 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "14",
+  "actions": []
+}

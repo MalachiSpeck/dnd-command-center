@@ -1,0 +1,19 @@
+{
+  "factions": [
+    {
+      "name": "Zhentarim",
+      "reputation": 0,
+      "description": "The Black Network of mercenaries and spies."
+    },
+    {
+      "name": "Lords' Alliance",
+      "reputation": 2,
+      "description": "A coalition of rulers keeping peace in the North."
+    },
+    {
+      "name": "Harpers",
+      "reputation": -1,
+      "description": "A semi-secret society battling tyranny and inequality."
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "bounty_1",
+    "title": "Sewer Rat Infestation",
+    "description": "Clear the giant vermin beneath the Trades Ward. Bring tail proofs to the guard post.",
+    "reward_gold": 200,
+    "reward_items": [
+      "Potion of Healing"
+    ],
+    "difficulty": "Easy",
+    "deadline_date": "20 Kythorn 1493",
+    "status": "available"
+  },
+  {
+    "id": "bounty_1784322401037",
+    "title": "Kill the NOBLES",
+    "description": "We are done with the nobles using our labor and taking all the profits. TAKE THEM DOWN!!",
+    "reward_gold": 200,
+    "reward_items": [
+      "Potion of Healing"
+    ],
+    "difficulty": "Medium",
+    "deadline_date": "Calendar Date",
+    "status": "available"
+  }
+]

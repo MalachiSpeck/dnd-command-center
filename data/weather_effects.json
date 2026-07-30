@@ -1,0 +1,18 @@
+{
+  "Clear": {
+    "visual": "none",
+    "rules": "Nice and calm weather. No penalties."
+  },
+  "Heavy Rain": {
+    "visual": "rain",
+    "rules": "Heavy Rain: disadvantage on Perception checks relying on sight, open flames extinguished."
+  },
+  "Heavy Snow": {
+    "visual": "snow",
+    "rules": "Heavy Snow: Everything is difficult terrain, visibility is low."
+  },
+  "Sandstorm": {
+    "visual": "sandstorm",
+    "rules": "Sandstorm: Blindness outside if eyes not protected, moving against the wind costs double movement."
+  }
+}

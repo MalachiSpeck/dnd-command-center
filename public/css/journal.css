@@ -1,0 +1,105 @@
+/* public/css/journal.css */
+.journal-layout-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.journal-prompt-card {
+    background: radial-gradient(circle at top left, #1c1917 0%, #0c0a09 100%);
+    border: 1.5px dashed var(--gold-amber);
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(251, 191, 36, 0.08);
+}
+
+.journal-prompt-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    color: var(--gold-amber);
+    margin-bottom: 6px;
+}
+
+.journal-prompt-text {
+    font-size: 0.8rem;
+    color: #e2e8f0;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    font-style: italic;
+}
+
+.journal-compose-area {
+    width: 100%;
+    height: 120px;
+    background: #07070a;
+    border: 1px solid var(--border-iron);
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.journal-compose-area:focus {
+    border-color: var(--arcane-violet);
+    box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
+}
+
+.journal-past-entries-header {
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-iron);
+    padding-bottom: 4px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.journal-past-entry-card {
+    background: var(--shadow-card);
+    border: 1px solid var(--border-iron);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 8px;
+    position: relative;
+}
+
+.journal-past-entry-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    color: var(--arcane-violet);
+    margin-bottom: 6px;
+}
+
+.journal-past-entry-meta {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.journal-past-entry-text {
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: #cbd5e1;
+    white-space: pre-wrap;
+}
+
+.inspiration-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(251, 191, 36, 0.15);
+    border: 1px solid var(--gold-amber);
+    color: var(--gold-amber);
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}

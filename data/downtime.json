@@ -1,0 +1,30 @@
+[
+  {
+    "id": "dt_1",
+    "character": "Furfur",
+    "project": "Translating the Calimport Cipher",
+    "current_points": 10,
+    "max_points": 10
+  },
+  {
+    "id": "dt_2",
+    "character": "Gnoah",
+    "project": "Establishing an Informant Network",
+    "current_points": 15,
+    "max_points": 20
+  },
+  {
+    "id": "dt_3",
+    "character": "Arrrric",
+    "project": "Forging Adamantine Plate",
+    "current_points": 12,
+    "max_points": 50
+  },
+  {
+    "id": "dt_1783722457268",
+    "character": "Gnoah",
+    "project": "Alchemists Journal",
+    "current_points": 0,
+    "max_points": 24
+  }
+]

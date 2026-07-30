@@ -1,0 +1,20 @@
+{
+  "name": "RETRIEVER",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 19,
+  "hp": 210,
+  "speed": "40 ft., climb 40 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "14",
+  "actions": [],
+  "raw_extracted": "STR \n22 (+6) \nDEX \n16 (+3) \nCON \n20 (+5) \nINT \n3 (- 4) \nSaving Throws Dex +8, Con +10, Wis +5 \nSkills Perception +5, Stealth +8 \nWIS \n11 (+O) \nCHA \n4 (-3) \nDamage Immunities necrotic, poison, psychic; bludgeoning, \npiercing, and slashing from nonmagical attacks that aren't \nadamantine \nCondition Immunities charmed, exhaustion, frightened, \nparalyzed, poisoned \nSenses blindsight 30 ft., darkvision 60 ft., \npassive Perception 15 \nLanguages understands Abyssal, Elvish, and Undercommon \nbut can't speak \nChallenge 14 (11,500 XP) \nFaultless Tracker. The retriever is given a quarry by its master. \nThe quarry can be a specific creature or object the master is \npersonally acquainted with, or it can be a general type of creature or object the master has seen before. The retriever knows \nthe direction and distance to its quarry as long as the two of \nthem are on the same plane of existence. The retriever can have \nC HAPTeR 6 I BESTIARY \nonly one such quarry at a time. The retriever also always kn"
+}

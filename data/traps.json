@@ -1,0 +1,29 @@
+[
+  {
+    "name": "Poison Dart Trap",
+    "trigger": "Pressure plate or hidden tripwire on floor",
+    "detection_dc": 12,
+    "save": "DC 13 CON",
+    "fail_effect": "Takes 2d10 poison damage and is Poisoned for 1 hour. On fail, the target is wracked with painful tremors.",
+    "success_effect": "Takes half damage and is not poisoned.",
+    "disarm": "DC 12 Thieves' Tools to wedge the pressure plate or snip the tripwire safely."
+  },
+  {
+    "name": "Glyph of Warding (Explosive)",
+    "trigger": "Speaking the incorrect command word or crossing the threshold",
+    "detection_dc": 15,
+    "save": "DC 15 DEX",
+    "fail_effect": "Takes 5d8 Fire damage in a 20ft radius sphere centered on the glyph.",
+    "success_effect": "Takes half damage.",
+    "disarm": "DC 15 Arcana check using Dispel Magic to unravel the magical runes."
+  },
+  {
+    "name": "Collapsing Ceiling",
+    "trigger": "Pulling a lever or tripping a low cord",
+    "detection_dc": 14,
+    "save": "DC 14 DEX",
+    "fail_effect": "Takes 4d10 bludgeoning damage and is pinned under rubble (Prone & Restrained).",
+    "success_effect": "Takes half damage and escapes being pinned.",
+    "disarm": "DC 13 Athletics or Thieves' Tools to brace the weak timbers or disable the trip mechanism."
+  }
+]

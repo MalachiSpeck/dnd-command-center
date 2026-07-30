@@ -1,0 +1,20 @@
+{
+  "name": "HELLFIRE ENGINE",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 18,
+  "hp": 216,
+  "speed": "40 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "16",
+  "actions": [],
+  "raw_extracted": "STR \n20 (+5) \nDEX \n16 (+3) \nCON \n24 (+7) \nINT \n2 (-4) \nSaving Throws Dex +8, Wis +5, Cha +O \nWIS \n10 (+O) \nCHA \nl (-5) \nDamage Resistances cold, psychic; bludgeoning, piercing, and \nslashing from nonmagical attacks that aren't silvered \nDamage Immunities fire, poison \nCondition Immunities charmed, deafened, exhaustion, \nfrightened, paralyzed, poisoned, unconscious \nSenses darkvision 120 ft., passive Perception 10 \nLanguages understands Infernal but can't speak \nChallenge 16 (15,000 XP) \nImmutable Form. The hellfire engine is immune to any spell or \neffect that would alter its form. \nMagic Resistance. The hellfire engine has advantage on saving \nthrows against spells and other magical effects. \nA CTIONS \nFlesh-Crushing Stride. The hellfire engine moves up to its \nspeed in a straight line. During this move, it can enter Large or \nsmaller creatures' spaces. A creature whose space the hellfire \nengine enters must make a DC 18 Dexterity saving throw. On \na successful save, the creature is p"
+}

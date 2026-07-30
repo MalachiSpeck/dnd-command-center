@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Join Campaign - D&D DM Command Center</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-abyss: #0a0a0c;
+            --shadow-card: #141419;
+            --border-iron: #2a2438;
+            --arcane-violet: #8b5cf6;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --gold-amber: #fbbf24;
+            --success-green: #10b981;
+            --crimson-rage: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-abyss);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: var(--shadow-card);
+            border: 1px solid var(--border-iron);
+            border-radius: 12px;
+            padding: 30px 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            color: var(--arcane-violet);
+            font-size: 2rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        .party-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .char-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background-color: #121216;
+            border: 1px solid var(--border-iron);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: left;
+            text-decoration: none;
+            color: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .char-card:hover {
+            border-color: var(--arcane-violet);
+            box-shadow: 0 0 12px rgba(139, 92, 246, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .char-art {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            border: 2px solid var(--border-iron);
+        }
+
+        .char-info {
+            flex-grow: 1;
+        }
+
+        .char-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: white;
+            margin-bottom: 2px;
+        }
+
+        .char-details {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .arrow-indicator {
+            color: var(--arcane-violet);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .lan-info {
+            margin-top: 15px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-iron);
+            padding-top: 15px;
+        }
+
+        .lan-ip {
+            color: var(--gold-amber);
+            font-weight: bold;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        /* Create New Button style */
+        .btn-create-char {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background-color: rgba(139, 92, 246, 0.1);
+            color: var(--arcane-violet);
+            border: 1px dashed var(--arcane-violet);
+            border-radius: 8px;
+            padding: 15px;
+            font-weight: bold;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Cinzel', serif;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+
+        .btn-create-char:hover {
+            background-color: var(--arcane-violet);
+            color: white;
+            border-style: solid;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Modal styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 1;
+            transition: opacity 0.2s ease;
+        }
+
+        .modal-overlay.hidden {
+            display: none !important;
+        }
+
+        .modal-content {
+            background-color: var(--shadow-card);
+            border: 1px solid var(--border-iron);
+            border-radius: 12px;
+            width: 500px;
+            max-width: 90%;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            text-align: left;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+        }
+
+        .form-group label {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group select {
+            padding: 10px;
+            background-color: var(--bg-abyss);
+            border: 1px solid var(--border-iron);
+            border-radius: 6px;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--arcane-violet);
+            box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-primary {
+            background-color: var(--arcane-violet);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            flex: 1;
+            font-family: 'Cinzel', serif;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--border-iron);
+            color: var(--text-muted);
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            flex: 1;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--crimson-rage);
+            color: var(--crimson-rage);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Connect to Campaign</h1>
+        <p class="subtitle">Select your character sheet below to synchronize with the DM Command Center</p>
+
+        <div id="loading" style="color: var(--text-muted);">Summoning party data...</div>
+        <div id="party-list" class="party-list" style="display: none;"></div>
+
+        <!-- Create Character Action -->
+        <div id="create-char-action" style="display: none; width: 100%; margin-top: 15px;">
+            <button class="btn-create-char" onclick="openCreatorModal()">
+                <span> Create New Character </span>
+            </button>
+        </div>
+
+        <div class="lan-info">
+            Connecting on LAN Network: <span id="lan-ip" class="lan-ip">detecting...</span>
+        </div>
+    </div>
+
+    <!-- MODAL: CREATE CHARACTER FROM SCRATCH -->
+    <div id="create-char-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 style="font-family: 'Cinzel', serif; color: var(--gold-amber); margin-bottom: 15px; border-bottom: 1px solid var(--border-iron); padding-bottom: 10px; text-align: left;">Forge New Character</h2>
+            
+            <div class="form-group">
+                <label>Character Name</label>
+                <input type="text" id="cre-name" placeholder="E.g., Grizz, Eldrin, Varis">
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Race</label>
+                    <input type="text" id="cre-race" placeholder="E.g., Elf, Dwarf, Human">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Class</label>
+                    <select id="cre-class" onchange="onCreatorClassChange()"></select>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Subclass</label>
+                    <select id="cre-subclass"></select>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Level</label>
+                    <input type="number" id="cre-level" value="1" min="1" max="20" onchange="onCreatorLevelOrClassChange()">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Max HP</label>
+                    <input type="number" id="cre-hp" value="12" min="1">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Armor Class (AC)</label>
+                    <input type="number" id="cre-ac" value="10" min="5">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Character Art Web URL (Optional)</label>
+                <input type="url" id="cre-art" placeholder="https://example.com/image.jpg">
+            </div>
+
+            <div class="btn-row">
+                <button class="btn-secondary" onclick="closeCreatorModal()">Cancel</button>
+                <button class="btn-primary" onclick="submitNewCharacterProposal()">Submit to DM</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let availableClasses = {};
+        let availableSubclasses = [];
+
+        async function fetchSrdClasses() {
+            try {
+                const classesRes = await fetch('/api/classes');
+                availableClasses = await classesRes.json();
+
+                const subclassesRes = await fetch('/api/subclasses');
+                availableSubclasses = await subclassesRes.json();
+
+                populateClassDropdowns();
+            } catch (err) {
+                console.error("Failed to fetch classes/subclasses data:", err);
+            }
+        }
+
+        function populateClassDropdowns() {
+            const classSelect = document.getElementById('cre-class');
+            if (!classSelect) return;
+
+            classSelect.innerHTML = '';
+            
+            const keys = Object.keys(availableClasses);
+            if (keys.length === 0) {
+                // Fallback option
+                const opt = document.createElement('option');
+                opt.value = 'Fighter';
+                opt.innerText = 'Fighter';
+                classSelect.appendChild(opt);
+                return;
+            }
+
+            keys.forEach(key => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.innerText = key;
+                classSelect.appendChild(opt);
+            });
+
+            onCreatorClassChange();
+        }
+
+        function onCreatorClassChange() {
+            const classSelect = document.getElementById('cre-class');
+            const subclassSelect = document.getElementById('cre-subclass');
+            if (!classSelect || !subclassSelect) return;
+
+            const selectedClass = classSelect.value;
+            subclassSelect.innerHTML = '';
+
+            // Add standard None option
+            const noneOpt = document.createElement('option');
+            noneOpt.value = '';
+            noneOpt.innerText = '-- None Selected --';
+            subclassSelect.appendChild(noneOpt);
+
+            // Filter subclasses from our array
+            let filtered = availableSubclasses.filter(sc => {
+                const cName = sc.class && sc.class.name;
+                return cName && cName.toLowerCase() === selectedClass.toLowerCase();
+            });
+
+            // Filter standard core subclasses
+            filtered = filtered.filter(sc => {
+                if (!sc || !sc.name) return false;
+                const name = sc.name;
+                const source = sc.source || '';
+                if (name.includes('UA') || name.includes('(UA)') || name.includes('Playtest') || name.includes('Sidekick')) {
+                    return false;
+                }
+                if (source.startsWith('UA') || source.includes('Modern') || source.includes('Mystic')) {
+                    return false;
+                }
+                return true;
+            });
+
+            filtered.forEach(sc => {
+                const opt = document.createElement('option');
+                opt.value = sc.name;
+                opt.innerText = sc.name;
+                subclassSelect.appendChild(opt);
+            });
+
+            onCreatorLevelOrClassChange();
+        }
+
+        function onCreatorLevelOrClassChange() {
+            const classSelect = document.getElementById('cre-class');
+            const levelInput = document.getElementById('cre-level');
+            const hpInput = document.getElementById('cre-hp');
+            const acInput = document.getElementById('cre-ac');
+
+            if (!classSelect || !levelInput) return;
+
+            const selectedClass = classSelect.value;
+            const level = parseInt(levelInput.value, 10) || 1;
+
+            // 1. Calculate HP automatically
+            let hitDie = 8;
+            if (['Wizard', 'Sorcerer'].includes(selectedClass)) hitDie = 6;
+            else if (['Bard', 'Cleric', 'Druid', 'Monk', 'Rogue', 'Warlock'].includes(selectedClass)) hitDie = 8;
+            else if (['Fighter', 'Paladin', 'Ranger'].includes(selectedClass)) hitDie = 10;
+            else if (selectedClass === 'Barbarian') hitDie = 12;
+
+            // Standard starting HP (assuming con mod +0)
+            let calculatedHp = hitDie;
+            if (level > 1) {
+                calculatedHp += (level - 1) * (Math.floor(hitDie / 2) + 1);
+            }
+
+            hpInput.value = calculatedHp;
+
+            // 2. Determine default starting Armor Class based on class starting loadout
+            let defaultAc = 10;
+            if (['Wizard', 'Sorcerer', 'Monk'].includes(selectedClass)) {
+                defaultAc = 10; // Mage Armor / Unarmored Defense simulated
+            } else if (['Rogue', 'Bard', 'Warlock'].includes(selectedClass)) {
+                defaultAc = 11; // Leather Armor
+            } else if (['Cleric', 'Druid'].includes(selectedClass)) {
+                defaultAc = 13; // Scale Mail or Hide Armor / Shield
+            } else if (['Fighter', 'Paladin', 'Ranger'].includes(selectedClass)) {
+                defaultAc = 16; // Chain Mail or Scale Mail / Shield
+            } else if (selectedClass === 'Barbarian') {
+                defaultAc = 12; // Unarmored Defense (Assuming Dex & Con positive modifiers)
+            }
+
+            acInput.value = defaultAc;
+        }
+
+        async function loadParty() {
+            await fetchSrdClasses();
+            try {
+                // Fetch party data
+                const response = await fetch('/api/party');
+                const party = await response.json();
+
+                // Fetch connection info to show LAN IP
+                const statusRes = await fetch('/api/status');
+                const statusData = await statusRes.json();
+                
+                document.getElementById('lan-ip').innerText = window.location.host;
+
+                const partyListDiv = document.getElementById('party-list');
+                const loadingDiv = document.getElementById('loading');
+
+                partyListDiv.innerHTML = '';
+                party.forEach(char => {
+                    const card = document.createElement('a');
+                    card.href = `/sheet/${char.id}`;
+                    card.className = 'char-card';
+
+                    const defaultArt = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400';
+                    const artUrl = char.art || defaultArt;
+
+                    card.innerHTML = `
+                        <div class="char-art" style="background-image: url('${artUrl}')"></div>
+                        <div class="char-info">
+                            <div class="char-name">${char.name}</div>
+                            <div class="char-details">Level ${char.level} ${char.race} ${char.class}</div>
+                        </div>
+                        <div class="arrow-indicator"></div>
+                    `;
+                    partyListDiv.appendChild(card);
+                });
+
+                loadingDiv.style.display = 'none';
+                partyListDiv.style.display = 'flex';
+                document.getElementById('create-char-action').style.display = 'block';
+
+            } catch (err) {
+                console.error("Failed to load join page data:", err);
+                document.getElementById('loading').innerText = "Failed to connect to server. Ensure server is running on LAN.";
+            }
+        }
+
+        function openCreatorModal() {
+            document.getElementById('create-char-modal').classList.remove('hidden');
+        }
+
+        function closeCreatorModal() {
+            document.getElementById('create-char-modal').classList.add('hidden');
+        }
+
+        async function submitNewCharacterProposal() {
+            const name = document.getElementById('cre-name').value.trim();
+            const race = document.getElementById('cre-race').value.trim() || 'Human';
+            const classSelect = document.getElementById('cre-class');
+            const subclassSelect = document.getElementById('cre-subclass');
+            const charClass = classSelect ? classSelect.value : 'Fighter';
+            const charSubclass = subclassSelect ? subclassSelect.value : '';
+            const level = parseInt(document.getElementById('cre-level').value, 10) || 1;
+            const hp = parseInt(document.getElementById('cre-hp').value, 10) || 12;
+            const ac = parseInt(document.getElementById('cre-ac').value, 10) || 10;
+            const art = document.getElementById('cre-art').value.trim();
+
+            if (!name) {
+                alert("The hero's name cannot be left blank!");
+                return;
+            }
+
+            // Automate starting proficiencies based on class data
+            const startingProficiencies = { skills: [], saving_throws: [], armor: [], weapons: [] };
+            const classData = availableClasses[charClass];
+            const statNames = { str: "Strength", dex: "Dexterity", con: "Constitution", int: "Intelligence", wis: "Wisdom", cha: "Charisma" };
+            if (classData) {
+                if (Array.isArray(classData.proficiency)) {
+                    startingProficiencies.saving_throws = classData.proficiency.map(p => statNames[p.toLowerCase()] || p);
+                }
+                if (classData.startingProficiencies) {
+                    if (Array.isArray(classData.startingProficiencies.armor)) {
+                        startingProficiencies.armor = classData.startingProficiencies.armor;
+                    }
+                    if (Array.isArray(classData.startingProficiencies.weapons)) {
+                        startingProficiencies.weapons = classData.startingProficiencies.weapons;
+                    }
+                }
+            }
+
+            // Automate level-appropriate class features list!
+            const startingFeatures = [];
+            if (classData && Array.isArray(classData.classFeatures)) {
+                classData.classFeatures.forEach((lvlFeats, idx) => {
+                    const featLvl = idx + 1;
+                    if (featLvl <= level && Array.isArray(lvlFeats)) {
+                        lvlFeats.forEach(feat => {
+                            if (feat && feat.name && !feat.gainSubclassFeature) {
+                                // Simple text conversion of entries array
+                                const descText = Array.isArray(feat.entries) ? feat.entries.map(e => typeof e === 'string' ? e : JSON.stringify(e)).join('\n') : '';
+                                startingFeatures.push({ name: feat.name, desc: descText });
+                            }
+                        });
+                    }
+                });
+            }
+
+            // If subclass chosen, append subclass desc
+            if (charSubclass) {
+                const subObj = availableSubclasses.find(sc => sc.name.toLowerCase() === charSubclass.toLowerCase());
+                if (subObj && Array.isArray(subObj.subclassFeatures)) {
+                    // Gather up to level
+                    let levelsGained = [];
+                    if (classData && Array.isArray(classData.classFeatures)) {
+                        classData.classFeatures.forEach((lvlFeats, idx) => {
+                            if (Array.isArray(lvlFeats) && lvlFeats.some(f => f.gainSubclassFeature === true)) {
+                                levelsGained.push(idx + 1);
+                            }
+                        });
+                    }
+                    subObj.subclassFeatures.forEach((featuresAtIdx, idx) => {
+                        const levelGained = levelsGained[idx];
+                        if (levelGained && levelGained <= level) {
+                            if (Array.isArray(featuresAtIdx)) {
+                                featuresAtIdx.forEach(f => {
+                                    if (f) {
+                                        const descText = Array.isArray(f.entries) ? f.entries.map(e => typeof e === 'string' ? e : JSON.stringify(e)).join('\n') : '';
+                                        startingFeatures.push({ name: f.name || charSubclass, desc: descText });
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            }
+
+            const proposedCharacter = {
+                name,
+                race,
+                class: charClass,
+                subclass: charSubclass,
+                level,
+                hp,
+                ac,
+                art: art || 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=400',
+                stats: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+                passives: { perception: 10, insight: 10, investigation: 10 },
+                magic_items: [],
+                secrets: "",
+                // Store actual features parsed from SRD Classes database!
+                class_features_srd: startingFeatures,
+                proficiencies: startingProficiencies,
+                spell_slots: [0, 2, 0, 0, 0, 0],
+                current_slots: [0, 2, 0, 0, 0, 0],
+                resources: [],
+                hp_current: hp,
+                hp_max: hp,
+                hp_temp: 0,
+                conditions: []
+            };
+
+            try {
+                const response = await fetch('/api/pending-characters/propose', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(proposedCharacter)
+                });
+
+                if (response.ok) {
+                    alert(`Character proposed successfully! Wait for the DM to approve your character.`);
+                    closeCreatorModal();
+                    // Clear fields
+                    document.getElementById('cre-name').value = '';
+                    document.getElementById('cre-race').value = '';
+                    document.getElementById('cre-class').value = '';
+                    document.getElementById('cre-level').value = '1';
+                    document.getElementById('cre-hp').value = '12';
+                    document.getElementById('cre-ac').value = '10';
+                    document.getElementById('cre-art').value = '';
+                } else {
+                    alert("Failed to submit proposal to the DM.");
+                }
+            } catch(e) {
+                console.error("Error submitting character proposal:", e);
+                alert("Failed to connect to the campaign server.");
+            }
+        }
+
+        window.onload = loadParty;
+    </script>
+</body>
+</html>

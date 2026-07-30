@@ -1,0 +1,20 @@
+{
+  "name": "FIRE ELEMENTAL MYRMIDON",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 18,
+  "hp": 123,
+  "speed": "40 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "7",
+  "actions": [],
+  "raw_extracted": "STR \n13 (+l) \nDEX \n18 (+4) \nCON \n15 (+2) \nINT \n9 (- 1) \nWIS \n10 (+O) \nCHA \n10 (+O) \nDamage Resistances bludgeoning, piercing, and slashing from \nnonmagical attacks \nDamage Immunities fire, poison \nCondition Immunities paralyzed, petrified, poisoned, prone \nSenses darkvision 60 ft., passive Perception 10 \nLanguages lgnan, one language of its creator's choice \n_, J \nChallenge 7 (2,900 XP) \nIllumination. The myrmidon sheds bright light in a 20-foot radius and dim light in a 40-foot radius. \nMagic Weapons. The myrmidon's weapon attacks are magical. \nWater Susceptibility. For every S feet the myrmidon moves in l \nfoot or more of water, it takes 2 (1 d4) cold damage. \nACTIONS \n\u2022\u2022 \nMultiattack. The myrmidon makes three scimitar attacks. \nScimitar. Melee Weapon Attack: +7 to hit, reach 5 ft., one target. \nHit: 7 (ld6 + 4) slashing damage. \nFiery Strikes (Recharge 6). The myrmidon uses Multiattack. \nEach attack that hits deals an extra S (ldlO) fire damage."
+}

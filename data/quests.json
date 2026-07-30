@@ -1,0 +1,17 @@
+[
+  {
+    "title": "Investigate the Sewer Whisperer",
+    "giver": "Vizier Akhbar",
+    "status": "active",
+    "objectives": [
+      {
+        "text": "Locate the hidden entry under Calimport",
+        "complete": false
+      },
+      {
+        "text": "Find and decode the cipher key",
+        "complete": false
+      }
+    ]
+  }
+]

@@ -1,0 +1,382 @@
+/* public/css/envelopes.css */
+.envelope-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(4, 4, 6, 0.96);
+    backdrop-filter: blur(8px);
+    z-index: 3000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+    animation: fadeInEnvelope 0.5s ease-out;
+}
+
+@keyframes fadeInEnvelope {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Dream Sequence styling */
+.envelope-fullscreen.dream {
+    background: radial-gradient(circle at center, #110e1c 0%, #050408 100%);
+    color: #e2e8f0;
+}
+
+.envelope-fullscreen.dream.patron-themed {
+    background: radial-gradient(circle at center, #12030a 0%, #030002 100%);
+    border: 1px solid #701a2f;
+}
+
+.dream-container {
+    max-width: 550px;
+    width: 100%;
+    text-align: center;
+    padding: 24px;
+}
+
+.dream-prelude {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    animation: pulseDreamText 3s infinite ease-in-out;
+}
+
+@keyframes pulseDreamText {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; text-shadow: 0 0 8px rgba(139, 92, 246, 0.5); }
+}
+
+.dream-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.8rem;
+    color: var(--gold-amber);
+    margin-bottom: 24px;
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+}
+
+.dream-narrative {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #cbd5e1;
+    min-height: 120px;
+    text-align: left;
+    background: rgba(13, 13, 18, 0.6);
+    border: 1px solid var(--border-iron);
+    padding: 18px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.6);
+}
+
+.dream-wake {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    color: #ef4444;
+    margin-top: 15px;
+    animation: wakeUpPulse 2s ease-out;
+}
+
+@keyframes wakeUpPulse {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.dream-continue, .intel-dismiss, .recap-dismiss {
+    background: var(--arcane-violet);
+    border: none;
+    color: white;
+    font-family: 'Cinzel', serif;
+    padding: 10px 24px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 15px;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+    transition: all 0.2s;
+}
+
+.dream-continue:hover, .intel-dismiss:hover, .recap-dismiss:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(139, 92, 246, 0.6);
+}
+
+/* Faction Intel Styling */
+.intel-document {
+    max-width: 500px;
+    width: 100%;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+    position: relative;
+    box-sizing: border-box;
+}
+
+.intel-header {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 2px solid rgba(255,255,255,0.1);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+}
+
+.intel-faction {
+    font-weight: bold;
+    color: var(--gold-amber);
+}
+
+.intel-classification {
+    font-family: monospace;
+    color: #ef4444;
+    border: 1px solid #ef4444;
+    padding: 1px 6px;
+    border-radius: 3px;
+}
+
+.intel-stamp {
+    position: absolute;
+    top: 45px;
+    right: 30px;
+    border: 3px dashed rgba(239, 68, 68, 0.5);
+    color: rgba(239, 68, 68, 0.5);
+    font-family: monospace;
+    font-weight: bold;
+    font-size: 1.2rem;
+    padding: 4px 10px;
+    transform: rotate(12deg);
+    pointer-events: none;
+    letter-spacing: 1px;
+}
+
+.intel-body {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #cbd5e1;
+    margin-bottom: 20px;
+    white-space: pre-line;
+}
+
+.intel-attachments {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 12px;
+    margin-bottom: 20px;
+}
+
+.intel-attachments h4 {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.intel-attachment {
+    display: inline-block;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-iron);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    color: var(--arcane-violet);
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.intel-attachment:hover {
+    background: rgba(139, 92, 246, 0.1);
+    border-color: var(--arcane-violet);
+}
+
+/* Session Recap scroll layout */
+.recap-scroll {
+    max-width: 550px;
+    width: 100%;
+    background: #121118;
+    border: 1px solid #332d44;
+    border-radius: 8px;
+    padding: 24px;
+    box-sizing: border-box;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+}
+
+.recap-previously {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    color: var(--gold-amber);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+.recap-previously-text {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-bottom: 15px;
+}
+
+.recap-divider {
+    border: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border-iron), transparent);
+    margin: 15px 0;
+}
+
+.recap-narrative {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #e2e8f0;
+    margin-bottom: 24px;
+}
+
+.drop-cap {
+    font-family: 'Cinzel', serif;
+    font-size: 2.8rem;
+    float: left;
+    line-height: 0.9;
+    padding-right: 8px;
+    color: var(--arcane-violet);
+    text-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+}
+
+/* Skill challenge styles */
+.challenge-board {
+    max-width: 500px;
+    width: 100%;
+    background: #0d0d12;
+    border: 2px solid var(--border-iron);
+    border-radius: 10px;
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.challenge-board h2 {
+    font-family: 'Cinzel', serif;
+    color: var(--gold-amber);
+    margin-bottom: 8px;
+    font-size: 1.4rem;
+}
+
+.challenge-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 15px;
+}
+
+.challenge-deadline {
+    font-size: 0.75rem;
+    color: #ef4444;
+    font-weight: bold;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+.challenge-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.challenge-option {
+    background: #141419;
+    border: 1px solid var(--border-iron);
+    border-radius: 6px;
+    padding: 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: white;
+}
+
+.challenge-option:hover:not(:disabled) {
+    border-color: var(--arcane-violet);
+    background: rgba(139, 92, 246, 0.05);
+}
+
+.challenge-option:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.challenge-skill {
+    display: block;
+    font-weight: bold;
+    color: var(--arcane-violet);
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+}
+
+.challenge-option-desc {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.challenge-roll {
+    background: #141419;
+    border-radius: 6px;
+    padding: 15px;
+    text-align: center;
+    animation: popRollResult 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popRollResult {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.challenge-roll.success { border: 1.5px solid var(--success-green); }
+.challenge-roll.failure { border: 1.5px solid var(--crimson-rage); }
+
+.roll-die {
+    font-size: 2.2rem;
+    font-weight: 800;
+    display: block;
+    color: white;
+    text-shadow: 0 0 10px rgba(255,255,255,0.2);
+}
+
+.roll-mod {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    display: block;
+    margin-top: 4px;
+}
+
+.roll-total {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: var(--gold-amber);
+    display: block;
+    margin: 6px 0;
+}
+
+.roll-result {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    font-weight: bold;
+    display: block;
+}
+
+.challenge-roll.success .roll-result { color: var(--success-green); }
+.challenge-roll.failure .roll-result { color: var(--crimson-rage); }
+
+.roll-note {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 10px;
+    font-style: italic;
+}

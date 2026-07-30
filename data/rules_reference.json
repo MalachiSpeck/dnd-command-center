@@ -1,0 +1,30 @@
+{
+  "cover": {
+    "title": "Cover",
+    "description": "Walls, trees, creatures, and other obstacles can provide cover during combat, making a target more difficult to harm. A target can benefit from cover only when an attack or other effect originates on the opposite side of the cover.\n\n* **Half Cover**: +2 bonus to AC and Dexterity saving throws. A target has half cover if an obstacle blocks at least half of its body.\n* **Three-Quarters Cover**: +5 bonus to AC and Dexterity saving throws. A target has three-quarters cover if about three-quarters of it is covered.\n* **Total Cover**: Cannot be targeted directly by an attack or a spell, although some spells can reach such a target by including it in an area of effect."
+  },
+  "difficult_terrain": {
+    "title": "Difficult Terrain",
+    "description": "Every foot of movement on difficult terrain costs 1 extra foot. This rule is true even if multiple things in a space make the terrain difficult (like deep water, heavy undergrowth, or ice). Low furniture, rubble, steep stairs, snow, and shallow bogs are examples of difficult terrain."
+  },
+  "falling_damage": {
+    "title": "Falling Damage",
+    "description": "A fall from a great height is one of the most common hazards facing an adventurer. At the end of a fall, a creature takes 1d6 bludgeoning damage for every 10 feet it fell, to a maximum of 20d6. The creature lands prone, unless it avoids taking damage from the fall."
+  },
+  "suffocation": {
+    "title": "Suffocation",
+    "description": "A creature can hold its breath for a number of minutes equal to 1 + its Constitution modifier (minimum of 30 seconds).\n\nWhen a creature runs out of breath or is choking, it can survive for a number of rounds equal to its Constitution modifier (minimum of 1 round). At the start of its next turn, it drops to 0 hit points and is dying, and it can't regain hit points or be stabilized until it can breathe again."
+  },
+  "grappling": {
+    "title": "Grappling & Shoving",
+    "description": "When you want to grab a creature or wrestle with it, you can use the Attack action to make a Special melee attack, a grapple. The target of your grapple must be no more than one size larger than you and must be within your reach.\n\nUsing at least one free hand, you try to seize the target by making a grapple check, an Athletics check contested by the target's Athletics or Acrobatics check (target chooses). If you succeed, you subject the target to the Grappled condition.\n\n* **Shoving**: You make a contested strength check (Athletics vs Athletics/Acrobatics) to either knock the target prone or push it 5 feet away from you."
+  },
+  "surprise": {
+    "title": "Surprise Rounds",
+    "description": "The DM determines who might be surprised. If neither side tries to be stealthy, they automatically notice each other. Otherwise, the DM compares the Stealth checks of anyone hiding with the Passive Perception score of each creature on the opposing side.\n\nAny character or monster that doesn't notice a threat is surprised at the start of the encounter. If you're surprised, you can't move or take an action on your first turn of the combat, and you can't take a reaction until that turn ends. A member of a group can be surprised even if the other members aren't."
+  },
+  "mounted_combat": {
+    "title": "Mounted Combat",
+    "description": "Once during your move, you can mount a creature that is within 5 feet of you or dismount. Doing so costs an amount of movement equal to half your speed.\n\nWhile you're mounted, you have two choices. You can control the mount, matching its initiative to yours (it can only take the Dash, Disengage, and Dodge actions). Or you can allow the mount to act independently (it has its own initiative and actions)."
+  }
+}

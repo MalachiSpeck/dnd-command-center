@@ -1,0 +1,26 @@
+{
+  "exploration": {
+    "name": "Dungeon Synth Ambience",
+    "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+  },
+  "tension": {
+    "name": "Suspenseful Drone",
+    "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
+  },
+  "combat": {
+    "name": "Epic Battle Beats",
+    "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"
+  },
+  "boss": {
+    "name": "Colossus Orchestral",
+    "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3"
+  },
+  "victory": {
+    "name": "Heroic Fanfare Stinger",
+    "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3"
+  },
+  "death": {
+    "name": "Somber Piano Elegance",
+    "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3"
+  }
+}

@@ -1,0 +1,24 @@
+[
+  {
+    "name": "Healing Potion",
+    "materials": {
+      "Vial": 1,
+      "Red Mushroom": 2,
+      "Purified Water": 1
+    },
+    "dc": 12,
+    "time_days": 1,
+    "skill": "Arcana"
+  },
+  {
+    "name": "Greater Healing Potion",
+    "materials": {
+      "Vial": 1,
+      "Fire Blossom": 2,
+      "Distilled Glow-sap": 1
+    },
+    "dc": 15,
+    "time_days": 2,
+    "skill": "Medicine"
+  }
+]

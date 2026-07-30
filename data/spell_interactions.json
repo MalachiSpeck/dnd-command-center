@@ -1,0 +1,37 @@
+[
+  {
+    "query": "Multiple Concentration",
+    "ruling": "You can't concentrate on two spells at once. Casting another concentration spell instantly drops the first.",
+    "page": "PHB p.203"
+  },
+  {
+    "query": "Double Bless",
+    "ruling": "Effects of the same spell name do NOT stack. If you are under two Bless spells, you only add 1d4 to attack rolls/saving throws, not 2d4.",
+    "page": "PHB p.205"
+  },
+  {
+    "query": "Resistance Stacking",
+    "ruling": "Multiple sources of the same damage resistance do not stack to create immunity or double resistance. You either have resistance or you don't.",
+    "page": "PHB p.197"
+  },
+  {
+    "query": "Temporary HP Stacking",
+    "ruling": "Temporary hit points do NOT stack. If you have 5 temp HP and receive 10, you can choose to keep the 5 or replace them with 10. You do not get 15.",
+    "page": "PHB p.191"
+  },
+  {
+    "query": "Advantage Disadvantage Multiples",
+    "ruling": "Advantage and Disadvantage do not compound. If you have three sources of advantage and one of disadvantage, they cancel out into a normal straight roll.",
+    "page": "PHB p.173"
+  },
+  {
+    "query": "Extra Attack Multiclass",
+    "ruling": "If you gain the Extra Attack feature from multiple classes (like Fighter 5 and Paladin 5), they do NOT stack. You still only attack twice when taking the Attack action.",
+    "page": "PHB p.164"
+  },
+  {
+    "query": "Shield Spell Reaction Surprise",
+    "ruling": "You can cast the Shield spell as a reaction on your turn if you are surprised, but only AFTER your first turn has ended (since surprise prevents reactions until your turn ends).",
+    "page": "PHB p.189"
+  }
+]

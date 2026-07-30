@@ -1,0 +1,20 @@
+{
+  "name": "ELDER TEMPEST",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 19,
+  "hp": 264,
+  "speed": "0 ft., fly 120 ft. (hover)",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "23",
+  "actions": [],
+  "raw_extracted": "STR \n23 (+6) \nDEX \n28 (+9) \nCON \n23 (+6) \nSaving Throws Wis +12, Cha +11 \nCHA \n18 (+4) \nDamage Resistances bludgeoning, piercing, and slashing from \nnonmagical attacks \nDamage Immunities lightning, poison, thunder \nCondition Immunities exhaustion, grappled, paralyzed, \npetrified, poisoned, prone, restrained, stunned \nSenses darkvision 60 ft., passive Perception 15 \nLanguages -\nChallenge 23 (50,000 XP) \n. -\nAir Form. The tempest can enter a hostile creature's space and \nstop there. It can move through a space as narrow as 1 inch \nwide without squeezing. \nFlyby. The tempest doesn't provoke opportunity attacks when \nit flies out of an enemy's reach. \nLegendary Resistance (3/Day). If the tempest fails a saving \nthrow, it can choose to succeed instead. \nLiving Storm. The tempest is always at the center of a storm \nld6 + 4 miles in diameter. Heavy precipitation in the form of \neither rain or snow falls there7 causing the area to be lightly \nobscured. Heavy rain also extinguishes open flames "
+}

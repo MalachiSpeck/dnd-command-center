@@ -1,0 +1,20 @@
+{
+  "name": "OGRE HOWDAH",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 13,
+  "hp": 59,
+  "speed": "40 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "2",
+  "actions": [],
+  "raw_extracted": "STR \n19 (+4) \nDEX \n8 (-1) \nCON \n16 (+3) \nINT \n5 (-3) \nWIS \n7 (-2) \nSenses darkvision 60 ft., passive Perception 8 \nLanguages Common, Giant \nChallenge 2 (450 XP) \nCHA \n7 (-2) \nHowdah. The ogre carries a compact fort on its back. Up to \nfour Small creatures can ride in the fort without squeezing. To \nmake a melee attack against a target within 5 feet of the ogre, \nthey must use spears or weapons with reach. Creatures in the \nfort have three-quarters cover against attacks and effects from \noutside it. If the ogre dies, creatures in the fort are placed in \nunoccupied spaces within S feet of the ogre. \nACTIONS \nMace. Melee Weapon Attack: +6 to hit, reach S ft., one target. \nHjt: 11 (2d6 + 4) bludgeoning damage. \nCHAPTER 6 I BESTIARY \n221"
+}

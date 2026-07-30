@@ -1,0 +1,20 @@
+{
+  "name": "I BESTIARY",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 19,
+  "hp": 95,
+  "speed": "25 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "1",
+  "actions": [],
+  "raw_extracted": "STR \n19 (+4) \nDEX \n8 (- 1) \nSaving Throws Wis +8 \nCON \n19 (+4) \nINT \n14 (+2) \n, \n\u2022 \nWIS \n19 (+4) \n~ . \nCHA \n16 (+3) \nDamage Resistances acid, fire, lightning; bludgeoning, piercing, \nand slashing from nonmagical attacks \nDamage Immunities cold, necrotic, poison \nCondition Immunities charmed, exhaustion, frightened, \nparalyzed, petrified, poisoned \nSenses darkvision 60 ft., passive Perception 14 \n-\n\u2022 1 ./ \nLanguages the languages the eidolon knew in life \n~. \nFalse Appearance. While the statue remains motionless, it is \nindistinguishable from a normal statue. \nGhostly Inhabitant. The eidolon that enters the sacred statue \nremains inside it until the statue drops to 0 hit points, the eidolon uses a bonus action to move out of the statue, or the eidolon is turned or forced out by an effect such as the dispel evil \nand good spell. When the eidolon leaves the statue, it appears \nin an unoccupied space within 5 feet of the statue. \nInert. When not inhabited by an eidolon, the statue is \nan o"
+}

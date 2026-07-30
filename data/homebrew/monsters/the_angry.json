@@ -1,0 +1,20 @@
+{
+  "name": "THE ANGRY",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 18,
+  "hp": 255,
+  "speed": "30 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "13",
+  "actions": [],
+  "raw_extracted": "STR \n17 (+3) \nDEX \n10 (+O) \nSkills Perception +6 \nCON \n19 (+4) \nINT \n8 (-1) \nWIS \n13 (+l) \nCHA \n6 (- 2) \nDamage Resistances bludgeoning, piercing, and slashing while \nin dim light or darkness \nSenses darkvision 60 ft., passive Perception 16 \nLanguages Common \nChallenge 13 (10,000 XP) \nTwo Heads. The Angry has advantage on Wisdom (Perception) \nchecks and on saving throws against being blinded, charmed, \ndeafened, frightened, stunned, or knocked unconscious. \nRising Anger. If another creature deals damage to the Angry, \nthe Angry's attack rolls have advantage until the end of its \nnext turn, and the first time it hits with a hook attack on its \nnext turn, the attack's target takes an extra 19 (3dl 2) psychic damage. \nOn its turn, the Angry has disadvantage on attack rolls if \nno other creature has dealt damage to it since the end of its \nlast turn. \nACTIONS \nMultiattack. The Angry makes two hook attacks. \nHook. Melee Weapon Attack: +8 to hit, reach 5 ft., one target. \nHit: 16 (2dl2 + 3) "
+}

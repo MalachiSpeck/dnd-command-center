@@ -1,0 +1,32 @@
+{
+  "active": "Dungeon Crawl",
+  "presets": {
+    "Dungeon Crawl": {
+      "positions": {
+        "True": 1,
+        "Arrrric": 2,
+        "Suri": 3,
+        "Cleric": 4
+      },
+      "description": "True leads to spot traps, Arrrric is close behind to engage, Suri stays safe in the middle, and the Cleric covers the rear."
+    },
+    "Open Road": {
+      "positions": {
+        "True": 2,
+        "Arrrric": 1,
+        "Suri": 3,
+        "Cleric": 4
+      },
+      "description": "Arrrric scouts out front, True covers the center-left, with spellcasters keeping standard road spacing."
+    },
+    "Stealth": {
+      "positions": {
+        "True": 1,
+        "Arrrric": 4,
+        "Suri": 3,
+        "Cleric": 2
+      },
+      "description": "True creeps far ahead in shadows, Cleric and Suri move quietly in the middle, Arrrric steps softly behind."
+    }
+  }
+}

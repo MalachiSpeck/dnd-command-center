@@ -1,0 +1,20 @@
+{
+  "name": "lawful evil",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 18,
+  "hp": 187,
+  "speed": "30 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "14",
+  "actions": [],
+  "raw_extracted": "STR \n19 (+4) \nDEX \n17 {+3) \nCON \n18 (+4) \nINT \n16 (+3) \nSaving Throws Con +9, Int +8, Wis +8 \nWIS \n16 (+3) \nSkills Insight +8, Intimidation +9, Perception +8 \nSenses passive Perception 18 \nLanguages Gith \nChallenge 14 (11,500 XP) \nCHA \n18 (+4) \nInnate Spel/casting (Psionics). The githyanki's innate spellcast\u00b7 \ning ability is Intelligence (spell save DC 16, +8 to hit with spell \nattacks). It can innately cast the following spells, requiring no \ncomponents: \nAt will: mage hand (the hand is invisible) \n3/day each: jump, levitate (self only), misty step, non detection \n(self only) \nl/day each: Bigby's hand, mass suggestion, plane shift, telekinesis \nACTIONS \nMultiattack. The githyanki makes two greatsword attacks. \nCHAPTER 6 I BESTI ARY \nSilver Creatsword. Melee Weapon Attack: +1 2 to hit, reach 5 \nft., one target. Hit: 14 (2d6 + 7) slashing damage plus 17 (Sd6) \npsychic damage. On a critical hit against a target in an astral \nbody (as with the astral projection spell), the githyanki can c"
+}

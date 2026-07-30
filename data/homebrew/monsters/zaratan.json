@@ -1,0 +1,20 @@
+{
+  "name": "ZARATAN",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 21,
+  "hp": 307,
+  "speed": "40 ft., swim 40 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "22",
+  "actions": [],
+  "raw_extracted": "STR \n30 (+10) \nDEX \n10 (+O) \nCON \n30 (+10) \nSaving Throws Wis +12, Cha +11 \nDamage Vulnerabilities thunder \nINT \n2 (-4) \nWIS \n21 (+5) \nCHA \n18 {+4) \nDamage Resistances cold, fire, lightning; bludgeoning, \npiercing, and slashing from nonmagical attacks \nDamage Immunities poison \nCondition Immunities exhaustion, paralyzed, petrified, \npoisoned, stunned \nSenses darkvision 60 ft., tremorsense 60 ft., \npassive Perception 15 \nLanguages -\n\u2022 \nChallenge 22 (41,000 XP) \n' \n.. \nEarth-Shaking Movement. As a bonus action after moving \nat least 10 feet on the ground, the zaratan can send a shock \nwave through the ground in a 120-foot-radius circle centered \non itself. That area becomes difficult terrain for 1 minute. Each \ncreature on the ground that is concentrating must succeed on \na DC 25 Constitution saving throw or the creature's concentration is broken. \nThe shock wave deals 100 thunder damage to all structures \nin contact with the ground in the area. If a creature is near a \nstructure that co"
+}

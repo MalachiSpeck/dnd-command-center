@@ -1,0 +1,20 @@
+{
+  "name": "J BESTI ARY",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 16,
+  "hp": 60,
+  "speed": "30 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "3",
+  "actions": [],
+  "raw_extracted": "STR \n18 (+4) \nDEX \n14 (+2) \nCON \n17 (+3) \nSenses passive Perception 11 \nLanguages Common \nChallenge 3 (700 XP) \n\u2022 \nINT \n11 (+O) \nWIS \n12 (+l) \nCHA \n12 (+l ) \nHead.first Charge. The giff can try to knock a creature over; \nif the giff moves at least 20 feet in a straight line that ends \nwithin 5 feet of a Large or smaller creature, that creature must \nsucceed on a DC 14 Strength saving throw or take 7 (2d6) bludgeoning damage and be knocked prone. \nFirearms Knowledge. The giff's mastery of its weapons enables \nit to ignore the loading property of muskets and pistols. \nACTIONS \nMultiattack. The giff makes two pistol attacks. \nLongsword. Melee Weapon Attack: +6 to hit, reach 5 ft., one tar\u00b7 \nget. Hit: 8 (ld8 + 4) slashing damage, or 9 (ldlO + 4) slashing \ndamage if used with two hands. \nMusket. Ranged Weapon Attack: +4 to hit, range 40/120 ft., one \ntarget. Hit: 7 (1dl2 + 2) piercing damage. \nPistol. Ranged Weapon Attack: +4 to hit, range 30/90 ft., one \ntarget. Hit: 7 (ldlO + 2) piercing "
+}

@@ -1,0 +1,20 @@
+{
+  "name": "STONE DEFENDER",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 16,
+  "hp": 52,
+  "speed": "30 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "4",
+  "actions": [],
+  "raw_extracted": "STR \n19 (+4) \nDEX \n10 (+O) \nCON \n17 (+3) \nINT \n3 (-4) \nWIS \n10 (+O) \nCHA \n1 (-5) \nDamage Immunities poison; bludgeoning, piercing, and \nslashing from nonmagical attacks that aren't adamantine \nCondition Immunities charmed, exhaustion, frightened, \nparalyzed, petrified, poisoned \nSenses darkvision 60 ft., passive Perception 10 \nLanguages understands one language of its creator but can't \nspeak \nChallenge 4 (1,100 XP) \nFalse Appearance. While the stone defender remains motionless against an uneven earthen or stone surface, it is indistinguishable from that surface. \nMagic Resistance. The stone defender has advantage on saving \nthrows against spells and other magical effects. \nACTIONS \nSlam. Melee Weapon Attack: +6 to hit, reach 5 ft., one target. \nHit: 11 (2d6 + 4) bludgeoning damage, and ifthe target is Large \nor smaller, it is knocked prone. \nREACTIONS \nIntercept Attack. In response to another creature within 5 feet \nof it being hit by an attack roll, the stone defender gives that \ncre"
+}

@@ -1,0 +1,22 @@
+[
+  { "roll": 1, "description": "A crowd of citizens blocks your path. DC 10 Dexterity (Acrobatics) or Strength (Athletics) check to bypass, otherwise difficult terrain." },
+  { "roll": 2, "description": "A large cart of tomatoes blocks your way. DC 12 Dexterity (Acrobatics) to vault, or fall and suffer disadvantage on next check." },
+  { "roll": 3, "description": "The ground is slick with rancid sewer grease. DC 10 Dexterity saving throw or slide 15ft back and fall prone." },
+  { "roll": 4, "description": "An aggressive guard dog barks and snaps at you. Make a DC 13 Wisdom (Animal Handling) check or take 1d4 piercing damage." },
+  { "roll": 5, "description": "Low hanging laundry lines. DC 11 Dexterity saving throw or be blinded until the end of your turn." },
+  { "roll": 6, "description": "A sudden dead end or detour. DC 10 Intelligence (Investigation) to find a side path instantly, or lose 10ft of movement." },
+  { "roll": 7, "description": "Slippery wet cobblestones. DC 10 Dexterity saving throw or fall prone." },
+  { "roll": 8, "description": "An open manhole or grating. DC 12 Strength (Athletics) to leap over, or fall 10 feet down (1d6 damage)." },
+  { "roll": 9, "description": "Thick smoke from a nearby forge. DC 10 Constitution saving throw or be poisoned (choking) for 1 round." },
+  { "roll": 10, "description": "A citizen drops a basket of marbles. DC 13 Dexterity saving throw or slide and fall prone." },
+  { "roll": 11, "description": "A local merchant screams and drops a crate of glass bottles. DC 12 Dexterity saving throw or suffer 1d6 slashing damage." },
+  { "roll": 12, "description": "Narrow scaffolding. DC 11 Dexterity (Acrobatics) to cross, or fall 10 feet and take 1d6 bludgeoning." },
+  { "roll": 13, "description": "A low-flying flock of pigeons blinds you. DC 10 Wisdom saving throw or lose your direction." },
+  { "roll": 14, "description": "Unstable roof tiles. DC 12 Dexterity saving throw or slide off, hanging by your fingertips." },
+  { "roll": 15, "description": "A sudden burst of steam. DC 11 Constitution saving throw or take 1d6 fire damage." },
+  { "roll": 16, "description": "A beggar grabs your leg pleading for coin. DC 10 Strength check to shake off, or speed halved." },
+  { "roll": 17, "description": "A rogue gust of wind blows sand in your eyes. DC 12 Constitution saving throw or be blinded until next turn." },
+  { "roll": 18, "description": "A loose board or stone. DC 10 Dexterity saving throw or trip, spending 10ft of movement." },
+  { "roll": 19, "description": "Narrow alleyway. Large creatures cannot pass without squeezing; others must succeed DC 10 Dexterity check." },
+  { "roll": 20, "description": "Clear path! You gain an additional 10ft of movement this round." }
+]

@@ -1,0 +1,9 @@
+[
+  {"name": "Potion of Healing", "price": 50, "rarity": "Common"},
+  {"name": "Wand of Magic Missiles", "price": 400, "rarity": "Uncommon"},
+  {"name": "Bag of Holding", "price": 4000, "rarity": "Uncommon"},
+  {"name": "Cloak of Elvenkind", "price": 3000, "rarity": "Uncommon"},
+  {"name": "Flame Tongue Longsword", "price": 5000, "rarity": "Rare"},
+  {"name": "Adamantine Armor", "price": 500, "rarity": "Uncommon"},
+  {"name": "Figurine of Wondrous Power (Onyx Dog)", "price": 100, "rarity": "Uncommon"}
+]

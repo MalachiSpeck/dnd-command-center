@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DM Mobile Console - Simplified View</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-abyss: #050507;
+            --bg-vault: #0a0a0f;
+            --shadow-card: #0f0f14;
+            --border-iron: #1f1f2e;
+            --arcane-violet: #8b5cf6;
+            --crimson-rage: #ef4444;
+            --gold-amber: #fbbf24;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+        body {
+            background-color: var(--bg-abyss);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        header {
+            text-align: center;
+            border-bottom: 1px solid var(--border-iron);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            margin: 0;
+            color: var(--arcane-violet);
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        button {
+            background: var(--border-iron);
+            border: 1px solid var(--arcane-violet);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            flex: 1;
+        }
+        button.next {
+            background: var(--gold-amber);
+            color: black;
+            border-color: var(--gold-amber);
+        }
+        .combatant-card {
+            background: var(--shadow-card);
+            border: 1px solid var(--border-iron);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .combatant-card.active {
+            border-color: var(--arcane-violet);
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+        }
+        .combatant-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .combatant-name {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        .combatant-info {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .dmg-section {
+            display: flex;
+            gap: 8px;
+        }
+        input[type="number"] {
+            background: var(--bg-abyss);
+            border: 1px solid var(--border-iron);
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            width: 70px;
+            text-align: center;
+        }
+        .btn-hit {
+            background: var(--crimson-rage);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        .btn-heal {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>DM Mobile Console</h1>
+        <div style="font-size: 0.85rem; color: var(--gold-amber); margin-top: 5px;" id="round-counter">Round 1</div>
+    </header>
+
+    <div class="controls">
+        <button onclick="prevTurn()">⏪ Prev</button>
+        <button class="next" onclick="nextTurn()">Next ⏩</button>
+    </div>
+
+    <div id="combatant-list">
+        <p style="text-align: center; color: var(--text-muted);">Awaiting combat state...</p>
+    </div>
+
+    <script>
+        let encounter = [];
+        let activeIndex = 0;
+
+        async function fetchState() {
+            try {
+                const res = await fetch('/api/board-state');
+                const data = await res.json();
+                encounter = data.encounter || [];
+                activeIndex = data.activeCombatIndex || 0;
+                document.getElementById('round-counter').innerText = `Round ${data.activeRound || 1}`;
+                render();
+            } catch (e) {
+                console.error("Poller failed:", e);
+            }
+        }
+
+        function render() {
+            const list = document.getElementById('combatant-list');
+            if (encounter.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: var(--text-muted);">No combatants on the field.</p>';
+                return;
+            }
+            list.innerHTML = '';
+            encounter.forEach((com, idx) => {
+                const card = document.createElement('div');
+                card.className = `combatant-card ${idx === activeIndex ? 'active' : ''}`;
+                
+                const hpMax = parseInt(com.maxHp || com.hp || 10, 10);
+                const currentDmg = parseInt(com.currentDamage || 0, 10);
+                const currentHp = Math.max(0, hpMax - currentDmg);
+
+                card.innerHTML = `
+                    <div class="combatant-header">
+                        <span class="combatant-name" style="${com.isDefeated ? 'text-decoration: line-through; color: var(--text-muted);' : ''}">${com.name}</span>
+                        <span class="combatant-info">HP: ${currentHp}/${hpMax} (AC: ${com.ac || '--'})</span>
+                    </div>
+                    <div class="dmg-section">
+                        <input type="number" id="dmg-input-${com.id}" placeholder="Amt" />
+                        <button class="btn-hit" onclick="adjustDmg('${com.id}', true)">Hit</button>
+                        <button class="btn-heal" onclick="adjustDmg('${com.id}', false)">Heal</button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        async function adjustDmg(id, isDamage) {
+            const val = parseInt(document.getElementById(`dmg-input-${id}`).value) || 0;
+            if (val <= 0) return;
+
+            const com = encounter.find(c => c.id === id);
+            if (!com) return;
+
+            if (isDamage) {
+                com.currentDamage = (com.currentDamage || 0) + val;
+            } else {
+                com.currentDamage = Math.max(0, (com.currentDamage || 0) - val);
+            }
+
+            // Sync states
+            const hpMax = parseInt(com.maxHp || com.hp || 10, 10);
+            if (com.currentDamage >= hpMax) {
+                com.isDefeated = true;
+                com.isFuckedUp = false;
+            } else if (com.currentDamage >= hpMax / 2) {
+                com.isDefeated = false;
+                com.isFuckedUp = true;
+            } else {
+                com.isDefeated = false;
+                com.isFuckedUp = false;
+            }
+
+            try {
+                await fetch('/api/update-board', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(encounter)
+                });
+                fetchState();
+            } catch (e) {}
+        }
+
+        async function nextTurn() {
+            try {
+                await fetch('/api/streamdeck/next');
+                fetchState();
+            } catch (e) {}
+        }
+
+        async function prevTurn() {
+            try {
+                await fetch('/api/streamdeck/prev');
+                fetchState();
+            } catch (e) {}
+        }
+
+        fetchState();
+        setInterval(fetchState, 1500);
+    </script>
+</body>
+</html>

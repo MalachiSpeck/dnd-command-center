@@ -1,0 +1,12 @@
+{
+  "room_types": [
+    { "name": "Armory", "cost": 1000, "build_time_days": 10 },
+    { "name": "Library", "cost": 800, "build_time_days": 7 },
+    { "name": "Tavern Wing", "cost": 1500, "build_time_days": 14 }
+  ],
+  "upgrades_built": [],
+  "staff": [],
+  "defense_rating": 10,
+  "weekly_income": 50,
+  "weekly_expenses": 20
+}

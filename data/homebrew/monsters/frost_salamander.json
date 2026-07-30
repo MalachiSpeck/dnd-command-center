@@ -1,0 +1,20 @@
+{
+  "name": "FROST SALAMANDER",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 17,
+  "hp": 168,
+  "speed": "60 ft., burrow 40 ft., climb 40 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "9",
+  "actions": [],
+  "raw_extracted": "STR \n20 (+S) \nDEX \n12 (+l) \nCON \n18 (+4) \nINT \n7 (-2) \ny .., . \n~\u00b7 \n., \n\u2022 \nWIS \n11 (+O) \n. ... . ' \n.. .... ~;:r I \n\u2022 \nCHA \n7 (-2) \nSaving Throws Con +8, Wis +4 \n\u00b7' \n'!lilr. \n-....~ \nSkills Perception +4 \n' ' \n~ \n\" \nDamage Vulnerabilities fire \nt \n\u2022 ... ~ \nDamage Immunities cold \n\u2022 \n1 t. \n_. \nSenses darkvision 60 ft., tremorsense 60 ft., \nl \npassive Perception 14 \n\u2022 \n_ \\t \u2022 \nLanguages Primordial \n!\u2022 ~ \n~ J .... \nChallenge 9 (S,000 XP) \nBurning Fury. When the salamander takes fire damage, its \nFreezing Breath automatically recharges. \nACTIONS \nMultiattack. The salamander makes five attacks: four with its \nclaws and one with its bite. \nClaws. Melee Weapon Attack: +9 to hit, reach 10 ft., one target. \nHit: 8 (ld6 + S) piercing damage. \nBite. Melee Weapon Attack: +9 to hit, reach 15 ft., one target. \nHit: 9 (ld8 + S) piercing damage and S (ldlO) cold damage. \nFreezing Breath (Recharge 6). The salamander exhales chill \nwind in a 60-foot cone. Each creature in that area must make a \nDC 17 Co"
+}

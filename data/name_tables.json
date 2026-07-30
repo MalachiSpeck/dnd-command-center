@@ -1,0 +1,22 @@
+{
+  "Calishite": {
+    "first": ["Akhbar", "Kamil", "Malik", "Rania", "Zahra", "Yasin", "Karim", "Samira"],
+    "last": ["al-Farsi", "al-Din", "al-Habib", "Nasser", "Sulayman", "Qadir", "Ghandour"]
+  },
+  "Chondathan": {
+    "first": ["Aldous", "Beren", "Garrick", "Milo", "Sybilla", "Tessa", "Lucan", "Katelyn"],
+    "last": ["Amblecrown", "Buckman", "Evenwood", "Greycastle", "Stonewright", "Windward"]
+  },
+  "Illuskan": {
+    "first": ["Bjorn", "Dagr", "Egil", "Helga", "Siri", "Ulf", "Torvald", "Runa", "Astrid"],
+    "last": ["Frostbeard", "Ironshield", "Stormrider", "Thunderfist", "Vinter", "Wolfclaw"]
+  },
+  "Elvish": {
+    "first": ["Aramil", "Arara", "Carric", "Enna", "Ivellios", "Lia", "Sariel", "Xanaphia"],
+    "last": ["Amastacia", "Galanodel", "Meliamne", "Siannodel", "Xiloscient", "Liadon"]
+  },
+  "Dwarvish": {
+    "first": ["Adrik", "Balasar", "Bruenor", "Dain", "Gimli", "Hlin", "Oskar", "Torbera"],
+    "last": ["Battlehammer", "Brawnanvil", "Fireforge", "Frostbeard", "Ironfist", "Strakeln"]
+  }
+}

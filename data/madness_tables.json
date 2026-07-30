@@ -1,0 +1,28 @@
+{
+  "short_term": [
+    "The character becomes paralyzed, blinded, or deafened for 1d10 minutes.",
+    "The character becomes incapacitated and spends 1d10 minutes screaming, laughing, or weeping.",
+    "The character is frightened and must run away from any source of fear for 1d10 minutes.",
+    "The character babble incoherently and can't speak or cast spells for 1d10 minutes.",
+    "The character experiences vivid hallucinations and has disadvantage on ability checks for 1d10 minutes.",
+    "The character is compelled to eat or drink anything they see (soil, potion, sewage) for 1d10 minutes.",
+    "The character is stunned for 1d10 minutes, frozen in place.",
+    "The character falls unconscious for 1d10 minutes."
+  ],
+  "long_term": [
+    "The character experiences vivid hallucinations and has disadvantage on all ability checks and attack rolls. Lasts 1d10 x 10 hours.",
+    "The character suffers intense paranoia, believing everyone is conspiring against them. Lasts 1d10 x 10 hours.",
+    "The character falls into a catatonic stupor, completely unresponsive. Lasts 1d10 x 10 hours.",
+    "The character becomes convinced that they are a different creature entirely. Lasts 1d10 x 10 hours.",
+    "The character loses the ability to speak, communicating only in hand gestures and screams. Lasts 1d10 x 10 hours.",
+    "The character develops an uncontrollable tic or twitch that gives them disadvantage on stealth and dexterity checks. Lasts 1d10 x 10 hours.",
+    "The character becomes intensely greedy and will steal anything shiny they see. Lasts 1d10 x 10 hours."
+  ],
+  "indefinite": [
+    "The character regards something common as repulsive (e.g., money, taverns, spellcasting). Cured only by Greater Restoration or Heal.",
+    "The character is convinced that they are the absolute strongest person alive, ignoring safety.",
+    "The character is terrified of a specific common creature (e.g., spiders, dogs, horses) and cannot look at them without shaking.",
+    "The character is incredibly stubborn and refuses to accept that they could ever be wrong about anything.",
+    "The character hoards all food, items, and garbage they find, refusing to share with the party."
+  ]
+}

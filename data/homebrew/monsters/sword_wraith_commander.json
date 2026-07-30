@@ -1,0 +1,20 @@
+{
+  "name": "SWORD WRAITH COMMANDER",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 18,
+  "hp": 127,
+  "speed": "30 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "8",
+  "actions": [],
+  "raw_extracted": "STR \n18 (+4) \nDEX \n14 (+2) \nSkills Perception +4 \nCON \n18 (+4) \nINT \n11 (+O) \nWIS \n12 (+l) \nCHA \n14 (+2) \nDamage Resistances necrotic; bludgeoning, piercing, and \nslashing from nonmagical attacks \nf j \nDamage Immunities poison \nCondition Immunities exhaustion, frightened, poisoned, \nunconscious \nJl. \nSenses darkvision 60 ft., passive Perception 14 \nLanguages the languages it knew in life \nChallenge 8 (3,900 XP) \nMartial Fury. As a bonus action, the sword wraith can make \none weapon attack, which deals an extra 9 (2d8) necrotic damage on a hit. If it does so, attack rolls against it have advantage \nuntil the start of its next turn. \nTurning Defiance. The sword wraith and any other sword \nwraiths within 30 feet of it have advantage on saving throws \nagainst effects that turn undead. \nACTIONS \nMultiattack. The sword wraith makes two weapon attacks. \nLongsword. Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 8 (ld8 + 4) slashing damage, or 9 (ldlO + 4) slashing \ndamage if use"
+}

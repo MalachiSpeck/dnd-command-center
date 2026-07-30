@@ -1,0 +1,20 @@
+{
+  "name": "WATER ELEMENTAL MYRMIDON",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 18,
+  "hp": 127,
+  "speed": "40 ft., swim 40 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "7",
+  "actions": [],
+  "raw_extracted": "STR \n18 (+4) \nDEX \n14 (+2) \nCON \n15 (+3) \nINT \n8 (- 1) \nWIS \n10 (+O) \nCHA \n10 (+O) \nDamage Resistances acid; bludgeoning, piercing, and slashing \nfrom nonmagical attacks \nDamage Immunities poison \nCondition Immunities paralyzed, petrified, poisoned, prone \nSenses darkvision 60 ft., passive Perception 10 \nLanguages Aquan, one language of its creator's choice \nChallenge 7 (2,900 XP) \nMagic Weapons. The myrmidon's weapon attacks are magical. \nACTIONS \nMultiattack. The myrmidon makes three trident attacks. \nTrident. Melee or Ranged Weapon Attack: +7 to hit, reach 5 ft. or \nrange 20/60 ft., one target. Hit: 7 (ld6 + 4) piercing damage, or \n8 (ld8 + 4) piercing damage if used with two hands to make a \nmelee attack. \nFreezing Strikes (Recharge 6). The myrmidon uses Multiattack. \nEach attack that hits deals an extra 5 (ldlO) cold damage. A \ntarget that is hit by one or more of these attacks has its speed \nreduced by 10 feet until the end of the myrmidon's next turn. \nCHAPTER 6 I BESTtARY \n\u2022 \n2"
+}

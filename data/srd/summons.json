@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Wolf",
+    "hp": 11,
+    "ac": 13,
+    "speed": "40 ft",
+    "actions": "Bite: +4 to hit, 2d4+2 piercing damage. Target must succeed DC 11 Strength save or be knocked prone."
+  },
+  {
+    "name": "Skeleton",
+    "hp": 13,
+    "ac": 13,
+    "speed": "30 ft",
+    "actions": "Shortsword: +4 to hit, 1d6+2 piercing. Shortbow: +4 to hit, 1d6+2 piercing."
+  },
+  {
+    "name": "Brown Bear",
+    "hp": 34,
+    "ac": 11,
+    "speed": "40 ft, climb 30 ft",
+    "actions": "Multiattack: One bite and one claws. Bite: +6 to hit, 1d8+4 piercing. Claws: +6 to hit, 2d6+4 slashing."
+  },
+  {
+    "name": "Fey Spirit",
+    "hp": 30,
+    "ac": 12,
+    "speed": "40 ft",
+    "actions": "Shortsword: +5 to hit, 1d6+3 piercing + 1d6 force."
+  },
+  {
+    "name": "Imp Familiar",
+    "hp": 10,
+    "ac": 13,
+    "speed": "20 ft, fly 40 ft",
+    "actions": "Sting: +5 to hit, 1d4+3 piercing + 3d6 poison."
+  }
+]

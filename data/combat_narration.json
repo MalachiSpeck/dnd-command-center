@@ -1,0 +1,184 @@
+{
+  "slashing": {
+    "glancing": [
+      "The blade nicks their arm, drawing a thin line of blood.",
+      "Your swing catches the edge of their armor, scraping across the surface."
+    ],
+    "solid": [
+      "You carve a deep gash across their torso.",
+      "The blade bites into flesh with a satisfying arc."
+    ],
+    "devastating": [
+      "Your slash nearly cleaves them in two.",
+      "The strike opens a wound that will scar for life."
+    ]
+  },
+  "piercing": {
+    "glancing": [
+      "The weapon grazes their shoulder, tearing a shred of clothing.",
+      "A shallow poke draws a bead of dark blood."
+    ],
+    "solid": [
+      "The point sinks deep, puncturing armor and flesh alike.",
+      "A clean thrust pierces their defense with a sickening crunch."
+    ],
+    "devastating": [
+      "You drive the weapon fully through them, skewering vital organs.",
+      "The attack punches straight through, leaving a gaping, bleeding hole."
+    ]
+  },
+  "bludgeoning": {
+    "glancing": [
+      "The blow glances off their helm, ringing their ears.",
+      "A bruising strike clips their shoulder but fails to land square."
+    ],
+    "solid": [
+      "A heavy crack impacts their ribs, knocking the wind from them.",
+      "The bludgeon lands with a dull thud, rattling their bones."
+    ],
+    "devastating": [
+      "A shattering impact crushes bone, sending a spray of splintered armor.",
+      "The crushing blow collapses their guard and caves in their armor."
+    ]
+  },
+  "fire": {
+    "glancing": [
+      "Licking flames singe their hair and blacken their clothes.",
+      "A wave of intense heat scorches their skin with a sharp hiss."
+    ],
+    "solid": [
+      "Searing fire wraps around them, blistering their skin in seconds.",
+      "A solid burst of flame erupts, leaving char marks and smelling of sulfur."
+    ],
+    "devastating": [
+      "Enveloping inferno engulfs them, melting armor plates and setting them ablaze.",
+      "White-hot fire incinerates their outer defenses, leaving them blackened and smoking."
+    ]
+  },
+  "cold": {
+    "glancing": [
+      "A sudden frost rimes their eyebrows, making them shiver.",
+      "A chilling wind numbs their limbs for a brief moment."
+    ],
+    "solid": [
+      "Ice crystals erupt across their skin, freezing tissue with sharp pain.",
+      "The biting cold slows their blood, forming thick icicles on their gear."
+    ],
+    "devastating": [
+      "A flash-freeze encases them in jagged ice, nearly shattering their limbs.",
+      "Glacial frost penetrates to their core, turning breathing into a ragged gasp."
+    ]
+  },
+  "lightning": {
+    "glancing": [
+      "Static electricity sparks across their chainmail, stinging them.",
+      "A stray arc crackles near their ears, leaving their hair standing on end."
+    ],
+    "solid": [
+      "A bolt of electric fury surges through them, locking up their muscles.",
+      "Blue arcs leap across their torso, burning pathways in their skin."
+    ],
+    "devastating": [
+      "A blinding lightning strike blasts them square, discharging with an explosive pop.",
+      "The crackling discharge scorches their nervous system, leaving them smelling of ozone."
+    ]
+  },
+  "poison": {
+    "glancing": [
+      "The noxious vapor makes them cough and water at the eyes.",
+      "A drop of venom enters their veins, causing a brief, hot ache."
+    ],
+    "solid": [
+      "Green toxins seep into their system, causing immediate fever and nausea.",
+      "The poison burns through their blood, making their breathing shallow and labored."
+    ],
+    "devastating": [
+      "A lethal dose of venom turns their veins black, causing agonizing full-body convulsions.",
+      "The virulent toxin eats away at their organs, turning their breath to a gasping rattle."
+    ]
+  },
+  "necrotic": {
+    "glancing": [
+      "A shadow touches them, turning a small patch of skin pale and lifeless.",
+      "The breath of decay makes them feel suddenly weary and cold."
+    ],
+    "solid": [
+      "Withered black energy decays their flesh, peeling it back from the bone.",
+      "The chill of death drains their life force, leaving gray rot in its wake."
+    ],
+    "devastating": [
+      "Pure entropic decay turns their limbs skeletal, stripping away their soul's luster.",
+      "Malignant death magic desiccates their body, turning blood to dust in their veins."
+    ]
+  },
+  "radiant": {
+    "glancing": [
+      "A flash of holy light dazzles them, singeing their hair.",
+      "A brief ray of solar heat burns their outer garments."
+    ],
+    "solid": [
+      "Blinding celestial light burns away their shadows, scorching them with solar fire.",
+      "A pillar of pure starlight cleanses their outer flesh with intense, burning heat."
+    ],
+    "devastating": [
+      "Supernal light pierces through them, burning away impure tissue from within.",
+      "A divine brand of stellar fire sears their very essence, leaving them glowing with pain."
+    ]
+  },
+  "psychic": {
+    "glancing": [
+      "A sharp ringing sound fills their skull, giving them a brief headache.",
+      "An echo of whispers makes them lose focus for a split second."
+    ],
+    "solid": [
+      "A wave of agonizing mental static assaults their mind, causing their nose to bleed.",
+      "A phantom scream echoes inside their brain, shattering their concentration."
+    ],
+    "devastating": [
+      "A mind-shattering blast of pure cognitive dread tears at their sanity, leaving them weeping.",
+      "An existential terror floods their mind, nearly short-circuiting their nervous system."
+    ]
+  },
+  "thunder": {
+    "glancing": [
+      "A sharp crack of noise rattles their teeth and disorients them.",
+      "The sonic boom pushes them back slightly with a ringing in their ears."
+    ],
+    "solid": [
+      "A concussive shockwave slams into them, bruising muscles and bursting capillaries.",
+      "An explosive clap of thunder impacts their chest like a physical hammer."
+    ],
+    "devastating": [
+      "A cataclysmic sonic blast ruptures their eardrums, throwing them backwards in pain.",
+      "The massive shockwave fractures their heavy armor and leaves them breathless."
+    ]
+  },
+  "force": {
+    "glancing": [
+      "A ripple of invisible force clips them, tearing their cloak.",
+      "An energetic pulse pushes against their shield with a high-pitched hum."
+    ],
+    "solid": [
+      "A missile of raw magical force punches into their chest, cracking ribs.",
+      "A hard beam of pure kinetic energy strikes them square, sending them reeling."
+    ],
+    "devastating": [
+      "A devastating detonation of arcane force ruptures their skin and shatters their posture.",
+      "An absolute pulse of raw gravity-like force nearly disintegrates their shoulder armor."
+    ]
+  },
+  "acid": {
+    "glancing": [
+      "A splash of green fluid eats a small hole in their sleeve, stinging them.",
+      "Sizzling droplets hiss against their armor, leaving light pits."
+    ],
+    "solid": [
+      "A stream of caustic fluid melts through their armor, burning deep into their skin.",
+      "The corrosive acid melts their gear, generating a noxious, smoking cloud of pain."
+    ],
+    "devastating": [
+      "A deluge of highly concentrated acid dissolves their armor plates and liquefies skin.",
+      "The caustic spray burns to the bone, filling the air with the smell of sizzling flesh."
+    ]
+  }
+}

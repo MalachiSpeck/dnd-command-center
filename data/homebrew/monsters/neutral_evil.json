@@ -1,0 +1,20 @@
+{
+  "name": "neutral evil",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 19,
+  "hp": 187,
+  "speed": "30 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "17",
+  "actions": [],
+  "raw_extracted": "STR \n9 (-1) \nDEX \n15 (+2) \nCON \n12 (+l) \nINT \n23 (+6) \nSaving Throws Int +12, Wis +10, Cha +11 \nWIS \n18 (+4) \nCHA \n21 (+5) \nSkills Arcana +12, Deception +11, History +12, Insight +10, \nPerception +10 \nSenses truesight 120 ft., passive Perception 20 \nlanguages Common plus up to five other languages \nChallenge 17 (18,000 XP) \nCorruption. As a bonus action, the nagpa targets one creature \nit can see within 90 feet of it. The target must make a DC 20 \nCharisma saving throw. An evil creature makes the save with \ndisadvantage. On a fa iled save, the target is charmed by the \nnagpa until the start of the nagpa's next turn. On a successful \nsave, the target becomes immune to the nagpa's Corruption for \nthe next 24 hours. \nParalysis (Recharge 6). As a bonus action, the nagpa forces \neach creature within 30 feet of it to succeed on a DC 20 Wisdom saving throw or be paralyzed for l minute. A paralyzed target can repeat the saving throw at the end of each of its turns, \nending the effect on itself"
+}

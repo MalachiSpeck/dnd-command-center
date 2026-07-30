@@ -1,0 +1,20 @@
+{
+  "name": "SKULK",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 14,
+  "hp": 18,
+  "speed": "30 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "1/2",
+  "actions": [],
+  "raw_extracted": "STR \n6 (- 2) \nDEX \n19 (+4) \nSaving Throws Con +2 \nSkills Stealth +8 \nCON \n10 (+O) \nDamage Immunities radiant \nCondition Immunities blinded \nINT \n10 (+O) \nWIS \n7 {- 2) \nSenses darkvision 120 ft., passive Perception 8 \nLanguages understands Common but can't speak \nChallenge 1/2 (100 XP) \nCHA \n1 {-5) \nFallible Invisibility. The skulk is invisible. This invisibility can be \ncircumvented by three things: \n\u2022 The skulk appears as a drab, smooth-skinned humanoid if its e \nreflection can be seen in a mirror or on another surface. \n\u2022 The skulk appears as a dim, translucent form in the light of \na candle made of fat rendered from a corpse whose identity \nis unknown. \n\u2022 Humanoid children, aged 10 and under, can see through this \ninvisibility. \nTrackless. The skulk leaves no tracks to indicate where it has \nbeen or where it's headed. \nACTIONS \n.. \nClaws. Melee Weapon Attack: +6 to hit, reach 5 ft., one target. \nHit: 6 {ld4 + 4) slashing damage. If the skulk has advantage on \nthe attack roll, the ta"
+}

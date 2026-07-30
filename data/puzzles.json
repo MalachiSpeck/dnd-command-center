@@ -1,0 +1,22 @@
+[
+  {
+    "title": "Welcome to the Dungeon!",
+    "setup_text": "Three pressure plates rest before three heavy stone arches. Each arch features an ancient runic carving of a classic creature: a dragon, an owl, and a snake. Inscription above the arches: 'Only the one who treads the pathway of the hunter may pass unscathed; the beast of wisdom flies high, the drake reigns over the mountains, and the serpent crawls in the dust.'",
+    "solution": "Step on the Owl plate first, then the Dragon plate, and finally the Snake plate, mimicking the descending order of flight and crawl altitude.",
+    "hints": [
+      "Think about relative altitude and height.",
+      "The owl flies highest of all.",
+      "The snake remains firmly on the dusty ground."
+    ]
+  },
+  {
+    "title": "The Cryptic Cipher",
+    "setup_text": "The inscription on the locked sarcophagus says: 'The child of the sun is born in fire, raised in water, and dies in air.' What is it?",
+    "solution": "Steam or smoke.",
+    "hints": [
+      "Water meets flame to make it.",
+      "It rises up but vanishes into the sky.",
+      "It is gaseous."
+    ]
+  }
+]

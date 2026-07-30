@@ -1,0 +1,41 @@
+{
+  "A": [
+    "Alaric", "Adran", "Aramil", "Aust", "Althaea", "Anastrianna", "Andraste", "Antinua"
+  ],
+  "B": [
+    "Barach", "Berrian", "Brodar", "Bram", "Balasar", "Biri", "Bethany", "Bryn"
+  ],
+  "C": [
+    "Caelen", "Carric", "Clinn", "Conall", "Cora", "Callie", "Cassandra", "Celia"
+  ],
+  "quirks": [
+    "Always whispers as if telling a secret",
+    "Chews on a toothpick constantly",
+    "Tops off every sentence with an inappropriate laugh",
+    "Has an extremely twitchy left eye",
+    "Uses overly formal and archaic language",
+    "Possesses a strong, unidentifiable accent",
+    "Constantly checks their pockets as if paranoid",
+    "Has a monocle that keeps falling out"
+  ],
+  "voices": [
+    "Husky, low whisper",
+    "Snooty high-society drawl",
+    "Gruff, gravelly pirate accent",
+    "Rapid-fire, energetic chatterbox",
+    "Slow, sleepy, melodic tone",
+    "Squeaky and nervous",
+    "Dramatically booming theatrical voice",
+    "Thick Scottish-style brogue"
+  ],
+  "motivations": [
+    "Wants to buy back a family heirloom from a local pawnshop",
+    "Trying to gather gold to cure their child's magical fever",
+    "Secretly working as an informant for the local thieves' guild",
+    "Fascinated by ancient history and wants to hear stories of dungeons",
+    "Just wants to go home and take a nap, hates their job",
+    "Hopes to recruit adventurers to clear out a haunted basement",
+    "Deeply religious, looking to convert travelers to their faith",
+    "Obsessed with trading for shiny gemstones or unusual trinkets"
+  ]
+}

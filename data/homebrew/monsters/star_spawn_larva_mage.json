@@ -1,0 +1,20 @@
+{
+  "name": "STAR SPAWN LARVA MAGE",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 16,
+  "hp": 168,
+  "speed": "30 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "16",
+  "actions": [],
+  "raw_extracted": "STR \n17 (+3) \nDEX \n12 (+1) \nCON \n23 (+6) \nINT \n18 (+4) \nSaving Throws Dex +6, Wis +6, Cha +8 \nSkills Perception +6 \nWIS \n12 (+1) \nCHA \n16 (+3) \nDamage Resistances cold; bludgeoning, piercing, and slashing \nfrom nonmagical attacks \nDamage Immunities psychic \nCondition Immunities charmed, frightened, paralyzed, \npetrified, poisoned, restrained \nSenses darkvision 60 ft., passive Perception 16 \nLanguages Deep Speech \nChallenge 16 (15,000 XP) \nInnate Spetlcasting. The larva mage's innate spellcasting ability \nis Charisma (spell save DC 161 +8 to hit with spell attacks). It \ncan innately cast the following spells, requiring no material \ncomponents: \nAt will: eldritch blast (3 beams, +3 bonus to each damage roll), \nminor illusion \n3/day: dominate monster \n\u2022 \n1/day: circle of death \nReturn to Worms. When the larva mage is reduced to 0 hit \npoints, it breaks apart into a swarm ofinsects in the same \nspace. Unless the swarm is destroyed, the larva mage reforms \nfrom it 24 hours later. \nACT IONS "
+}

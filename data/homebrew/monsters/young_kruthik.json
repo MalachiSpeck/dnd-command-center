@@ -1,0 +1,20 @@
+{
+  "name": "YOUNG KRUTHIK",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 16,
+  "hp": 9,
+  "speed": "30 ft., burrow 10 ft., climb 30 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "1/8",
+  "actions": [],
+  "raw_extracted": "STR \n13 (+l) \nDEX \n16 (+3) \nCON \n13 (+l) \nINT \n4 (-3) \nWIS \n10 (+O) \nSenses darkvision 30 ft., tremorsense 60 ft., \npassive Perception 10 \nLanguages Kruthik \nChallenge 1/8 (25 XP) \nCHA \n6 (- 2) \nKeen Smell. The kruthik has advantage on Wisdom (Perception) \nchecks that rely on smell. \nPack Tactics. The kruthik has advantage on an attack roll \nagainst a creature if at least one of the kruthik's allies is within \n5 feet of the creature and the ally isn't incapacitated. \nTunneler. The kruthik can burrow through solid rock at half \nits burrowing speed and leaves a 21/2-foot-diameter tunnel \nin its wake. \nACTIONS \n' \n... \n, ... \n. . \nStab. Melee Weapon Attack: +S to hit, reach 5 ft., one target. \nHit: 5 (ld4 + 3) piercing damage. \nCHAPTER 6 I BESTIARY"
+}

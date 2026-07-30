@@ -1,0 +1,20 @@
+{
+  "name": "STAR SPAWN MANGLER",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 14,
+  "hp": 71,
+  "speed": "40 ft., climb 40 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "5",
+  "actions": [],
+  "raw_extracted": "STR \n8 (-1) \nDEX \n18 (+4) \nCON \n12 (+l) \nSaving Throws Dex +7, Con +4 \nINT \n11 (+O) \nSkills Stealth +7 \n' \u2022 \nDamage Resistances cold \nDamage Immunities psychic \n\u2022 \nWIS \n12 (+l) \nCondition Immunities charmed, frightened, prone \nSenses darkvision 60 ft., passive Perception 11 \nLanguages Deep Speech \nChallenge 5 (l ,800 XP) \ni\u00b7 f \n. ' \nCHA \n7 (-2) \n............ \n..... ~ \n. \\.. \n\"'~J.t-,, \n... ~ . \n.. \nAmbush. On the first round of each combat, the mangler has \nadvantage on attack rolls against a creature that hasn't taken \na turn yet. \nShadow Stealth. While in dim light or darkness, the mangler \ncan take the Hide action as a bonus action. \nACTIONS \nMultiattack. The mangler makes two claw attacks. \nClaw. Melee Weapon Attack: +7 to hit, reach 5 ft., one target. \nHit: 8 (ld8 + 4) slashing damage. If the attack roll has advan\u00b7 \ntage, the target also takes 7 (2d6) psychic damage. \nFlurry of Claws (Recharge 4-6). The mangler makes six claw attacks against one target. Either before or after thes"
+}

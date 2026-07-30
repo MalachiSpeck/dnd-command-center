@@ -1,0 +1,20 @@
+{
+  "name": "I BESTIARY \nEARTH ELEMENTAL MYRMIDON",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 18,
+  "hp": 127,
+  "speed": "30 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "7",
+  "actions": [],
+  "raw_extracted": "STR \n18 (+4) \nDEX \n10 (+O) \nCON \n17 (+3) \nINT \n8 (- 1) \nWIS \n10 (+O) \nCHA \n10 (+O) \nDamage Resistances bludgeoning, piercing, and slashing from \nnonmagical attacks \nDamage Immunities poison \nCondition Immunities paralyzed, petrified, poisoned, prone \nSenses darkvision 60 ft., passive Perception 10 \nLanguages Terran, one language of its creator's choice \nChallenge 7 (2,900 XP) \nMagic Weapons. The myrmidon's weapon attacks are magical. \nA CT IONS \nMultiattack. The myrmidon makes two maul attacks. \nMaul. Melee Weapon Attack: +7 to hit, reach 5 ft., one target. \nHit: 11 (2d6 + 4) bludgeoning damage. \nThunderous Strike (Recharge 6). The myrmidon makes one \nmaul attack. On a hit, the target takes an extra 16 (3dl0) thun\u00b7 \nder damage, and the target must succeed on a DC 14 Strength \nsaving throw or be knocked prone. \n, \n\u2022"
+}

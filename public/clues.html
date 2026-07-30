@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investigation Board & Conspiracy Web</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=MedievalSharp&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        :root {
+            --cork-bg: #2a1f1a;
+            --wood-trim: #4a2c1b;
+            --card-paper: #f4ebd0;
+            --pin-red: #ef4444;
+            --pin-gold: #fbbf24;
+            --pin-blue: #3b82f6;
+            --text-dark: #1e1b2e;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #110e1b;
+            color: #e2e8f0;
+            font-family: 'Montserrat', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .board-container {
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.8) 100%), url('https://www.transparenttextures.com/patterns/corkboard.png'), var(--cork-bg);
+            border: 15px solid var(--wood-trim);
+            box-sizing: border-box;
+            position: relative;
+            overflow: auto;
+        }
+
+        .header {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(17, 14, 27, 0.9);
+            border: 2px solid var(--pin-gold);
+            padding: 10px 30px;
+            border-radius: 4px;
+            z-index: 100;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-family: 'Cinzel', serif;
+            color: var(--pin-gold);
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 0.75rem;
+            color: #a78bfa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .corkboard-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 2000px;
+            height: 1500px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .clue-card {
+            position: absolute;
+            width: 220px;
+            background: var(--card-paper);
+            color: var(--text-dark);
+            padding: 15px;
+            box-shadow: 3px 5px 12px rgba(0,0,0,0.5);
+            border-radius: 2px;
+            font-family: 'MedievalSharp', cursive;
+            transition: transform 0.2s ease;
+            z-index: 10;
+            border-bottom: 2px solid #ccc;
+        }
+
+        .clue-card::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 14px;
+            height: 14px;
+            background: radial-gradient(circle, #ff6b6b 0%, #c92a2a 100%);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+
+        .clue-card h3 {
+            margin: 5px 0 8px 0;
+            font-size: 1.1rem;
+            border-bottom: 1px dashed rgba(0,0,0,0.2);
+            padding-bottom: 4px;
+            color: #4a2c1b;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .clue-card p {
+            margin: 0;
+            font-size: 0.8rem;
+            line-height: 1.35;
+            font-family: 'Montserrat', sans-serif;
+            color: #2d2d2d;
+        }
+
+        .clue-card .badge {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 0.65rem;
+            background: #110e1b;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: bold;
+        }
+
+        .clue-card.npc-node {
+            background: #fdf5e6;
+            border-left: 5px solid var(--pin-blue);
+        }
+
+        .clue-card.npc-node::before {
+            background: radial-gradient(circle, #63b3ed 0%, #2b6cb0 100%);
+        }
+
+        .clue-card.location-node {
+            background: #e6fffa;
+            border-left: 5px solid #319795;
+        }
+
+        .clue-card.location-node::before {
+            background: radial-gradient(circle, #4fd1c5 0%, #234e52 100%);
+        }
+
+        .clue-card.evidence-node {
+            background: #fff5f5;
+            border-left: 5px solid var(--pin-red);
+        }
+
+        .clue-card.evidence-node::before {
+            background: radial-gradient(circle, #fc8181 0%, #9b2c2c 100%);
+        }
+
+        /* Ambient music controller widget */
+        .ambient-widget {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(17, 14, 27, 0.9);
+            border: 1px solid var(--pin-gold);
+            padding: 10px 15px;
+            border-radius: 6px;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-audio {
+            background: var(--pin-gold);
+            color: black;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: 'Cinzel', serif;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="board-container" id="board-container">
+        <div class="header">
+            <h1>Investigation Board</h1>
+            <p>Conspiracy Web & Collected Clues</p>
+        </div>
+
+        <canvas class="corkboard-canvas" id="corkboard-canvas" width="2000" height="1500"></canvas>
+
+        <div id="cards-container"></div>
+    </div>
+
+    <script>
+        const socket = io();
+        const canvas = document.getElementById('corkboard-canvas');
+        const ctx = canvas.getContext('2d');
+        let boardData = { nodes: [], connections: [] };
+
+        async function loadBoard() {
+            try {
+                const response = await fetch('/api/investigation-board');
+                boardData = await response.json();
+                renderBoard();
+            } catch (err) {
+                console.error("Failed to load investigation board:", err);
+            }
+        }
+
+        function renderBoard() {
+            // Clear canvas and draw connections
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw connection lines (Red strings!)
+            boardData.connections.forEach(conn => {
+                const fromNode = boardData.nodes.find(n => n.id === conn.from);
+                const toNode = boardData.nodes.find(n => n.id === conn.to);
+                
+                // Only draw if both are public/discovered
+                if (fromNode && toNode && fromNode.discovered && toNode.discovered) {
+                    ctx.beginPath();
+                    // Connect centers
+                    const x1 = fromNode.x + 110;
+                    const y1 = fromNode.y + 10; // Pin position (top center of polaroid)
+                    const x2 = toNode.x + 110;
+                    const y2 = toNode.y + 10;
+                    
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    
+                    // Set line style to look like a red string
+                    if (conn.color === 'red') {
+                        ctx.strokeStyle = '#ef4444';
+                        ctx.lineWidth = 3;
+                    } else if (conn.color === 'yellow') {
+                        ctx.strokeStyle = '#fbbf24';
+                        ctx.lineWidth = 2;
+                    } else if (conn.color === 'green') {
+                        ctx.strokeStyle = '#10b981';
+                        ctx.lineWidth = 3;
+                    } else {
+                        ctx.strokeStyle = '#e2e8f0';
+                        ctx.lineWidth = 1.5;
+                    }
+                    
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+                    ctx.shadowBlur = 4;
+                    ctx.stroke();
+                    
+                    // Draw label if any
+                    if (conn.label) {
+                        ctx.font = '9px Montserrat';
+                        ctx.fillStyle = '#fff';
+                        ctx.shadowBlur = 0;
+                        const mx = (x1 + x2) / 2;
+                        const my = (y1 + y2) / 2;
+                        ctx.fillText(conn.label, mx + 5, my - 5);
+                    }
+                }
+            });
+
+            // Render polaroid cards
+            const container = document.getElementById('cards-container');
+            container.innerHTML = '';
+            
+            boardData.nodes.forEach(node => {
+                if (!node.discovered) return; // Players can only see discovered clues
+                
+                const card = document.createElement('div');
+                card.className = `clue-card ${node.type}-node`;
+                card.style.left = `${node.x}px`;
+                card.style.top = `${node.y}px`;
+                
+                card.innerHTML = `
+                    <h3>${node.title}</h3>
+                    <p>${node.description}</p>
+                    <span class="badge">${node.type}</span>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        // Realtime websocket synchronization
+        socket.on('investigation-board-updated', (data) => {
+            boardData = data;
+            renderBoard();
+        });
+
+        // Initialize
+        loadBoard();
+    </script>
+</body>
+</html>

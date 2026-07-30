@@ -1,0 +1,20 @@
+{
+  "name": "SKULL LORD",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 18,
+  "hp": 105,
+  "speed": "30 ft.",
+  "stats": {
+    "str": 10,
+    "dex": 10,
+    "con": 10,
+    "int": 10,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "15",
+  "actions": [],
+  "raw_extracted": "STR \n14 (+2) \nDEX \n16 (+3) \nCON \n17 (+3) \nINT \n16 (+3) \nWIS \n15 (+2) \nCHA \n21 (+S) \nSkills Athletics +7, History +8, Perception +12, Stealth +8 \nDamage Resistances cold, necrotic; bludgeoning, piercing, and \nslashing from nonmagical attacks \nDamage Immunities poison \nCondition Immunities blinded, charmed, deafened, exhaustion, \nfrightened, poisoned, stunned, unconscious \nSenses darkvision 60 ft., passive Perception 22 \nLanguages all the languages it knew in life \nChallenge 15 (13,000 XP) \nLegendary Resistance (3/Day). If the skull lord fails a saving \nthrow, it can choose to succeed instead. \nMaster of the Grave. While within 30 feet of the skull lord, any \nundead ally of the skull lord makes saving throws with advantage, and that ally regains 1 d6 hit points whenever it starts its \nturn there. \nEvasion. If the skull lord is subjected to an effect that allows it \nto make a Dexterity saving throw to take only half the damage, \nthe skull lord instead takes no damage if it succeeds on the"
+}

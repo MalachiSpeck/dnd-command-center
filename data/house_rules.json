@@ -1,0 +1,8 @@
+{
+  "critical_hits": "max_dice_plus_roll",
+  "healing_potions": "max_value",
+  "flanking": "advantage",
+  "encumbrance": "standard",
+  "diagonal_movement": "alternating",
+  "death_saves": "visible"
+}

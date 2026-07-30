@@ -1,0 +1,26 @@
+{
+  "dark_encounter": {
+    "name": "Dark Encounter",
+    "scale": [55.0, 58.27, 61.74, 65.41, 73.42, 82.41, 87.31, 98.0],
+    "base_tempo": 120,
+    "bass_type": "sawtooth",
+    "lead_type": "triangle",
+    "rhythm": [1, 0, 1, 0, 1, 1, 0, 1]
+  },
+  "heroic_skirmish": {
+    "name": "Heroic Skirmish",
+    "scale": [65.41, 73.42, 82.41, 87.31, 98.0, 110.0, 123.47, 130.81],
+    "base_tempo": 135,
+    "bass_type": "triangle",
+    "lead_type": "sine",
+    "rhythm": [1, 0, 0, 1, 1, 0, 1, 0]
+  },
+  "boss_orchestral": {
+    "name": "Colossus Boss",
+    "scale": [55.0, 58.27, 65.41, 69.3, 73.42, 82.41, 87.31, 103.83],
+    "base_tempo": 150,
+    "bass_type": "sawtooth",
+    "lead_type": "square",
+    "rhythm": [1, 1, 0, 1, 1, 1, 0, 1]
+  }
+}

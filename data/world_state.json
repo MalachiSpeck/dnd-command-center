@@ -1,0 +1,11 @@
+{
+  "locations": {
+    "Calimport Docks": {
+      "tavern_burned": false,
+      "guard_captain_dead": false,
+      "merchant_guild_hostile": false
+    }
+  },
+  "flags": {},
+  "events": []
+}

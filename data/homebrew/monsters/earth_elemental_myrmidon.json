@@ -1,0 +1,19 @@
+{
+  "name": "EARTH ELEMENTAL MYRMIDON",
+  "size": "Medium",
+  "type": "creature",
+  "alignment": "unaligned",
+  "ac": 18,
+  "hp": 127,
+  "speed": "30 ft.",
+  "stats": {
+    "str": 18,
+    "dex": 10,
+    "con": 17,
+    "int": 8,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "7",
+  "actions": []
+}
