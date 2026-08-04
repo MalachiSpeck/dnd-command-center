@@ -1,0 +1,534 @@
+{
+  "wild_shapes": [
+    {
+      "id": "brown_bear",
+      "name": "Brown Bear",
+      "cr": "1",
+      "cr_num": 1,
+      "hp": 34,
+      "ac": 11,
+      "speed": "40 ft",
+      "str": 19,
+      "dex": 10,
+      "con": 16,
+      "int": 2,
+      "wis": 13,
+      "cha": 7,
+      "actions": [
+        { "name": "Bite", "type": "Melee Weapon Attack", "toHit": "+5", "damage": "1d8+4 piercing" },
+        { "name": "Claws", "type": "Melee Weapon Attack", "toHit": "+5", "damage": "2d6+4 slashing" },
+        { "name": "Multiattack", "type": "Special", "description": "Makes one Bite attack and one Claws attack." }
+      ]
+    },
+    {
+      "id": "dire_wolf",
+      "name": "Dire Wolf",
+      "cr": "1",
+      "cr_num": 1,
+      "hp": 37,
+      "ac": 14,
+      "speed": "50 ft",
+      "str": 17,
+      "dex": 15,
+      "con": 15,
+      "int": 3,
+      "wis": 12,
+      "cha": 7,
+      "actions": [
+        { "name": "Bite", "type": "Melee Weapon Attack", "toHit": "+5", "damage": "2d6+3 piercing", "extra": "Target must succeed on a DC 13 STR save or be knocked prone." },
+        { "name": "Pack Tactics", "type": "Passive", "description": "Advantage on attack rolls if an ally is within 5ft of target." }
+      ]
+    },
+    {
+      "id": "giant_spider",
+      "name": "Giant Spider",
+      "cr": "1",
+      "cr_num": 1,
+      "hp": 26,
+      "ac": 14,
+      "speed": "30 ft, climb 30 ft",
+      "str": 14,
+      "dex": 16,
+      "con": 12,
+      "int": 2,
+      "wis": 11,
+      "cha": 4,
+      "actions": [
+        { "name": "Bite", "type": "Melee Weapon Attack", "toHit": "+5", "damage": "1d8+3 piercing + 2d8 poison" },
+        { "name": "Web", "type": "Ranged Weapon Attack", "toHit": "+5", "damage": "Restrained", "description": "Range 30/60 ft. Target is restrained by webbing." },
+        { "name": "Spider Climb", "type": "Passive", "description": "Can climb difficult surfaces, including upside down on ceilings." }
+      ]
+    },
+    {
+      "id": "constrictor_snake",
+      "name": "Constrictor Snake",
+      "cr": "1/4",
+      "cr_num": 0.25,
+      "hp": 13,
+      "ac": 12,
+      "speed": "30 ft, swim 30 ft",
+      "str": 15,
+      "dex": 14,
+      "con": 12,
+      "int": 1,
+      "wis": 10,
+      "cha": 3,
+      "actions": [
+        { "name": "Bite", "type": "Melee Weapon Attack", "toHit": "+4", "damage": "1d4+2 piercing" },
+        { "name": "Constrict", "type": "Melee Weapon Attack", "toHit": "+4", "damage": "1d8+2 bludgeoning", "extra": "Target is grappled and restrained (escape DC 12)." }
+      ]
+    },
+    {
+      "id": "panther",
+      "name": "Panther",
+      "cr": "1/4",
+      "cr_num": 0.25,
+      "hp": 13,
+      "ac": 12,
+      "speed": "50 ft, climb 40 ft",
+      "str": 14,
+      "dex": 15,
+      "con": 10,
+      "int": 3,
+      "wis": 14,
+      "cha": 7,
+      "actions": [
+        { "name": "Bite", "type": "Melee Weapon Attack", "toHit": "+4", "damage": "1d6+2 piercing" },
+        { "name": "Claw", "type": "Melee Weapon Attack", "toHit": "+4", "damage": "1d4+2 slashing" },
+        { "name": "Pounce", "type": "Special", "description": "If panther moves 20ft straight toward target and hits with claw, target DC 12 STR save or knocked prone." }
+      ]
+    },
+    {
+      "id": "giant_hyena",
+      "name": "Giant Hyena",
+      "cr": "1",
+      "cr_num": 1,
+      "hp": 45,
+      "ac": 12,
+      "speed": "50 ft",
+      "str": 16,
+      "dex": 12,
+      "con": 14,
+      "int": 2,
+      "wis": 12,
+      "cha": 7,
+      "actions": [
+        { "name": "Bite", "type": "Melee Weapon Attack", "toHit": "+5", "damage": "2d6+3 piercing" },
+        { "name": "Rampage", "type": "Reaction/Bonus", "description": "When reducing a creature to 0 HP, move up to half speed and make a bite attack." }
+      ]
+    },
+    {
+      "id": "giant_eagle",
+      "name": "Giant Eagle",
+      "cr": "1",
+      "cr_num": 1,
+      "hp": 26,
+      "ac": 13,
+      "speed": "10 ft, fly 60 ft",
+      "str": 16,
+      "dex": 17,
+      "con": 13,
+      "int": 8,
+      "wis": 14,
+      "cha": 10,
+      "actions": [
+        { "name": "Beak", "type": "Melee Weapon Attack", "toHit": "+5", "damage": "1d6+3 piercing" },
+        { "name": "Talons", "type": "Melee Weapon Attack", "toHit": "+5", "damage": "2d6+3 slashing" }
+      ]
+    },
+    {
+      "id": "reef_shark",
+      "name": "Reef Shark",
+      "cr": "1/2",
+      "cr_num": 0.5,
+      "hp": 22,
+      "ac": 12,
+      "speed": "swim 40 ft",
+      "str": 14,
+      "dex": 13,
+      "con": 13,
+      "int": 1,
+      "wis": 10,
+      "cha": 4,
+      "actions": [
+        { "name": "Bite", "type": "Melee Weapon Attack", "toHit": "+4", "damage": "2d4+2 piercing" },
+        { "name": "Pack Tactics", "type": "Passive", "description": "Advantage on attack rolls if an ally is within 5ft." }
+      ]
+    }
+  ],
+  "polymorph_beasts": [
+    {
+      "id": "giant_rat",
+      "name": "Giant Rat",
+      "cr": "1/8",
+      "cr_num": 0.125,
+      "hp": 7,
+      "ac": 12,
+      "speed": "30 ft",
+      "str": 7,
+      "dex": 15,
+      "con": 11,
+      "int": 2,
+      "wis": 10,
+      "cha": 4,
+      "actions": [
+        { "name": "Bite", "type": "Melee Weapon Attack", "toHit": "+4", "damage": "1d4+2 piercing" },
+        { "name": "Keen Smell", "type": "Passive", "description": "Advantage on Perception checks relying on smell." }
+      ]
+    },
+    {
+      "id": "constrictor_snake",
+      "name": "Constrictor Snake",
+      "cr": "1/4",
+      "cr_num": 0.25,
+      "hp": 13,
+      "ac": 12,
+      "speed": "30 ft, swim 30 ft",
+      "str": 15,
+      "dex": 14,
+      "con": 12,
+      "int": 1,
+      "wis": 10,
+      "cha": 3,
+      "actions": [
+        { "name": "Bite", "type": "Melee Weapon Attack", "toHit": "+4", "damage": "1d4+2 piercing" },
+        { "name": "Constrict", "type": "Melee Weapon Attack", "toHit": "+4", "damage": "1d8+2 bludgeoning", "extra": "Target is grappled and restrained (escape DC 12)." }
+      ]
+    },
+    {
+      "id": "panther",
+      "name": "Panther",
+      "cr": "1/4",
+      "cr_num": 0.25,
+      "hp": 13,
+      "ac": 12,
+      "speed": "50 ft, climb 40 ft",
+      "str": 14,
+      "dex": 15,
+      "con": 10,
+      "int": 3,
+      "wis": 14,
+      "cha": 7,
+      "actions": [
+        { "name": "Bite", "type": "Melee Weapon Attack", "toHit": "+4", "damage": "1d6+2 piercing" },
+        { "name": "Claw", "type": "Melee Weapon Attack", "toHit": "+4", "damage": "1d4+2 slashing" }
+      ]
+    },
+    {
+      "id": "ape",
+      "name": "Ape",
+      "cr": "1/2",
+      "cr_num": 0.5,
+      "hp": 19,
+      "ac": 12,
+      "speed": "30 ft, climb 30 ft",
+      "str": 16,
+      "dex": 14,
+      "con": 14,
+      "int": 6,
+      "wis": 12,
+      "cha": 7,
+      "actions": [
+        { "name": "Fist", "type": "Melee Weapon Attack", "toHit": "+5", "damage": "1d6+3 bludgeoning" },
+        { "name": "Rock", "type": "Ranged Weapon Attack", "toHit": "+5", "damage": "1d6+3 bludgeoning (range 25/50 ft)" }
+      ]
+    },
+    {
+      "id": "black_bear",
+      "name": "Black Bear",
+      "cr": "1/2",
+      "cr_num": 0.5,
+      "hp": 19,
+      "ac": 11,
+      "speed": "40 ft, climb 30 ft",
+      "str": 15,
+      "dex": 10,
+      "con": 14,
+      "int": 2,
+      "wis": 12,
+      "cha": 7,
+      "actions": [
+        { "name": "Bite", "type": "Melee Weapon Attack", "toHit": "+4", "damage": "1d6+2 piercing" },
+        { "name": "Claws", "type": "Melee Weapon Attack", "toHit": "+4", "damage": "2d4+2 slashing" }
+      ]
+    },
+    {
+      "id": "brown_bear",
+      "name": "Brown Bear",
+      "cr": "1",
+      "cr_num": 1,
+      "hp": 34,
+      "ac": 11,
+      "speed": "40 ft",
+      "str": 19,
+      "dex": 10,
+      "con": 16,
+      "int": 2,
+      "wis": 13,
+      "cha": 7,
+      "actions": [
+        { "name": "Bite", "type": "Melee Weapon Attack", "toHit": "+5", "damage": "1d8+4 piercing" },
+        { "name": "Claws", "type": "Melee Weapon Attack", "toHit": "+5", "damage": "2d6+4 slashing" }
+      ]
+    },
+    {
+      "id": "dire_wolf",
+      "name": "Dire Wolf",
+      "cr": "1",
+      "cr_num": 1,
+      "hp": 37,
+      "ac": 14,
+      "speed": "50 ft",
+      "str": 17,
+      "dex": 15,
+      "con": 15,
+      "int": 3,
+      "wis": 12,
+      "cha": 7,
+      "actions": [
+        { "name": "Bite", "type": "Melee Weapon Attack", "toHit": "+5", "damage": "2d6+3 piercing (DC 13 STR save or prone)" }
+      ]
+    },
+    {
+      "id": "polar_bear",
+      "name": "Polar Bear",
+      "cr": "2",
+      "cr_num": 2,
+      "hp": 42,
+      "ac": 12,
+      "speed": "40 ft, swim 30 ft",
+      "str": 20,
+      "dex": 10,
+      "con": 16,
+      "int": 2,
+      "wis": 13,
+      "cha": 7,
+      "actions": [
+        { "name": "Bite", "type": "Melee Weapon Attack", "toHit": "+7", "damage": "1d8+5 piercing" },
+        { "name": "Claws", "type": "Melee Weapon Attack", "toHit": "+7", "damage": "2d6+5 slashing" }
+      ]
+    },
+    {
+      "id": "rhinoceros",
+      "name": "Rhinoceros",
+      "cr": "2",
+      "cr_num": 2,
+      "hp": 45,
+      "ac": 11,
+      "speed": "40 ft",
+      "str": 21,
+      "dex": 8,
+      "con": 15,
+      "int": 2,
+      "wis": 12,
+      "cha": 6,
+      "actions": [
+        { "name": "Gore", "type": "Melee Weapon Attack", "toHit": "+7", "damage": "2d8+5 bludgeoning" },
+        { "name": "Charge", "type": "Special", "description": "Moves 20ft straight toward target before hit: extra 2d8 bludgeoning & DC 15 STR save or prone." }
+      ]
+    },
+    {
+      "id": "killer_whale",
+      "name": "Killer Whale",
+      "cr": "3",
+      "cr_num": 3,
+      "hp": 90,
+      "ac": 12,
+      "speed": "swim 60 ft",
+      "str": 19,
+      "dex": 10,
+      "con": 13,
+      "int": 3,
+      "wis": 12,
+      "cha": 7,
+      "actions": [
+        { "name": "Bite", "type": "Melee Weapon Attack", "toHit": "+6", "damage": "5d6+4 piercing" },
+        { "name": "Echolocation", "type": "Passive", "description": "120ft blindsight while underwater." }
+      ]
+    },
+    {
+      "id": "elephant",
+      "name": "Elephant",
+      "cr": "4",
+      "cr_num": 4,
+      "hp": 76,
+      "ac": 12,
+      "speed": "40 ft",
+      "str": 22,
+      "dex": 9,
+      "con": 17,
+      "int": 3,
+      "wis": 11,
+      "cha": 6,
+      "actions": [
+        { "name": "Gore", "type": "Melee Weapon Attack", "toHit": "+8", "damage": "3d8+6 piercing" },
+        { "name": "Stomp", "type": "Melee Weapon Attack", "toHit": "+8", "damage": "3d10+6 bludgeoning (vs prone targets)" }
+      ]
+    },
+    {
+      "id": "triceratops",
+      "name": "Triceratops",
+      "cr": "5",
+      "cr_num": 5,
+      "hp": 95,
+      "ac": 13,
+      "speed": "50 ft",
+      "str": 22,
+      "dex": 9,
+      "con": 17,
+      "int": 2,
+      "wis": 11,
+      "cha": 5,
+      "actions": [
+        { "name": "Gore", "type": "Melee Weapon Attack", "toHit": "+9", "damage": "4d8+6 piercing" },
+        { "name": "Stomp", "type": "Melee Weapon Attack", "toHit": "+9", "damage": "3d10+6 bludgeoning" }
+      ]
+    },
+    {
+      "id": "mammoth",
+      "name": "Mammoth",
+      "cr": "6",
+      "cr_num": 6,
+      "hp": 126,
+      "ac": 13,
+      "speed": "40 ft",
+      "str": 24,
+      "dex": 9,
+      "con": 21,
+      "int": 3,
+      "wis": 11,
+      "cha": 6,
+      "actions": [
+        { "name": "Gore", "type": "Melee Weapon Attack", "toHit": "+10", "damage": "4d8+7 piercing" },
+        { "name": "Stomp", "type": "Melee Weapon Attack", "toHit": "+10", "damage": "4d10+7 bludgeoning" }
+      ]
+    },
+    {
+      "id": "giant_ape",
+      "name": "Giant Ape",
+      "cr": "7",
+      "cr_num": 7,
+      "hp": 157,
+      "ac": 12,
+      "speed": "40 ft, climb 40 ft",
+      "str": 23,
+      "dex": 14,
+      "con": 18,
+      "int": 7,
+      "wis": 12,
+      "cha": 7,
+      "actions": [
+        { "name": "Fist", "type": "Melee Weapon Attack", "toHit": "+9", "damage": "3d10+6 bludgeoning" },
+        { "name": "Rock", "type": "Ranged Weapon Attack", "toHit": "+9", "damage": "7d6+6 bludgeoning (range 50/100 ft)" },
+        { "name": "Multiattack", "type": "Special", "description": "Makes two Fist attacks." }
+      ]
+    },
+    {
+      "id": "tyrannosaurus_rex",
+      "name": "Tyrannosaurus Rex",
+      "cr": "8",
+      "cr_num": 8,
+      "hp": 136,
+      "ac": 13,
+      "speed": "50 ft",
+      "str": 25,
+      "dex": 10,
+      "con": 19,
+      "int": 2,
+      "wis": 12,
+      "cha": 9,
+      "actions": [
+        { "name": "Bite", "type": "Melee Weapon Attack", "toHit": "+10", "damage": "4d12+7 piercing", "extra": "Target is grappled (escape DC 17) and restrained." },
+        { "name": "Tail", "type": "Melee Weapon Attack", "toHit": "+10", "damage": "3d8+7 bludgeoning" },
+        { "name": "Multiattack", "type": "Special", "description": "Makes one Bite attack and one Tail attack." }
+      ]
+    }
+  ],
+  "familiars": [
+    {
+      "id": "owl",
+      "name": "Owl (Familiar)",
+      "hp": 1,
+      "ac": 11,
+      "speed": "5 ft, fly 60 ft",
+      "str": 3,
+      "dex": 13,
+      "con": 8,
+      "actions": [
+        { "name": "Talons", "type": "Melee Weapon Attack", "toHit": "+3", "damage": "1 slashing" },
+        { "name": "Flyby", "type": "Passive", "description": "Doesn't provoke opportunity attacks when flying out of enemy reach." },
+        { "name": "Keen Sight & Hearing", "type": "Passive", "description": "Advantage on Wisdom (Perception) checks that rely on sight or hearing." }
+      ]
+    },
+    {
+      "id": "raven",
+      "name": "Raven (Familiar)",
+      "hp": 1,
+      "ac": 12,
+      "speed": "10 ft, fly 50 ft",
+      "str": 2,
+      "dex": 14,
+      "con": 8,
+      "actions": [
+        { "name": "Beak", "type": "Melee Weapon Attack", "toHit": "+4", "damage": "1 piercing" },
+        { "name": "Mimicry", "type": "Special", "description": "Can mimic simple sounds or words it has heard." }
+      ]
+    },
+    {
+      "id": "cat",
+      "name": "Cat (Familiar)",
+      "hp": 2,
+      "ac": 12,
+      "speed": "40 ft, climb 30 ft",
+      "str": 3,
+      "dex": 15,
+      "con": 10,
+      "actions": [
+        { "name": "Claws", "type": "Melee Weapon Attack", "toHit": "+0", "damage": "1 slashing" },
+        { "name": "Keen Smell", "type": "Passive", "description": "Advantage on Perception checks relying on smell." }
+      ]
+    },
+    {
+      "id": "imp",
+      "name": "Imp (Pact Familiar)",
+      "hp": 10,
+      "ac": 13,
+      "speed": "20 ft, fly 40 ft",
+      "str": 6,
+      "dex": 17,
+      "con": 13,
+      "actions": [
+        { "name": "Sting", "type": "Melee Weapon Attack", "toHit": "+5", "damage": "1d4+3 piercing + 3d6 poison (DC 11 Con half)" },
+        { "name": "Invisibility", "type": "Special", "description": "Magically turns invisible until it attacks or concentrates." }
+      ]
+    },
+    {
+      "id": "steel_defender",
+      "name": "Steel Defender (Artificer Companion)",
+      "hp": 30,
+      "ac": 15,
+      "speed": "40 ft",
+      "str": 14,
+      "dex": 12,
+      "con": 14,
+      "actions": [
+        { "name": "Force Rend", "type": "Melee Weapon Attack", "toHit": "+5", "damage": "1d8+2 force" },
+        { "name": "Repair (3/day)", "type": "Special", "damage": "2d8+2 heal", "description": "Restores HP to itself or a construct within 5ft." },
+        { "name": "Deflect Attack", "type": "Reaction", "description": "Imposes disadvantage on attack roll against target within 5ft." }
+      ]
+    },
+    {
+      "id": "beast_companion",
+      "name": "Beast Companion (Ranger)",
+      "hp": 20,
+      "ac": 14,
+      "speed": "40 ft",
+      "str": 14,
+      "dex": 14,
+      "con": 14,
+      "actions": [
+        { "name": "Maul / Beast Strike", "type": "Melee Weapon Attack", "toHit": "+5", "damage": "1d8+4 slashing" }
+      ]
+    }
+  ]
+}

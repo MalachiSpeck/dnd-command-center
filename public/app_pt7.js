@@ -1,22 +1,5 @@
-// --- LOCAL SOUNDBOARD SOUND CONTROLLER ---
-window.triggerSound = async function(soundFile) {
-    try {
-        await fetch('/api/sounds/trigger', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sound: soundFile })
-        });
-        
-        // Play local browser playback if context activated
-        if (currentAudioContext) {
-            const audio = new Audio(`/sounds/${soundFile}`);
-            audio.volume = 0.8;
-            audio.play().catch(e => console.log("Soundblock active. Interact to hear."));
-        }
-    } catch(err) {
-        console.error("Failed to broadcast soundboard event:", err);
-    }
-};
+// --- LEGACY SOUND TRIGGER NO-OP STUB ---
+window.triggerSound = function() {};
 
 // --- PROCEDURAL HAZARDS/TRAPS ROLLER ---
 window.generateRandomHazard = async function() {

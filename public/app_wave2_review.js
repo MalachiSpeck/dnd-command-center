@@ -58,11 +58,21 @@ window.loadReviewDrafts = async function() {
         const drafts = await response.json();
         window.loadedDrafts = drafts;
 
+        // Fetch duplicate detection list
+        let dupSet = new Set();
+        try {
+            const dupRes = await fetch('/api/drafts/check-duplicates');
+            const dupData = await dupRes.json();
+            if (dupData.success && dupData.duplicates) {
+                dupData.duplicates.forEach(d => dupSet.add(`${d.category}:${d.fileName}`));
+            }
+        } catch (e) {}
+
         listContainer.innerHTML = '';
         const categories = [
-            { key: 'spells', label: ' Spells' },
-            { key: 'monsters', label: ' Monsters' },
-            { key: 'magic_items', label: ' Magic Items' }
+            { key: 'spells', label: '🔮 Spells' },
+            { key: 'monsters', label: '👾 Monsters' },
+            { key: 'magic_items', label: '✨ Magic Items' }
         ];
 
         let totalDraftsCount = 0;
@@ -94,10 +104,15 @@ window.loadReviewDrafts = async function() {
                     btn.style.textOverflow = 'ellipsis';
                     btn.style.borderColor = 'var(--border-iron)';
 
-                    // Extract a clean name
                     let cleanName = file.replace(/\.md|\.json/g, '').replace(/_/g, ' ');
                     cleanName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
-                    btn.innerText = cleanName;
+                    
+                    const isDup = dupSet.has(`${cat.key}:${file}`);
+                    if (isDup) {
+                        btn.innerHTML = `${cleanName} <span style="color: #f59e0b; font-size: 0.65rem; font-weight: bold; background: rgba(245,158,11,0.15); padding: 1px 4px; border-radius: 3px; float: right;">⚠️ Existing</span>`;
+                    } else {
+                        btn.innerText = cleanName;
+                    }
 
                     btn.onclick = () => {
                         // Highlight active draft button
@@ -750,12 +765,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
 
                 document.body.appendChild(notification);
-                
-                // Play notification sound if available
-                if (window.triggerSound) {
-                    // Quick low key sound alert
-                    console.log("Flashed sync notification toast.");
-                }
             });
         }
     }, 1000);

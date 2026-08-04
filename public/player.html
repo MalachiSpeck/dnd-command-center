@@ -3,6 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>Player View - Active Encounter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#8b5cf6">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            });
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -25,37 +35,47 @@
             gap: 40px;
             height: 100%;
             align-items: center;
+            overflow: hidden;
         }
         .cinematic-board {
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
             max-height: 85vh;
             overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+        }
+        .cinematic-board::-webkit-scrollbar {
+            display: none; /* WebKit hidden scrollbar */
         }
         .player-card {
             background-color: var(--shadow-card);
             border: 2px solid var(--border-iron);
             border-radius: 8px;
-            padding: 15px 25px;
+            padding: 12px 20px;
             font-size: 1.4rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
+            overflow: hidden;
+            box-sizing: border-box;
+            width: 100%;
         }
         .player-card.active-turn {
             border-color: var(--arcane-violet);
             box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
-            transform: scale(1.03);
+            transform: scale(1.02);
             background: #111019;
         }
         .status-fucked-up {
             color: var(--crimson-rage);
             font-family: 'Cinzel', serif;
-            font-size: 1rem;
+            font-size: 0.85rem;
             font-weight: bold;
             letter-spacing: 1.5px;
             border: 1px solid var(--crimson-rage);
@@ -63,6 +83,7 @@
             border-radius: 4px;
             background: rgba(239, 68, 68, 0.08);
             box-shadow: 0 0 5px rgba(239, 68, 68, 0.2);
+            flex-shrink: 0;
         }
         /* Cinematic Turn Art Card on right half */
         .art-card-container {
@@ -95,8 +116,12 @@
             margin: 0;
             font-family: 'Cinzel', serif;
             color: var(--arcane-violet);
-            font-size: 1.8rem;
+            font-size: clamp(1.2rem, 2.5vw, 1.8rem);
             letter-spacing: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
         }
         .art-card-details p {
             margin: 5px 0 0 0;
@@ -174,11 +199,19 @@
             }
 
             list.innerHTML = '';
-            
+
+            // Calculate dynamic sizing based on character count
+            const totalCombatants = boardState.length;
+            const isCompact = totalCombatants > 5;
+            list.style.gap = isCompact ? '8px' : '12px';
+
             // Draw public initiative cards with active status tracking
             boardState.forEach((combatant, idx) => {
                 const card = document.createElement('div');
                 card.className = 'player-card';
+                if (isCompact) {
+                    card.style.padding = '8px 14px';
+                }
                 
                 let activeGlow = '';
                 let nameColorStyle = 'color: var(--text-main);';
@@ -188,15 +221,15 @@
                     if (combatant.type === 'player') {
                         card.style.boxShadow = '0 0 15px #fbbf24';
                         card.style.borderColor = '#fbbf24';
-                        activeGlow = `<span style="color:#fbbf24; margin-right:8px; filter: drop-shadow(0 0 4px #fbbf24); font-size: 1.25rem;"></span>`;
+                        activeGlow = `<span style="color:#fbbf24; margin-right:8px; filter: drop-shadow(0 0 4px #fbbf24); font-size: 1.1rem; flex-shrink: 0;"></span>`;
                         nameColorStyle = 'color: #fbbf24; text-shadow: 0 0 8px rgba(251, 191, 36, 0.6);';
                     } else if (combatant.type === 'monster') {
                         card.style.boxShadow = '0 0 15px #ef4444';
                         card.style.borderColor = '#ef4444';
-                        activeGlow = `<span style="color:#ef4444; margin-right:8px; filter: drop-shadow(0 0 4px #ef4444); font-size: 1.25rem;"></span>`;
+                        activeGlow = `<span style="color:#ef4444; margin-right:8px; filter: drop-shadow(0 0 4px #ef4444); font-size: 1.1rem; flex-shrink: 0;"></span>`;
                         nameColorStyle = 'color: #ef4444; text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);';
                     } else {
-                        activeGlow = `<span style="color:#fbbf24; margin-right:8px;"></span>`;
+                        activeGlow = `<span style="color:#fbbf24; margin-right:8px; flex-shrink: 0;"></span>`;
                     }
                 }
                 
@@ -217,22 +250,32 @@
                 // Render condition tags on players mirror
                 let conditionsListHtml = '';
                 if ((combatant.conditions && combatant.conditions.length > 0) || combatant.concentratingSpell) {
-                    conditionsListHtml += `<div style="display:flex; gap:4px; margin-top:5px; flex-wrap:wrap; align-items:center;">`;
+                    conditionsListHtml += `<div style="display:flex; gap:4px; margin-top:4px; flex-wrap:wrap; align-items:center;">`;
                     if (combatant.concentratingSpell) {
-                        conditionsListHtml += `<span style="font-size:0.75rem; background:#fbbf24; color:black; padding:2px 6px; border-radius:3px; font-weight:bold; box-shadow: 0 0 6px #fbbf24;"> Conc: ${combatant.concentratingSpell}</span>`;
+                        conditionsListHtml += `<span style="font-size:0.7rem; background:#fbbf24; color:black; padding:2px 5px; border-radius:3px; font-weight:bold; box-shadow: 0 0 6px #fbbf24;"> Conc: ${combatant.concentratingSpell}</span>`;
                     }
                     if (combatant.conditions && combatant.conditions.length > 0) {
                         combatant.conditions.forEach(c => {
-                            conditionsListHtml += `<span style="font-size:0.75rem; background:#8b5cf6; color:white; padding:2px 6px; border-radius:3px; font-weight:bold;">${c}</span>`;
+                            conditionsListHtml += `<span style="font-size:0.7rem; background:#8b5cf6; color:white; padding:2px 5px; border-radius:3px; font-weight:bold;">${c}</span>`;
                         });
                     }
                     conditionsListHtml += `</div>`;
                 }
 
+                // Dynamic font size based on name length and compact mode
+                const nameLen = combatant.name ? combatant.name.length : 0;
+                let fontSize = '1.3rem';
+                if (nameLen > 22) fontSize = '0.9rem';
+                else if (nameLen > 15) fontSize = '1.05rem';
+                else if (isCompact) fontSize = '1.1rem';
+
                 card.innerHTML = `
-                    <div style="display:flex; flex-direction:column; width:100%;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-                            <span style="${nameColorStyle} font-family: 'Cinzel'; font-weight: bold; display:flex; align-items:center;">${activeGlow} ${combatant.name}</span> 
+                    <div style="display:flex; flex-direction:column; width:100%; min-width:0; overflow:hidden;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; width:100%; min-width:0; gap:8px;">
+                            <span style="${nameColorStyle} font-family: 'Cinzel', serif; font-weight: bold; display:flex; align-items:center; min-width:0; flex:1; font-size: ${fontSize}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                ${activeGlow}
+                                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:inline-block;">${combatant.name}</span>
+                            </span> 
                             ${statusTag}
                         </div>
                         ${conditionsListHtml}
@@ -297,16 +340,7 @@
 
         window.onload = loadInitialState;
 
-        function triggerLocalAudioPlay(soundFile) {
-            const audio = document.getElementById('sound-trigger-element');
-            if (audio) {
-                // Try playing from local server directory first, fallback gracefully
-                audio.src = `/sounds/${soundFile}`;
-                audio.play().catch(e => {
-                    console.log(`Sound file play attempt for ${soundFile} failed (likely file missing or user interaction block).`);
-                });
-            }
-        }
+        function triggerLocalAudioPlay(soundFile) {}
     </script>
 </body>
 </html>

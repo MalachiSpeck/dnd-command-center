@@ -1,0 +1,841 @@
+{
+  "active_scene_id": "scene_1785697499889_ekqz",
+  "scenes": [
+    {
+      "id": "scene_default",
+      "name": "AfterlifeCasinoFull",
+      "width_px": 2800,
+      "height_px": 2100,
+      "background_color": "#121824",
+      "background_url": "/maps/1785609990399_AfterlifeCasinoFull.jpeg",
+      "grid": {
+        "type": "square",
+        "size_px": 70,
+        "offset_x": 0,
+        "offset_y": 0,
+        "color": "#ffffff",
+        "opacity": 0.2,
+        "visible": true
+      },
+      "walls": [
+        {
+          "id": "w_1",
+          "type": "opaque",
+          "points": [
+            280,
+            280,
+            280,
+            1120
+          ]
+        },
+        {
+          "id": "w_2",
+          "type": "opaque",
+          "points": [
+            280,
+            280,
+            1120,
+            280
+          ]
+        },
+        {
+          "id": "w_3",
+          "type": "door",
+          "state": "closed",
+          "points": [
+            1120,
+            280,
+            1260,
+            280
+          ]
+        },
+        {
+          "id": "w_4",
+          "type": "opaque",
+          "points": [
+            1260,
+            280,
+            1820,
+            280
+          ]
+        },
+        {
+          "id": "w_5",
+          "type": "window",
+          "points": [
+            280,
+            1120,
+            700,
+            1120
+          ]
+        }
+      ],
+      "lights": [],
+      "tokens": [
+        {
+          "id": "tok_party_char_1",
+          "character_id": "char_1",
+          "name": "Furfur",
+          "x": 420,
+          "y": 140,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 45,
+          "hp_max": 45,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_2",
+          "character_id": "char_2",
+          "name": "Grizz Fiddlestop",
+          "x": 630,
+          "y": 490,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 1,
+          "hp_max": 52,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_3",
+          "character_id": "char_3",
+          "name": "Arrrric",
+          "x": 560,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 2,
+          "hp_max": 58,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_4",
+          "character_id": "char_4",
+          "name": "Gnoah",
+          "x": 700,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 50,
+          "hp_max": 50,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_5",
+          "character_id": "char_5",
+          "name": "Valerie",
+          "x": 840,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 2,
+          "hp_max": 45,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_1784401791183",
+          "character_id": "char_1784401791183",
+          "name": "Test",
+          "x": 980,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 2,
+          "hp_max": 10,
+          "conditions": []
+        },
+        {
+          "id": "tok_mon_mon_1785696515539779",
+          "name": "pteranodon A",
+          "x": 1050,
+          "y": 490,
+          "size_cells": 1,
+          "color": "#ef4444",
+          "vision_radius_ft": 60,
+          "disposition": "hostile",
+          "hp_current": 13,
+          "hp_max": 13,
+          "conditions": []
+        },
+        {
+          "id": "tok_mon_mon_1785696515539382",
+          "name": "pteranodon B",
+          "x": 1190,
+          "y": 490,
+          "size_cells": 1,
+          "color": "#ef4444",
+          "vision_radius_ft": 60,
+          "disposition": "hostile",
+          "hp_current": 15,
+          "hp_max": 15,
+          "conditions": []
+        },
+        {
+          "id": "tok_mon_mon_1785696515539665",
+          "name": "pteranodon C",
+          "x": 1330,
+          "y": 490,
+          "size_cells": 1,
+          "color": "#ef4444",
+          "vision_radius_ft": 60,
+          "disposition": "hostile",
+          "hp_current": 13,
+          "hp_max": 13,
+          "conditions": []
+        },
+        {
+          "id": "tok_mon_mon_1785696515539261",
+          "name": "pteranodon D",
+          "x": 1470,
+          "y": 490,
+          "size_cells": 1,
+          "color": "#ef4444",
+          "vision_radius_ft": 60,
+          "disposition": "hostile",
+          "hp_current": 14,
+          "hp_max": 14,
+          "conditions": []
+        },
+        {
+          "id": "tok_mon_mon_1785696515539458",
+          "name": "pteranodon E",
+          "x": 1610,
+          "y": 490,
+          "size_cells": 1,
+          "color": "#ef4444",
+          "vision_radius_ft": 60,
+          "disposition": "hostile",
+          "hp_current": 11,
+          "hp_max": 11,
+          "conditions": []
+        },
+        {
+          "id": "tok_mon_mon_1785696515539419",
+          "name": "pteranodon F",
+          "x": 1050,
+          "y": 630,
+          "size_cells": 1,
+          "color": "#ef4444",
+          "vision_radius_ft": 60,
+          "disposition": "hostile",
+          "hp_current": 14,
+          "hp_max": 14,
+          "conditions": []
+        },
+        {
+          "id": "tok_mon_mon_178569651553929",
+          "name": "pteranodon G",
+          "x": 1190,
+          "y": 630,
+          "size_cells": 1,
+          "color": "#ef4444",
+          "vision_radius_ft": 60,
+          "disposition": "hostile",
+          "hp_current": 7,
+          "hp_max": 7,
+          "conditions": []
+        },
+        {
+          "id": "tok_mon_mon_178569651554076",
+          "name": "pteranodon H",
+          "x": 1330,
+          "y": 630,
+          "size_cells": 1,
+          "color": "#ef4444",
+          "vision_radius_ft": 60,
+          "disposition": "hostile",
+          "hp_current": 16,
+          "hp_max": 16,
+          "conditions": []
+        },
+        {
+          "id": "tok_mon_mon_1785696515540310",
+          "name": "pteranodon 8",
+          "x": 1470,
+          "y": 630,
+          "size_cells": 1,
+          "color": "#ef4444",
+          "vision_radius_ft": 60,
+          "disposition": "hostile",
+          "hp_current": 16,
+          "hp_max": 16,
+          "conditions": []
+        },
+        {
+          "id": "tok_mon_mon_1785696515540270",
+          "name": "pteranodon 9",
+          "x": 1610,
+          "y": 630,
+          "size_cells": 1,
+          "color": "#ef4444",
+          "vision_radius_ft": 60,
+          "disposition": "hostile",
+          "hp_current": 11,
+          "hp_max": 11,
+          "conditions": []
+        }
+      ],
+      "drawings": [],
+      "templates": [],
+      "fog": {
+        "mode": "off",
+        "revealed_polygons": []
+      },
+      "aoe_templates": []
+    },
+    {
+      "id": "scene_1785697499889_mdju",
+      "name": "Abush part 2",
+      "width_px": 2800,
+      "height_px": 2100,
+      "background_color": "#121824",
+      "background_url": "/maps/1785532454925_Abush_part_2.jpg",
+      "grid": {
+        "type": "square",
+        "size_px": 70,
+        "offset_x": 0,
+        "offset_y": 0,
+        "color": "#ffffff",
+        "opacity": 0.2,
+        "visible": true
+      },
+      "walls": [],
+      "lights": [],
+      "tokens": [
+        {
+          "id": "tok_party_char_1",
+          "character_id": "char_1",
+          "name": "Furfur",
+          "x": 280,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 45,
+          "hp_max": 45,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_2",
+          "character_id": "char_2",
+          "name": "Grizz Fiddlestop",
+          "x": 420,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 1,
+          "hp_max": 52,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_3",
+          "character_id": "char_3",
+          "name": "Arrrric",
+          "x": 630,
+          "y": 490,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 2,
+          "hp_max": 58,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_4",
+          "character_id": "char_4",
+          "name": "Gnoah",
+          "x": 700,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 50,
+          "hp_max": 50,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_5",
+          "character_id": "char_5",
+          "name": "Valerie",
+          "x": 840,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 2,
+          "hp_max": 45,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_1784401791183",
+          "character_id": "char_1784401791183",
+          "name": "Test",
+          "x": 980,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 2,
+          "hp_max": 10,
+          "conditions": []
+        },
+        {
+          "id": "tok_manual_1785697619281",
+          "name": "DM",
+          "x": 1050,
+          "y": 840,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 30,
+          "hp_max": 30,
+          "conditions": []
+        }
+      ],
+      "drawings": [],
+      "templates": [],
+      "fog": {
+        "mode": "off",
+        "revealed_polygons": []
+      },
+      "aoe_templates": []
+    },
+    {
+      "id": "scene_1785697499889_loeg",
+      "name": "WOrking",
+      "width_px": 2800,
+      "height_px": 2100,
+      "background_color": "#121824",
+      "background_url": "/maps/1785532912343_WOrking.jpg",
+      "grid": {
+        "type": "square",
+        "size_px": 70,
+        "offset_x": 0,
+        "offset_y": 0,
+        "color": "#ffffff",
+        "opacity": 0.2,
+        "visible": true
+      },
+      "walls": [],
+      "lights": [],
+      "tokens": [
+        {
+          "id": "tok_party_char_1",
+          "character_id": "char_1",
+          "name": "Furfur",
+          "x": 280,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 45,
+          "hp_max": 45,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_2",
+          "character_id": "char_2",
+          "name": "Grizz Fiddlestop",
+          "x": 420,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 1,
+          "hp_max": 52,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_3",
+          "character_id": "char_3",
+          "name": "Arrrric",
+          "x": 560,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 2,
+          "hp_max": 58,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_4",
+          "character_id": "char_4",
+          "name": "Gnoah",
+          "x": 700,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 50,
+          "hp_max": 50,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_5",
+          "character_id": "char_5",
+          "name": "Valerie",
+          "x": 840,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 2,
+          "hp_max": 45,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_1784401791183",
+          "character_id": "char_1784401791183",
+          "name": "Test",
+          "x": 980,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 2,
+          "hp_max": 10,
+          "conditions": []
+        }
+      ],
+      "drawings": [],
+      "templates": [],
+      "fog": {
+        "mode": "off",
+        "revealed_polygons": []
+      },
+      "aoe_templates": []
+    },
+    {
+      "id": "scene_1785697499889_x8i8",
+      "name": "BoneDragon Map",
+      "width_px": 2800,
+      "height_px": 2100,
+      "background_color": "#121824",
+      "background_url": "/maps/1785533834995_BoneDragon_Map.jpg",
+      "grid": {
+        "type": "square",
+        "size_px": 70,
+        "offset_x": 0,
+        "offset_y": 0,
+        "color": "#ffffff",
+        "opacity": 0.2,
+        "visible": true
+      },
+      "walls": [],
+      "lights": [],
+      "tokens": [
+        {
+          "id": "tok_party_char_1",
+          "character_id": "char_1",
+          "name": "Furfur",
+          "x": 280,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 45,
+          "hp_max": 45,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_2",
+          "character_id": "char_2",
+          "name": "Grizz Fiddlestop",
+          "x": 420,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 1,
+          "hp_max": 52,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_3",
+          "character_id": "char_3",
+          "name": "Arrrric",
+          "x": 560,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 2,
+          "hp_max": 58,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_4",
+          "character_id": "char_4",
+          "name": "Gnoah",
+          "x": 700,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 50,
+          "hp_max": 50,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_5",
+          "character_id": "char_5",
+          "name": "Valerie",
+          "x": 840,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 2,
+          "hp_max": 45,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_1784401791183",
+          "character_id": "char_1784401791183",
+          "name": "Test",
+          "x": 980,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 2,
+          "hp_max": 10,
+          "conditions": []
+        }
+      ],
+      "drawings": [],
+      "templates": [],
+      "fog": {
+        "mode": "off",
+        "revealed_polygons": []
+      },
+      "aoe_templates": []
+    },
+    {
+      "id": "scene_1785697499889_51fu",
+      "name": "AfterlifeCasinoFull",
+      "width_px": 2800,
+      "height_px": 2100,
+      "background_color": "#121824",
+      "background_url": "/maps/1785609735001_AfterlifeCasinoFull.jpeg",
+      "grid": {
+        "type": "square",
+        "size_px": 70,
+        "offset_x": 0,
+        "offset_y": 0,
+        "color": "#ffffff",
+        "opacity": 0.2,
+        "visible": true
+      },
+      "walls": [],
+      "lights": [],
+      "tokens": [],
+      "drawings": [],
+      "templates": [],
+      "fog": {
+        "mode": "off",
+        "revealed_polygons": []
+      },
+      "aoe_templates": []
+    },
+    {
+      "id": "scene_1785697499889_ekqz",
+      "name": "AfterlifeCasinoFull",
+      "width_px": 2800,
+      "height_px": 2100,
+      "background_color": "#121824",
+      "background_url": "/maps/1785609752322_AfterlifeCasinoFull.jpeg",
+      "grid": {
+        "type": "square",
+        "size_px": 70,
+        "offset_x": 0,
+        "offset_y": 0,
+        "color": "#ffffff",
+        "opacity": 0.2,
+        "visible": true
+      },
+      "walls": [],
+      "lights": [],
+      "tokens": [
+        {
+          "id": "tok_party_char_1",
+          "character_id": "char_1",
+          "name": "Furfur",
+          "x": 280,
+          "y": 210,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 45,
+          "hp_max": 45,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_2",
+          "character_id": "char_2",
+          "name": "Grizz Fiddlestop",
+          "x": 420,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 1,
+          "hp_max": 52,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_3",
+          "character_id": "char_3",
+          "name": "Arrrric",
+          "x": 560,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 2,
+          "hp_max": 58,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_4",
+          "character_id": "char_4",
+          "name": "Gnoah",
+          "x": 700,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 50,
+          "hp_max": 50,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_5",
+          "character_id": "char_5",
+          "name": "Valerie",
+          "x": 840,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 2,
+          "hp_max": 45,
+          "conditions": []
+        },
+        {
+          "id": "tok_party_char_1784401791183",
+          "character_id": "char_1784401791183",
+          "name": "Test",
+          "x": 980,
+          "y": 350,
+          "size_cells": 1,
+          "color": "#3b82f6",
+          "vision_radius_ft": 60,
+          "disposition": "friendly",
+          "hp_current": 2,
+          "hp_max": 10,
+          "conditions": []
+        }
+      ],
+      "drawings": [],
+      "templates": [],
+      "fog": {
+        "mode": "off",
+        "revealed_polygons": []
+      },
+      "aoe_templates": []
+    },
+    {
+      "id": "scene_1785697499889_55ba",
+      "name": "AfterlifeCasinoFull",
+      "width_px": 2800,
+      "height_px": 2100,
+      "background_color": "#121824",
+      "background_url": "/maps/1785609813337_AfterlifeCasinoFull.jpeg",
+      "grid": {
+        "type": "square",
+        "size_px": 70,
+        "offset_x": 0,
+        "offset_y": 0,
+        "color": "#ffffff",
+        "opacity": 0.2,
+        "visible": true
+      },
+      "walls": [],
+      "lights": [],
+      "tokens": [],
+      "drawings": [],
+      "templates": [],
+      "fog": {
+        "mode": "off",
+        "revealed_polygons": []
+      },
+      "aoe_templates": []
+    },
+    {
+      "id": "scene_1785697499889_2klo",
+      "name": "AbandondedLibrary",
+      "width_px": 2800,
+      "height_px": 2100,
+      "background_color": "#121824",
+      "background_url": "/maps/1785609846217_AbandondedLibrary.jpg",
+      "grid": {
+        "type": "square",
+        "size_px": 70,
+        "offset_x": 0,
+        "offset_y": 0,
+        "color": "#ffffff",
+        "opacity": 0.2,
+        "visible": true
+      },
+      "walls": [],
+      "lights": [],
+      "tokens": [],
+      "drawings": [],
+      "templates": [],
+      "fog": {
+        "mode": "off",
+        "revealed_polygons": []
+      },
+      "aoe_templates": []
+    }
+  ]
+}

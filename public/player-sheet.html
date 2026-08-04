@@ -8,6 +8,17 @@
     <meta name="theme-color" content="#8b5cf6">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then((reg) => {
+                    console.log('[PWA] Service Worker registered successfully:', reg.scope);
+                }).catch((err) => {
+                    console.warn('[PWA] Service Worker registration failed:', err);
+                });
+            });
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
     <script src="/js/offline-store.js"></script>
@@ -17,17 +28,17 @@
     <script src="/js/envelope-presenters.js"></script>
     <script src="/js/gdrive-client.js"></script>
     <script src="/js/between-session-sync.js"></script>
-    <script src="/js/gdrive-auth-ui.js"></script>
-    <script src="/js/tavern-board.js"></script>
-    <script src="/js/journal.js"></script>
-    <script src="/js/session-reconnect.js"></script>
-    <script src="/js/conflict-resolver.js"></script>
+    <script src="/js/gdrive-auth-ui.js" defer></script>
+    <script src="/js/tavern-board.js" defer></script>
+    <script src="/js/journal.js" defer></script>
+    <script src="/js/session-reconnect.js" defer></script>
+    <script src="/js/conflict-resolver.js" defer></script>
     <link rel="stylesheet" href="/css/envelopes.css">
     <link rel="stylesheet" href="/css/tavern-board.css">
     <link rel="stylesheet" href="/css/journal.css">
     <script src="https://apis.google.com/js/api.js" async defer></script>
-    <script src="/app_wave3.js"></script>
-    <script src="/app_wave4.js"></script>
+    <script src="/app_wave3.js" defer></script>
+    <script src="/app_wave4.js" defer></script>
     <style>
         :root {
             --bg-abyss: #0a0a0c;
@@ -100,34 +111,38 @@
         }
 
         .char-avatar {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             background-size: cover;
             background-position: center;
             border: 2px solid var(--arcane-violet);
             box-shadow: 0 0 10px var(--glow-color);
+            flex-shrink: 0;
         }
 
         .char-header-info {
             flex-grow: 1;
+            overflow: visible;
         }
 
         .char-header-info h1 {
             font-family: 'Cinzel', serif;
-            font-size: 1.15rem;
+            font-size: 1.35rem;
             color: var(--arcane-violet);
             text-shadow: 0 0 5px var(--glow-color);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 180px;
+            white-space: normal;
+            word-wrap: break-word;
+            margin: 0;
         }
 
         .char-meta {
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
-            margin-top: 1px;
+            margin-top: 2px;
+            white-space: normal;
+            word-wrap: break-word;
+            line-height: 1.3;
         }
 
         /* Banner for whose turn it is */
@@ -181,9 +196,100 @@
             background-color: var(--shadow-card);
             border-top: 1px solid var(--border-iron);
             display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            z-index: 1000;
+            grid-template-columns: repeat(8, 1fr);
+            z-index: 10000;
             box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
+        }
+
+        /* Toggle Switch styling for Settings tab */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 22px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--border-iron);
+            transition: .3s;
+            border-radius: 22px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: var(--arcane-violet);
+        }
+        input:checked + .slider:before {
+            transform: translateX(18px);
+        }
+
+        /* Digital Dice Disabled Mode */
+        body.digital-dice-disabled .digital-dice-only {
+            display: none !important;
+        }
+        body.digital-dice-disabled .physical-dice-only {
+            display: flex !important;
+        }
+        body.digital-dice-disabled #floating-dice-roller-btn {
+            display: none !important;
+        }
+
+        /* Compact Density Mode */
+        body.density-compact .section-card {
+            padding: 8px 10px;
+            margin-bottom: 8px;
+        }
+        body.density-compact .stat-box {
+            padding: 4px;
+        }
+
+        /* Filter Chip Buttons for Pop-Out Modals */
+        .filter-chip {
+            background: var(--bg-abyss);
+            color: var(--text-muted);
+            border: 1px solid var(--border-iron);
+            padding: 5px 10px;
+            border-radius: 14px;
+            font-size: 0.72rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+        .filter-chip:hover {
+            border-color: var(--arcane-violet);
+            color: white;
+        }
+        .filter-chip.active {
+            background: var(--arcane-violet);
+            border-color: var(--arcane-violet);
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 0 6px var(--glow-color);
+        }
+
+        /* Modern Typography Mode */
+        body.font-modern h1, 
+        body.font-modern h2, 
+        body.font-modern h3, 
+        body.font-modern .section-title {
+            font-family: 'Inter', sans-serif !important;
+            letter-spacing: 0px !important;
         }
 
         .tab-btn {
@@ -213,6 +319,104 @@
             background-color: rgba(139, 92, 246, 0.05);
             font-weight: 700;
             box-shadow: inset 0 3px 0 var(--arcane-violet);
+        }
+
+        /* --- VIEWPORT ENGINE & MASTER CANVAS STYLES --- */
+        .sheet-viewport-container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            transition: all 0.25s ease-in-out;
+        }
+
+        /* TABLET MODE (Centered 860px cap) */
+        body[data-view-mode="tablet"] .sheet-viewport-container,
+        body[data-view-mode="tablet"] header,
+        body[data-view-mode="tablet"] #char-profile-banner,
+        body[data-view-mode="tablet"] .bottom-tabs {
+            max-width: 860px !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }
+        
+        @media (min-width: 768px) and (max-width: 1024px) {
+            body[data-view-mode="auto"] .sheet-viewport-container,
+            body[data-view-mode="auto"] header,
+            body[data-view-mode="auto"] #char-profile-banner,
+            body[data-view-mode="auto"] .bottom-tabs {
+                max-width: 860px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+
+        /* LAPTOP MASTER CANVAS MODE (Dual-Panel Widescreen) */
+        body.master-canvas-active .sheet-viewport-container {
+            display: grid !important;
+            grid-template-columns: 360px 1fr !important;
+            gap: 16px !important;
+            max-width: 1540px !important;
+            margin: 16px auto !important;
+            padding: 0 16px !important;
+            align-items: start !important;
+        }
+
+        body.master-canvas-active header,
+        body.master-canvas-active #char-profile-banner {
+            max-width: 1540px !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }
+
+        body.master-canvas-active #tab-vitals {
+            display: block !important;
+            position: sticky !important;
+            top: 75px !important;
+            max-height: calc(100vh - 150px) !important;
+            overflow-y: auto !important;
+            border-right: 1px solid var(--border-iron) !important;
+            padding-right: 12px !important;
+            background: rgba(10, 10, 12, 0.6);
+            border-radius: 8px;
+        }
+
+        body.master-canvas-active .main-workspace-pane {
+            min-width: 0 !important;
+        }
+
+        body.master-canvas-active .bottom-tabs {
+            max-width: 1540px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            border-radius: 12px 12px 0 0 !important;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.7) !important;
+        }
+
+        /* Scrollbar styling for pinned vitals rail */
+        body.master-canvas-active #tab-vitals::-webkit-scrollbar {
+            width: 5px;
+        }
+        body.master-canvas-active #tab-vitals::-webkit-scrollbar-thumb {
+            background: var(--border-iron);
+            border-radius: 4px;
+        }
+
+        /* MOBILE OVERRIDE */
+        body[data-view-mode="mobile"] .sheet-viewport-container {
+            display: block !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        body[data-view-mode="mobile"] header,
+        body[data-view-mode="mobile"] #char-profile-banner {
+            max-width: 100% !important;
+            margin: 0 !important;
+        }
+        body[data-view-mode="mobile"] #tab-vitals {
+            position: static !important;
+            border-right: none !important;
+            max-height: none !important;
         }
 
         /* Section Cards */
@@ -768,37 +972,65 @@
         Its your turn in combat.
     </div>
 
-    <!-- Sticky Main Header -->
-    <header>
+    <!-- Sticky Top Action Buttons Bar -->
+    <header style="background-color: var(--shadow-card); border-bottom: 1px solid var(--border-iron); padding: 8px 16px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; position: sticky; top: 0; z-index: 100;">
+        <div id="pwa-network-pill" style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #4ade80; margin-right: auto;">
+            <span id="pwa-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e;"></span>
+            <span id="pwa-status-text" style="font-weight: 600;">Online</span>
+        </div>
+        <button onclick="switchActiveTab('map')" style="background: #0284c7; color: white; font-weight: bold; border: none; padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; font-family:'Cinzel', serif; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);">
+            🗺️ Map
+        </button>
+        <button onclick="openLevelUpModal()" style="background: var(--gold-amber); color: #000; font-weight: bold; border: none; padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; font-family:'Cinzel', serif; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 0 10px rgba(251, 191, 36, 0.3);">
+            📜 Level Up
+        </button>
+        <button onclick="switchActiveTab('settings')" style="background: var(--shadow-card); color: var(--gold-amber); border: 1.5px solid var(--gold-amber); padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; font-family:'Cinzel', serif; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 0 10px rgba(251, 191, 36, 0.2);">
+            ⚙️ Settings
+        </button>
+    </header>
+
+    <!-- Player Profile Header Section (Picture, Name, Class/Meta) Underneath Top Buttons -->
+    <div id="char-profile-banner" style="background-color: #0d0d12; border-bottom: 1px solid var(--border-iron); padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
         <div id="char-avatar" class="char-avatar" style="background-image: url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400')"></div>
         <div class="char-header-info">
-            <h1 id="char-name">Character Name</h1>
-            <div id="char-meta" class="char-meta">Level 7 Tiefling Bard</div>
+            <h1 id="char-name" style="margin: 0; font-size: 1.35rem; color: var(--arcane-violet);">Character Name</h1>
+            <div id="char-meta" class="char-meta"><div>Level 7 Tiefling</div><div>Bard</div></div>
         </div>
-        <div style="display: flex; gap: 6px;">
-            <button onclick="openImportModal()" style="background: #2a6f97; color: white; padding: 5px 8px; font-size: 0.65rem; border-radius: 4px; text-transform: uppercase; font-family:'Cinzel', serif; letter-spacing: 0.5px;">Import 5e</button>
-            <button onclick="performLevelUp()" style="background: var(--success-green); color: white; padding: 5px 8px; font-size: 0.65rem; border-radius: 4px; text-transform: uppercase; font-family:'Cinzel', serif; letter-spacing: 0.5px;">Level Up</button>
-            <button onclick="openShortcutModal()" style="background: var(--arcane-violet); color: white; padding: 5px 8px; font-size: 0.65rem; border-radius: 4px; text-transform: uppercase; font-family:'Cinzel', serif; letter-spacing: 0.5px;">PWA Link</button>
+    </div>
+
+    <!-- PERSISTENT FLOATING QUICK DICE ROLLER BUTTON -->
+    <button id="floating-dice-roller-btn" class="digital-dice-only" onclick="openDiceRollerModal({ title: 'Quick d20 Roll', notation: '1d20', modifier: 0 })" style="position: fixed; bottom: 72px; right: 16px; z-index: 990; background: var(--gold-amber); color: #000; font-weight: bold; padding: 10px 16px; border-radius: 30px; border: 2px solid #fff; box-shadow: 0 4px 15px rgba(245,158,11,0.5); font-family: 'Cinzel', serif; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: transform 0.15s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+        🎲 Quick Roll
+    </button>
+
+    <!-- WILD SHAPE ACTIVE HEADER BANNER -->
+    <div id="wildshape-active-header-banner" class="pwa-shortcut-card" style="padding: 10px 14px; margin: 0 12px 10px 12px; font-size: 0.85rem; border: 2px solid #10b981; display: none; background: rgba(16, 185, 129, 0.12); box-shadow: 0 0 15px rgba(16, 185, 129, 0.25); border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2rem;">🐻</span>
+                <div>
+                    <div style="font-weight: bold; color: #10b981; font-family: 'Cinzel', serif;" id="header-wildshape-name">WILD SHAPE: Brown Bear</div>
+                    <div style="font-size: 0.75rem; color: #a7f3d0;" id="header-wildshape-stats">HP: 34/34 | AC: 11 | Speed: 40 ft</div>
+                </div>
+            </div>
+            <button onclick="revertWildShape()" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">↩️ Revert</button>
         </div>
-    </header>
+    </div>
 
     <!-- Level-Up Preview Pending Gold Banner (Flashes when close to level up) -->
     <div id="levelup-preview-banner" class="pwa-shortcut-card" style="padding: 12px; margin: 0 12px 10px 12px; font-size: 0.8rem; border-color: var(--gold-amber); border-style: solid; display: none; background: rgba(245, 158, 11, 0.08); box-shadow: 0 0 10px rgba(245, 158, 11, 0.15); border-radius: 6px;">
+
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <span style="font-weight: bold; color: var(--gold-amber);">⭐ Level-Up Preview Available!</span>
             <button onclick="openSandboxLevelUpPreview()" style="background: var(--gold-amber); color: black; border: none; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; cursor: pointer;">Plan Upgrade</button>
         </div>
     </div>
 
-    <!-- TAB 1: VITALS -->
+    <!-- SHEET VIEWPORT CONTAINER (Responsive Mobile / Tablet / Widescreen Master Canvas) -->
+    <div class="sheet-viewport-container" id="sheet-viewport-container">
+
+    <!-- TAB 1: VITALS (Pinned left-rail in Laptop Master Canvas Mode) -->
     <div id="tab-vitals" class="tab-content active">
-        <!-- Live Sync Status Notification Banner -->
-        <div class="pwa-shortcut-card" style="padding: 10px; margin-bottom: 10px; font-size: 0.75rem; border-style: solid;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span id="pwa-status-text" style="color: var(--text-main); font-weight: 600;">Status: Connecting to DM...</span>
-                <span id="pwa-mode-badge" style="background-color: var(--arcane-violet); color: white; font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; font-weight: bold;">LIVE MODE</span>
-            </div>
-        </div>
 
         <!-- Combat Vitals -->
         <div class="section-card">
@@ -837,11 +1069,20 @@
                     <div class="vital-value" id="prof-display-val" style="font-size: 1.3rem; margin: 2px 0;">+2</div>
                 </div>
             </div>
+        </div>
 
-            <!-- Spell Slot Quick Display (Vitals tab helper) -->
-            <div id="spell-slots-compact-row" style="display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--border-iron); padding-top: 10px; margin-top: 10px;">
-                <!-- Dynamically generated list of slot pips -->
+        <!-- KINETIC RESOURCE VAULT HUD CARD (Vitals Tab) -->
+        <div id="resource-vault-hud-card"></div>
+        <!-- WEAPONS & ATTACK ACTIONS CARD (Vitals Tab) -->
+        <div class="section-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div class="section-title" style="color: var(--gold-amber); font-family: 'Cinzel', serif; margin: 0;">⚔️ Weapons &amp; Attack Actions</div>
+                <button class="btn-primary" style="padding: 4px 10px; font-size: 0.75rem; background: var(--arcane-violet);" onclick="openAddWeaponModal()">+ Add Weapon</button>
             </div>
+            <div id="weapons-list-vitals-container" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- Filled dynamically with weapon attack cards -->
+            </div>
+        </div>
 
             <!-- Mini Death Saves (Visible when down) -->
             <div id="death-saves-mini-card" style="display: none; border-top: 1px solid var(--border-iron); padding-top: 10px; margin-top: 10px;">
@@ -865,20 +1106,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Custom Sheet Theme Picker -->
-        <div class="section-card">
-            <div class="section-title">Visual Styling</div>
-            <p style="font-size: 0.7rem; color: var(--text-muted);">Choose a customized theme to color-code your character dashboard:</p>
-            <div class="theme-selector-flex">
-                <div class="theme-preset-circle" style="background: #8b5cf6;" id="theme-btn-violet" onclick="selectThemePreset('violet')"></div>
-                <div class="theme-preset-circle" style="background: #ef4444;" id="theme-btn-crimson" onclick="selectThemePreset('crimson')"></div>
-                <div class="theme-preset-circle" style="background: #fbbf24;" id="theme-btn-amber" onclick="selectThemePreset('amber')"></div>
-                <div class="theme-preset-circle" style="background: #10b981;" id="theme-btn-emerald" onclick="selectThemePreset('emerald')"></div>
-                <div class="theme-preset-circle" style="background: #3b82f6;" id="theme-btn-sapphire" onclick="selectThemePreset('sapphire')"></div>
-            </div>
-        </div>
 
         <!-- Exhaustion Level Tracker -->
         <div class="section-card">
@@ -894,6 +1121,102 @@
             </div>
             <div id="exhaustion-penalty-text-sheet" style="font-size:0.75rem; color:#ef4444; text-align:center; font-style:italic;">Level 0: No exhaustion. Feeling healthy and strong!</div>
         </div>
+
+        <!-- TRANSFORMATIONS & COMPANIONS VAULT CARD (Bottom of Vitals Tab) -->
+        <div class="section-card" style="border: 1.5px solid var(--arcane-violet); background: rgba(139, 92, 246, 0.04); margin-top: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                <div class="section-title" style="margin: 0; color: #a78bfa; font-family: 'Cinzel', serif;">🐾 Transformations &amp; Companions</div>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <button onclick="openWildShapeModal()" style="background: #10b981; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-weight: bold; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px;">🐻 Wild Shape</button>
+                    <button onclick="openPolymorphModal()" style="background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-weight: bold; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px;">🦖 Polymorph</button>
+                    <button onclick="openSummonCompanionModal()" style="background: #38bdf8; color: black; border: none; padding: 5px 10px; border-radius: 6px; font-weight: bold; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px;">🦅 Summon</button>
+                </div>
+            </div>
+
+            <!-- Active Wild Shape / Polymorph Outer HP Display -->
+            <div id="vitals-wildshape-container" style="display: none; background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 8px; padding: 10px; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-weight: bold; color: #10b981; font-size: 0.85rem;" id="vitals-ws-title">🐻 Active Form: Brown Bear</span>
+                    <span style="font-size: 0.75rem; color: #a7f3d0;" id="vitals-ws-hp-text">34 / 34 HP</span>
+                </div>
+                <!-- Progress bar for shape HP -->
+                <div style="width: 100%; background: #064e3b; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 8px;">
+                    <div id="vitals-ws-hp-bar" style="width: 100%; height: 100%; background: #10b981; transition: width 0.3s;"></div>
+                </div>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <button class="hp-adjust-btn" style="flex: 1;" onclick="adjustWildShapeHP(-5)">-5 HP</button>
+                    <button class="hp-adjust-btn" style="flex: 1;" onclick="adjustWildShapeHP(-1)">-1 HP</button>
+                    <button class="hp-adjust-btn" style="flex: 1;" onclick="adjustWildShapeHP(1)">+1 HP</button>
+                    <button class="hp-adjust-btn" style="flex: 1;" onclick="adjustWildShapeHP(5)">+5 HP</button>
+                </div>
+                <!-- Beast Attack Actions -->
+                <div id="vitals-ws-actions-list" style="margin-top: 8px; display: flex; flex-direction: column; gap: 4px;"></div>
+            </div>
+
+            <!-- Companions List -->
+            <div id="vitals-companions-list" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- Rendered dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN WORKSPACE PANE (Active Tab Workspace in Laptop Master Canvas Mode) -->
+    <div class="main-workspace-pane" id="main-workspace-pane">
+
+    <!-- TAB 9: BATTLEMAP & PROJECTOR VIEW -->
+    <div id="tab-map" class="tab-content">
+        <div class="section-card" style="padding: 12px; gap: 10px; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="section-title" style="color: #38bdf8; font-family: 'Cinzel', serif; margin: 0;">🗺️ Live Battlemap Viewport</div>
+                <button class="btn-primary" style="padding: 4px 10px; font-size: 0.75rem; background: #059669;" onclick="initPlayerMobileMap()">🔄 Sync Map</button>
+            </div>
+            
+            <div id="player-mobile-map-container" style="width: 100%; height: 320px; border-radius: 8px; border: 2px solid #38bdf8; overflow: hidden; position: relative; background: #070b19;"></div>
+            
+            <!-- MOBILE ZOOM & MAP CONTROLS -->
+            <div style="display: flex; gap: 6px;">
+                <button onclick="mobileZoomIn()" style="flex: 1; padding: 8px; background: #1e293b; border: 1px solid #38bdf8; color: white; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer;">🔍+ In</button>
+                <button onclick="mobileZoomOut()" style="flex: 1; padding: 8px; background: #1e293b; border: 1px solid #38bdf8; color: white; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer;">🔍- Out</button>
+                <button onclick="mobileZoomFit()" style="flex: 1; padding: 8px; background: #0284c7; border: none; color: white; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer;">🎯 Fit</button>
+                <button onclick="mobileCenterToken()" style="flex: 1; padding: 8px; background: #059669; border: none; color: white; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer;">👤 Find Me</button>
+            </div>
+            
+            <!-- FLOATING TOKEN NUDGE D-PAD -->
+            <div style="background: rgba(18,18,24,0.9); border: 1.5px solid var(--gold-amber); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                <div style="font-size: 0.75rem; color: var(--gold-amber); font-weight: bold; font-family: 'Cinzel';">🎮 TOKEN NUDGE CONTROLLER</div>
+                <div style="display: grid; grid-template-columns: repeat(3, 45px); grid-gap: 6px; justify-content: center;">
+                    <div></div>
+                    <button onclick="nudgePlayerToken('up')" style="height: 45px; background: #1e293b; border: 1px solid var(--gold-amber); color: white; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer;">⬆️</button>
+                    <div></div>
+                    <button onclick="nudgePlayerToken('left')" style="height: 45px; background: #1e293b; border: 1px solid var(--gold-amber); color: white; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer;">⬅️</button>
+                    <button onclick="nudgePlayerToken('down')" style="height: 45px; background: #1e293b; border: 1px solid var(--gold-amber); color: white; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer;">⬇️</button>
+                    <button onclick="nudgePlayerToken('right')" style="height: 45px; background: #1e293b; border: 1px solid var(--gold-amber); color: white; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer;">➡️</button>
+                </div>
+            </div>
+
+            <!-- CAST SPELL AOE TEMPLATE CARD -->
+            <div style="background: rgba(18,18,24,0.9); border: 1.5px solid #ef4444; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="font-size: 0.75rem; color: #ef4444; font-weight: bold; font-family: 'Cinzel';">🔥 CAST SPELL AOE TEMPLATE</div>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <select id="mobile-aoe-shape" style="flex: 1; min-width: 90px; padding: 6px; background: #09090d; border: 1px solid var(--border-iron); color: white; border-radius: 6px; font-size: 0.8rem;">
+                        <option value="sphere">⭕ Sphere</option>
+                        <option value="cone">📐 Cone</option>
+                        <option value="line">📏 Line</option>
+                        <option value="cube">⬛ Cube</option>
+                    </select>
+                    <select id="mobile-aoe-size" style="flex: 1; min-width: 90px; padding: 6px; background: #09090d; border: 1px solid var(--border-iron); color: white; border-radius: 6px; font-size: 0.8rem;">
+                        <option value="10">10 Feet</option>
+                        <option value="15">15 Feet</option>
+                        <option value="20" selected>20 Feet</option>
+                        <option value="30">30 Feet</option>
+                        <option value="60">60 Feet</option>
+                        <option value="150">150 Feet</option>
+                    </select>
+                    <button onclick="placeMobileAoETemplate()" style="background: #ef4444; color: white; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.8rem;">🔥 Drop</button>
+                    <button onclick="clearMobileAoETemplates()" style="background: #374151; color: white; font-weight: bold; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-iron); cursor: pointer; font-size: 0.8rem;">🧹 Clear</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- TAB 2: ABILITIES -->
@@ -908,11 +1231,29 @@
             </div>
         </div>
 
+        <!-- Passives & Saving Throws -->
+        <div class="section-card">
+            <div class="section-title">Passive Sensory & Saves</div>
+            <div style="display: flex; justify-content: space-around; font-size: 0.8rem; margin-bottom: 12px; border-bottom: 1px solid var(--border-iron); padding-bottom: 8px;">
+                <div>Perception: <strong id="pp-sheet-val" style="color: white;">10</strong></div>
+                <div>Insight: <strong id="pi-sheet-val" style="color: white;">10</strong></div>
+                <div>Investigation: <strong id="piv-sheet-val" style="color: white;">10</strong></div>
+            </div>
+            
+            <!-- Compact skills listing -->
+            <div class="skills-grid-compact" id="saves-skills-compact-grid">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+
         <!-- Class & Subclass Features parsed from SRD Classes database -->
         <div class="section-card" id="class-features-srd-section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div class="section-title" style="color: var(--gold-amber); font-family: 'Cinzel', serif; margin: 0;">⭐ Class & Subclass Features</div>
-                <button class="filter-btn" style="padding: 2px 8px; font-size: 0.65rem;" onclick="openClassTableModal()">View Class Table</button>
+                <div class="section-title" style="color: var(--gold-amber); font-family: 'Cinzel', serif; margin: 0;">⭐ Class &amp; Subclass Features</div>
+                <div style="display:flex; gap:6px;">
+                    <button id="toggle-features-view-btn" class="filter-btn" style="padding: 2px 8px; font-size: 0.65rem;" onclick="toggleFeaturesViewMode()">Show: All 1-20 Levels</button>
+                    <button class="filter-btn" style="padding: 2px 8px; font-size: 0.65rem;" onclick="openClassTableModal()">View Class Table</button>
+                </div>
             </div>
             <div id="class-features-srd-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
                 <!-- Populated dynamically with feature cards -->
@@ -951,39 +1292,41 @@
                 <!-- Languages badges -->
             </div>
         </div>
-
-        <!-- Passives & Saving Throws -->
-        <div class="section-card">
-            <div class="section-title">Passive Sensory & Saves</div>
-            <div style="display: flex; justify-content: space-around; font-size: 0.8rem; margin-bottom: 12px; border-bottom: 1px solid var(--border-iron); padding-bottom: 8px;">
-                <div>Perception: <strong id="pp-sheet-val" style="color: white;">10</strong></div>
-                <div>Insight: <strong id="pi-sheet-val" style="color: white;">10</strong></div>
-                <div>Investigation: <strong id="piv-sheet-val" style="color: white;">10</strong></div>
-            </div>
-            
-            <!-- Compact skills listing -->
-            <div class="skills-grid-compact" id="saves-skills-compact-grid">
-                <!-- Populated dynamically -->
-            </div>
-        </div>
     </div>
 
     <!-- TAB 3: SPELLBOOK -->
     <div id="tab-spellbook" class="tab-content">
+        <!-- Spell Slots Tracker (Spellbook Tab) -->
+        <div class="section-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div class="section-title" style="color: #a78bfa; font-family: 'Cinzel', serif; margin: 0;">✨ Active Spell Slots</div>
+                <button class="filter-btn" style="padding: 2px 8px; font-size: 0.65rem;" onclick="resetAllSpellSlots()">Reset All Slots (Long Rest)</button>
+            </div>
+            <div id="spell-slots-main-row" style="display: flex; flex-direction: column; gap: 6px;">
+                <!-- Filled dynamically with interactive slot pips -->
+            </div>
+        </div>
+
         <!-- Spells Panel -->
         <div class="section-card">
-            <div class="section-title">Spells & Cantrips</div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="section-title">Spells &amp; Cantrips</div>
+                <div id="spell-capacity-summary-pill" style="font-size: 0.7rem; color: var(--gold-amber); font-weight: bold; background: rgba(251, 191, 36, 0.1); border: 1px solid var(--gold-amber); padding: 3px 8px; border-radius: 10px;"></div>
+            </div>
             
             <!-- Spell List Filters (Walter Kammerer style) -->
-            <div class="spellbook-filters">
+            <div class="spellbook-filters" style="margin-top: 10px;">
                 <button class="filter-btn active" id="spell-filter-all" onclick="filterSpellbook('all')">All Spells</button>
                 <button class="filter-btn" id="spell-filter-known" onclick="filterSpellbook('known')">My Known</button>
                 <button class="filter-btn" id="spell-filter-prep" onclick="filterSpellbook('prep')">Prepared</button>
             </div>
 
-            <!-- Spell Search -->
-            <div class="spell-search-box">
-                <input type="text" id="spell-search-input" class="spell-search-input" placeholder="Search spells in library..." onkeyup="searchSpellsInList()">
+            <!-- Spell Search & Filter Options Button -->
+            <div style="display: flex; gap: 8px; margin-top: 10px;">
+                <input type="text" id="spell-search-input" class="spell-search-input" style="flex: 1;" placeholder="Search spells in library..." onkeyup="searchSpellsInList()">
+                <button onclick="openSpellFilterModal()" style="background: var(--shadow-card); color: var(--gold-amber); border: 1.5px solid var(--gold-amber); padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px; white-space: nowrap; font-family: 'Cinzel', serif; box-shadow: 0 0 8px rgba(251, 191, 36, 0.15);">
+                    🔍 Filters <span id="spell-filter-active-count" style="display:none; background: var(--gold-amber); color: black; border-radius: 10px; font-size: 0.65rem; padding: 1px 6px; font-weight: bold; margin-left: 2px;">0</span>
+                </button>
             </div>
 
             <!-- Spells Scroll Listing -->
@@ -995,9 +1338,99 @@
 
     <!-- TAB 4: EQUIPMENT -->
     <div id="tab-equipment" class="tab-content">
+        <!-- 5E COIN POUCH -->
+        <div class="section-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div class="section-title" style="color: var(--gold-amber); font-family: 'Cinzel', serif; margin: 0;">💰 Coin Pouch</div>
+                <button class="filter-btn" style="padding: 2px 8px; font-size: 0.65rem;" onclick="convertCurrencyToGp()">Convert All to GP</button>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 10px;">
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-iron); border-radius: 6px; padding: 6px; text-align: center;">
+                    <div style="font-size: 0.65rem; color: #e2e8f0; font-weight: bold;">PP</div>
+                    <input type="number" id="coin-pp-input" value="0" min="0" onchange="updateCoinValue('pp', this.value)" style="width: 100%; background: transparent; border: none; color: #a78bfa; text-align: center; font-weight: bold; font-size: 0.95rem; box-sizing: border-box;">
+                    <div style="display: flex; justify-content: center; gap: 2px; margin-top: 4px;">
+                        <button class="hp-adjust-btn" style="width: 18px; height: 18px; font-size: 0.65rem;" onclick="adjustCoin('pp', -1)">-</button>
+                        <button class="hp-adjust-btn" style="width: 18px; height: 18px; font-size: 0.65rem;" onclick="adjustCoin('pp', 1)">+</button>
+                    </div>
+                </div>
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-iron); border-radius: 6px; padding: 6px; text-align: center;">
+                    <div style="font-size: 0.65rem; color: #fbbf24; font-weight: bold;">GP</div>
+                    <input type="number" id="coin-gp-input" value="0" min="0" onchange="updateCoinValue('gp', this.value)" style="width: 100%; background: transparent; border: none; color: #fbbf24; text-align: center; font-weight: bold; font-size: 0.95rem; box-sizing: border-box;">
+                    <div style="display: flex; justify-content: center; gap: 2px; margin-top: 4px;">
+                        <button class="hp-adjust-btn" style="width: 18px; height: 18px; font-size: 0.65rem;" onclick="adjustCoin('gp', -1)">-</button>
+                        <button class="hp-adjust-btn" style="width: 18px; height: 18px; font-size: 0.65rem;" onclick="adjustCoin('gp', 1)">+</button>
+                    </div>
+                </div>
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-iron); border-radius: 6px; padding: 6px; text-align: center;">
+                    <div style="font-size: 0.65rem; color: #60a5fa; font-weight: bold;">EP</div>
+                    <input type="number" id="coin-ep-input" value="0" min="0" onchange="updateCoinValue('ep', this.value)" style="width: 100%; background: transparent; border: none; color: #60a5fa; text-align: center; font-weight: bold; font-size: 0.95rem; box-sizing: border-box;">
+                    <div style="display: flex; justify-content: center; gap: 2px; margin-top: 4px;">
+                        <button class="hp-adjust-btn" style="width: 18px; height: 18px; font-size: 0.65rem;" onclick="adjustCoin('ep', -1)">-</button>
+                        <button class="hp-adjust-btn" style="width: 18px; height: 18px; font-size: 0.65rem;" onclick="adjustCoin('ep', 1)">+</button>
+                    </div>
+                </div>
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-iron); border-radius: 6px; padding: 6px; text-align: center;">
+                    <div style="font-size: 0.65rem; color: #94a3b8; font-weight: bold;">SP</div>
+                    <input type="number" id="coin-sp-input" value="0" min="0" onchange="updateCoinValue('sp', this.value)" style="width: 100%; background: transparent; border: none; color: #94a3b8; text-align: center; font-weight: bold; font-size: 0.95rem; box-sizing: border-box;">
+                    <div style="display: flex; justify-content: center; gap: 2px; margin-top: 4px;">
+                        <button class="hp-adjust-btn" style="width: 18px; height: 18px; font-size: 0.65rem;" onclick="adjustCoin('sp', -1)">-</button>
+                        <button class="hp-adjust-btn" style="width: 18px; height: 18px; font-size: 0.65rem;" onclick="adjustCoin('sp', 1)">+</button>
+                    </div>
+                </div>
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-iron); border-radius: 6px; padding: 6px; text-align: center;">
+                    <div style="font-size: 0.65rem; color: #f97316; font-weight: bold;">CP</div>
+                    <input type="number" id="coin-cp-input" value="0" min="0" onchange="updateCoinValue('cp', this.value)" style="width: 100%; background: transparent; border: none; color: #f97316; text-align: center; font-weight: bold; font-size: 0.95rem; box-sizing: border-box;">
+                    <div style="display: flex; justify-content: center; gap: 2px; margin-top: 4px;">
+                        <button class="hp-adjust-btn" style="width: 18px; height: 18px; font-size: 0.65rem;" onclick="adjustCoin('cp', -1)">-</button>
+                        <button class="hp-adjust-btn" style="width: 18px; height: 18px; font-size: 0.65rem;" onclick="adjustCoin('cp', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; border-top: 1px solid var(--border-iron); padding-top: 8px;">
+                <span style="color: var(--text-muted);">Total Wealth Equivalent:</span>
+                <strong id="total-wealth-gold-display" style="color: var(--gold-amber); font-size: 0.95rem;">0 gp</strong>
+            </div>
+        </div>
+
+        <!-- ENCUMBRANCE & WEIGHT CAPACITY TRACKER -->
+        <div class="section-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div class="section-title" style="color: var(--gold-amber); font-family: 'Cinzel', serif; margin: 0;">🎒 Encumbrance Tracker</div>
+                <label style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <span>Track Weight</span>
+                    <input type="checkbox" id="encumbrance-toggle-checkbox" onchange="toggleEncumbrance()" style="accent-color: var(--gold-amber);">
+                </label>
+            </div>
+            <div id="encumbrance-status-container" style="font-size: 0.75rem; color: var(--text-muted);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span id="encumbrance-weight-label">Weight: 0 / 150 lbs</span>
+                    <span id="encumbrance-badge" style="font-weight: bold;">Unencumbered</span>
+                </div>
+                <div style="width: 100%; height: 8px; background: #09090d; border-radius: 4px; border: 1px solid var(--border-iron); overflow: hidden;">
+                    <div id="encumbrance-bar-fill" style="width: 0%; height: 100%; background: #10b981; transition: width 0.3s ease;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- WEAPONS & ATTACK ACTIONS CARD (Equipment Tab) -->
+        <div class="section-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div class="section-title" style="color: var(--gold-amber); font-family: 'Cinzel', serif; margin: 0;">⚔️ Weapons &amp; Attack Actions</div>
+                <div style="display: flex; gap: 6px;">
+                    <button class="btn-primary" style="padding: 4px 8px; font-size: 0.7rem; background: #10b981;" onclick="openHomebrewModal()">🧪 Custom Homebrew</button>
+                    <button class="btn-primary" style="padding: 4px 8px; font-size: 0.7rem; background: var(--arcane-violet);" onclick="openAddWeaponModal()">+ Add Weapon</button>
+                </div>
+            </div>
+            <div id="weapons-list-equip-container" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- Filled dynamically -->
+            </div>
+        </div>
+
         <!-- Core Armor Equipment Selection -->
         <div class="section-card">
-            <div class="section-title">Armor & Shields</div>
+            <div class="section-title">Armor & Shields Calculator</div>
             
             <!-- Select armor -->
             <div class="equip-select-group">
@@ -1027,11 +1460,29 @@
                     <span class="slider-round-btn"></span>
                 </label>
             </div>
+
+            <!-- Mage Armor Toggle -->
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #0d0d12; border: 1px solid var(--border-iron); border-radius: 6px; padding: 8px 12px; margin-bottom: 10px;">
+                <div>
+                    <span style="font-size: 0.85rem; font-weight: 600; color: white;">✨ Mage Armor Active</span>
+                    <div style="font-size: 0.65rem; color: var(--text-muted);">13 + DEX Mod when unarmored</div>
+                </div>
+                <label class="toggle-switch-input">
+                    <input type="checkbox" id="equip-mage-armor-checkbox" onchange="toggleMageArmor()">
+                    <span class="slider-round-btn"></span>
+                </label>
+            </div>
+
+            <!-- Manual AC Override -->
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #0d0d12; border: 1px solid var(--border-iron); border-radius: 6px; padding: 8px 12px;">
+                <span style="font-size: 0.85rem; font-weight: 600; color: white;">🛠️ Manual AC Override</span>
+                <input type="number" id="ac-override-input" placeholder="Auto" onchange="updateAcOverride(this.value)" style="width: 70px; background: #000; border: 1px solid var(--border-iron); color: var(--gold-amber); text-align: center; padding: 4px; border-radius: 4px; font-weight: bold;">
+            </div>
         </div>
 
         <!-- Attuned Magic Items Selection list -->
         <div class="section-card">
-            <div class="section-title">Attuned Magic Items</div>
+            <div class="section-title" id="attuned-items-title">Attuned Magic Items</div>
             <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">Equip/Attune to items from the Campaign Bazaar database to apply automatic stat modifications:</p>
             
             <!-- Dropdown to select magic item from Bazaar -->
@@ -1316,6 +1767,20 @@
     </div>
     
     <div id="tab-details" class="tab-content">
+        <!-- Class & Subclass Configuration -->
+        <div class="section-card">
+            <div class="section-title">Archetype &amp; Subclass Specialty</div>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">Select or change your character's subclass specialization:</p>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <div style="flex: 1;">
+                    <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Subclass Archetype</label>
+                    <select id="details-subclass-select" onchange="updateSubclassFromSheet(this.value)" style="width: 100%; background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); padding: 6px 10px; border-radius: 4px; font-size: 0.85rem; font-weight: bold;">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+            </div>
+        </div>
+
         <!-- Character Secrets -->
         <div class="section-card">
             <div class="section-title">Character Secrets</div>
@@ -1436,6 +1901,267 @@
         </div>
     </div>
 
+    <!-- SPELL ADVANCED FILTER MODAL -->
+    <div id="spell-filter-modal" class="overlay-modal">
+        <div class="modal-body-container" style="max-width: 480px; width: 92%; max-height: 85vh; display: flex; flex-direction: column;">
+            <div class="modal-header-row">
+                <h3 class="modal-title-header" style="color: var(--gold-amber);">🔮 Filter Spell Library</h3>
+                <button onclick="closeSpellFilterModal()" class="btn-close-modal">✕</button>
+            </div>
+
+            <div style="overflow-y: auto; flex: 1; padding-right: 4px; display: flex; flex-direction: column; gap: 14px;">
+                <!-- School Filter -->
+                <div>
+                    <label style="font-size: 0.75rem; color: var(--gold-amber); font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 6px;">Magic School</label>
+                    <div id="filter-school-options" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                </div>
+
+                <!-- Casting Time Filter -->
+                <div style="border-top: 1px solid var(--border-iron); padding-top: 12px;">
+                    <label style="font-size: 0.75rem; color: var(--gold-amber); font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 6px;">Casting Time</label>
+                    <div id="filter-casting-options" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                </div>
+
+                <!-- Range Filter -->
+                <div style="border-top: 1px solid var(--border-iron); padding-top: 12px;">
+                    <label style="font-size: 0.75rem; color: var(--gold-amber); font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 6px;">Range</label>
+                    <div id="filter-range-options" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                </div>
+
+                <!-- Duration Filter -->
+                <div style="border-top: 1px solid var(--border-iron); padding-top: 12px;">
+                    <label style="font-size: 0.75rem; color: var(--gold-amber); font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 6px;">Duration</label>
+                    <div id="filter-duration-options" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 8px; border-top: 1px solid var(--border-iron); padding-top: 12px; margin-top: 12px;">
+                <button onclick="resetSpellFilterOptions()" style="background: #2a2a2e; color: #ccc; flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; cursor: pointer; font-family:'Cinzel', serif; font-size: 0.75rem; border: none; letter-spacing: 0.5px;">Reset All</button>
+                <button onclick="applySpellFilterOptions()" style="background: var(--arcane-violet); color: white; flex: 2; padding: 10px; font-weight: bold; border-radius: 6px; cursor: pointer; font-family:'Cinzel', serif; font-size: 0.75rem; border: none; letter-spacing: 0.5px;">Apply Filters</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 8: SETTINGS & PREFERENCES -->
+    <div id="tab-settings" class="tab-content">
+        <!-- Quick Character Actions & Tools -->
+        <div class="section-card">
+            <div class="section-title">⚡ Character Actions &amp; Tools</div>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">Level up your hero, import 5e JSON data, or link home screen app shortcuts:</p>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button onclick="openLevelUpWizardModal()" style="background: var(--success-green); color: white; padding: 10px 14px; font-size: 0.85rem; border-radius: 6px; text-transform: uppercase; font-family:'Cinzel', serif; font-weight: bold; cursor: pointer; border: none; letter-spacing: 0.5px; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);">
+                    🧙 Level Up Wizard
+                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="openImportModal()" style="background: #2a6f97; color: white; padding: 8px 12px; font-size: 0.75rem; border-radius: 6px; text-transform: uppercase; font-family:'Cinzel', serif; font-weight: bold; flex: 1; cursor: pointer; border: none; letter-spacing: 0.5px;">
+                        📥 Import 5e JSON
+                    </button>
+                    <button onclick="openShortcutModal()" style="background: var(--arcane-violet); color: white; padding: 8px 12px; font-size: 0.75rem; border-radius: 6px; text-transform: uppercase; font-family:'Cinzel', serif; font-weight: bold; flex: 1; cursor: pointer; border: none; letter-spacing: 0.5px;">
+                        📱 PWA App Link
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Styling (Moved from Vitals) -->
+        <div class="section-card">
+            <div class="section-title">🎨 Visual Styling</div>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">Choose a color theme to personalize your character sheet interface:</p>
+            <div class="theme-selector-flex">
+                <div class="theme-preset-circle" style="background: #8b5cf6;" id="theme-btn-violet" onclick="selectThemePreset('violet')"></div>
+                <div class="theme-preset-circle" style="background: #ef4444;" id="theme-btn-crimson" onclick="selectThemePreset('crimson')"></div>
+                <div class="theme-preset-circle" style="background: #fbbf24;" id="theme-btn-amber" onclick="selectThemePreset('amber')"></div>
+                <div class="theme-preset-circle" style="background: #10b981;" id="theme-btn-emerald" onclick="selectThemePreset('emerald')"></div>
+                <div class="theme-preset-circle" style="background: #3b82f6;" id="theme-btn-sapphire" onclick="selectThemePreset('sapphire')"></div>
+            </div>
+        </div>
+
+        <!-- Layout & Density Settings -->
+        <div class="section-card">
+            <div class="section-title">📐 Layout &amp; Density</div>
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong style="font-size: 0.85rem; color: var(--text-main);">Display Viewport Mode</strong>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">Choose responsive layout scaling or force device view</div>
+                    </div>
+                    <select id="setting-viewport-mode" onchange="setViewMode(this.value)" style="background: var(--bg-abyss); color: white; border: 1px solid var(--arcane-violet); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">
+                        <option value="auto">⚡ Auto (Screen-Aware)</option>
+                        <option value="mobile">📱 Mobile HUD</option>
+                        <option value="tablet">📱 Tablet Centered</option>
+                        <option value="laptop">💻 Laptop Master Canvas</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-iron); padding-top: 10px;">
+                    <div>
+                        <strong style="font-size: 0.85rem; color: var(--text-main);">Display Density Mode</strong>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">Switch between spacious standard cards or compact mode</div>
+                    </div>
+                    <select id="setting-density-mode" onchange="updatePlayerSetting('densityMode', this.value)" style="background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">
+                        <option value="standard">Standard</option>
+                        <option value="compact">Compact / High-Density</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-iron); padding-top: 10px;">
+                    <div>
+                        <strong style="font-size: 0.85rem; color: var(--text-main);">Ability Score Display Priority</strong>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">Choose which value is highlighted prominently</div>
+                    </div>
+                    <select id="setting-score-priority" onchange="updatePlayerSetting('scorePriority', this.value)" style="background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">
+                        <option value="modifier">Modifier Primary (+3)</option>
+                        <option value="score">Base Score Primary (16)</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-iron); padding-top: 10px;">
+                    <div>
+                        <strong style="font-size: 0.85rem; color: var(--text-main);">Typography Style</strong>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">Choose font family style for headings</div>
+                    </div>
+                    <select id="setting-font-style" onchange="updatePlayerSetting('fontStyle', this.value)" style="background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">
+                        <option value="cinematic">Fantasy Cinematic (Cinzel)</option>
+                        <option value="modern">Clean Modern (Inter / Sans-Serif)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dice & Gameplay Settings -->
+        <div class="section-card">
+            <div class="section-title">🎲 Dice &amp; Gameplay Roll Mode</div>
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong style="font-size: 0.85rem; color: var(--text-main);">Dice Rolling Mode</strong>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">Interactive 3D animated dice vs instant calculation</div>
+                    </div>
+                    <select id="setting-roll-mode" onchange="updatePlayerSetting('rollMode', this.value)" style="background: var(--bg-abyss); color: white; border: 1px solid var(--border-iron); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">
+                        <option value="interactive">Interactive Dice Roller</option>
+                        <option value="instant">Instant Math Result</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-iron); padding-top: 10px;">
+                    <div>
+                        <strong style="font-size: 0.85rem; color: var(--text-main);">Digital Dice Roller Buttons</strong>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">Enable digital rolling buttons vs physical dice at the table</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="setting-digital-dice" checked onchange="updatePlayerSetting('digitalDiceEnabled', this.checked)">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-iron); padding-top: 10px;">
+                    <div>
+                        <strong style="font-size: 0.85rem; color: var(--text-main);">Auto-Apply Exhaustion Penalties</strong>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">Automatically subtract exhaustion (-1/lvl) from checks</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="setting-auto-exhaustion" onchange="updatePlayerSetting('autoExhaustion', this.checked)">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audio & Sound Settings -->
+        <div class="section-card">
+            <div class="section-title">🔊 Sound &amp; Audio Feedback</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                <div>
+                    <strong style="font-size: 0.85rem; color: var(--text-main);">Sound Effects (SFX)</strong>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">Play audio cues for dice rolls &amp; spell broadcasts</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="setting-sfx-enabled" onchange="updatePlayerSetting('sfxEnabled', this.checked)">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+    </div> <!-- End #tab-settings -->
+
+    </div> <!-- End .main-workspace-pane -->
+    </div> <!-- End .sheet-viewport-container -->
+
+    <!-- ADD WEAPON MODAL -->
+    <div id="add-weapon-modal" class="overlay-modal" style="display: none; z-index: 10000; padding: 15px;">
+        <div class="modal-body-container" style="max-width: 480px; width: 100%; background: var(--shadow-card); border: 2px solid var(--gold-amber); border-radius: 8px; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.8); box-sizing: border-box;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--gold-amber); padding-bottom:10px; margin-bottom:15px;">
+                <h3 style="font-family:'Cinzel', serif; color:var(--gold-amber); margin:0; font-size: 1.1rem;">⚔️ Add Weapon / Action</h3>
+                <button onclick="closeAddWeaponModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer; line-height: 1;">&times;</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                    <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Weapon Name</label>
+                    <input type="text" id="new-weapon-name" placeholder="e.g. Scimitar +1, Flame Dagger" style="width: 100%; background: var(--bg-abyss); border: 1px solid var(--border-iron); color: white; padding: 6px 10px; border-radius: 4px; box-sizing: border-box;">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Attack Stat</label>
+                        <select id="new-weapon-stat" style="width: 100%; background: var(--bg-abyss); border: 1px solid var(--border-iron); color: white; padding: 6px; border-radius: 4px;">
+                            <option value="dex">DEX (Dexterity)</option>
+                            <option value="str">STR (Strength)</option>
+                            <option value="con">CON (Constitution)</option>
+                            <option value="int">INT (Intelligence)</option>
+                            <option value="wis">WIS (Wisdom)</option>
+                            <option value="cha">CHA (Charisma)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Damage Dice</label>
+                        <input type="text" id="new-weapon-damage" placeholder="e.g. 1d6, 2d6, 1d8" value="1d6" style="width: 100%; background: var(--bg-abyss); border: 1px solid var(--border-iron); color: white; padding: 6px; border-radius: 4px; box-sizing: border-box;">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Damage Type</label>
+                        <select id="new-weapon-type" style="width: 100%; background: var(--bg-abyss); border: 1px solid var(--border-iron); color: white; padding: 6px; border-radius: 4px;">
+                            <option value="Slashing">Slashing</option>
+                            <option value="Piercing">Piercing</option>
+                            <option value="Bludgeoning">Bludgeoning</option>
+                            <option value="Fire">Fire</option>
+                            <option value="Radiant">Radiant</option>
+                            <option value="Necrotic">Necrotic</option>
+                            <option value="Force">Force</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Magic / Atk Bonus</label>
+                        <input type="number" id="new-weapon-bonus" value="0" style="width: 100%; background: var(--bg-abyss); border: 1px solid var(--border-iron); color: white; padding: 6px; border-radius: 4px; box-sizing: border-box;">
+                    </div>
+                </div>
+                <div style="margin-top: 10px; text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
+                    <button class="btn-secondary" onclick="closeAddWeaponModal()" style="padding: 6px 12px; font-size: 0.8rem;">Cancel</button>
+                    <button class="btn-primary" onclick="saveNewWeapon()" style="background: var(--gold-amber); color: black; font-weight: bold; padding: 6px 16px; font-size: 0.8rem;">Save Weapon</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GUIDED LEVEL UP WIZARD MODAL -->
+    <div id="level-up-wizard-modal" class="overlay-modal" style="display: none; z-index: 10000; padding: 15px;">
+        <div class="modal-body-container" style="max-width: 520px; width: 100%; background: var(--shadow-card); border: 2px solid var(--gold-amber); border-radius: 8px; padding: 20px; box-shadow: 0 0 25px rgba(0,0,0,0.9); box-sizing: border-box;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--gold-amber); padding-bottom:10px; margin-bottom:15px;">
+                <h3 style="font-family:'Cinzel', serif; color:var(--gold-amber); margin:0; font-size: 1.1rem;" id="lvl-wizard-title">🧙 Level Up Wizard</h3>
+                <button onclick="closeLevelUpWizardModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer; line-height: 1;">&times;</button>
+            </div>
+
+            <!-- Wizard Step Content Container -->
+            <div id="lvl-wizard-body-content" style="min-height: 220px;">
+                <!-- Populated dynamically per step -->
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-top: 1px solid var(--border-iron); padding-top: 12px;">
+                <button class="btn-secondary" id="lvl-wizard-prev-btn" onclick="prevLevelUpStep()" style="display: none; padding: 6px 12px; font-size: 0.8rem;">⬅ Back</button>
+                <div style="flex: 1;"></div>
+                <button class="btn-primary" id="lvl-wizard-next-btn" onclick="nextLevelUpStep()" style="background: var(--gold-amber); color: black; font-weight: bold; padding: 8px 16px; font-size: 0.85rem;">Next Step ➔</button>
+            </div>
+        </div>
+    </div>
+
     <!-- CLASS TABLE DETAILS MODAL -->
     <div id="class-table-modal" class="overlay-modal" style="display: none; z-index: 10000; padding: 15px;" onclick="closeClassTableModalOnOuterClick(event)">
         <div class="modal-body-container" style="max-width: 600px; max-height: 85vh; width: 100%; overflow-y: auto; background: var(--shadow-card); border: 2px solid var(--gold-amber); border-radius: 8px; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.8); box-sizing: border-box;">
@@ -1481,6 +2207,10 @@
         <button class="tab-btn" id="btn-tab-sandbox" onclick="switchActiveTab('sandbox')">
             <span style="font-size:1.1rem; font-weight:bold; color: var(--gold-amber);">SND</span>
             <span style="color: var(--gold-amber);">Sandbox</span>
+        </button>
+        <button class="tab-btn" id="btn-tab-settings" onclick="switchActiveTab('settings')">
+            <span style="font-size:1.1rem; font-weight:bold; color: var(--arcane-violet);">SET</span>
+            <span style="color: var(--arcane-violet);">Settings</span>
         </button>
     </div>
 
@@ -1815,6 +2545,13 @@
                 }
             });
 
+            socket.on('item-receive-prompt', ({ charId: targetCharId, characterName, item }) => {
+                if (targetCharId === charId) {
+                    window.pendingOfferedItem = item;
+                    showOfferedItemModal(item);
+                }
+            });
+
             // Init Sealed Envelope push receiver
             if (typeof initEnvelopeReceiver === 'function') {
                 initEnvelopeReceiver(socket);
@@ -1884,6 +2621,7 @@
                     campaignSpells = await window.offlineStore.getAll('spells') || [];
                     campaignSpells.sort((a,b) => a.name.localeCompare(b.name));
                 }
+                renderSpellsList();
 
                 // Fetch magic items library (offline-resilient)
                 await fetchBazaarAndPopulate();
@@ -1973,20 +2711,82 @@
             if (character.theme === undefined) character.theme = 'violet';
         }
 
-        // Switch Tabs (Walter Kammerer App-like UX)
+        // --- VIEWPORT ENGINE (MOBILE / TABLET / LAPTOP MASTER CANVAS) ---
+        function setViewMode(mode) {
+            if (!['auto', 'mobile', 'tablet', 'laptop'].includes(mode)) mode = 'auto';
+            localStorage.setItem('characterSheetViewMode', mode);
+            document.body.setAttribute('data-view-mode', mode);
+            
+            const selectEl = document.getElementById('setting-viewport-mode');
+            if (selectEl) selectEl.value = mode;
+
+            evaluateViewportMode();
+        }
+
+        function evaluateViewportMode() {
+            const mode = localStorage.getItem('characterSheetViewMode') || 'auto';
+            document.body.setAttribute('data-view-mode', mode);
+
+            const isWidescreen = window.innerWidth >= 1025;
+
+            if (mode === 'laptop' || (mode === 'auto' && isWidescreen)) {
+                document.body.classList.add('master-canvas-active');
+            } else {
+                document.body.classList.remove('master-canvas-active');
+            }
+        }
+
+        window.addEventListener('resize', function() {
+            evaluateViewportMode();
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedMode = localStorage.getItem('characterSheetViewMode') || 'auto';
+            setViewMode(savedMode);
+        });
+
+        // Switch Tabs (Walter Kammerer App-like UX with Widescreen Master Canvas Support)
         function switchActiveTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            const isMasterCanvas = document.body.classList.contains('master-canvas-active');
+
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                if (isMasterCanvas && tab.id === 'tab-vitals') {
+                    // Keep vitals rail pinned on left
+                    return;
+                }
+                tab.classList.remove('active');
+            });
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
 
-            document.getElementById(`tab-${tabName}`).classList.add('active');
+            let targetTabId = tabName;
+            if (isMasterCanvas && tabName === 'vitals') {
+                targetTabId = 'abilities';
+            }
+
+            const targetTab = document.getElementById(`tab-${targetTabId}`);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            } else {
+                console.warn(`Tab #tab-${targetTabId} not found!`);
+            }
+
             const targetBtn = document.getElementById(`btn-tab-${tabName}`);
             if (targetBtn) targetBtn.classList.add('active');
 
-            if (tabName === 'sandbox') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            if (tabName === 'settings') {
+                if (typeof initPlayerSettings === 'function') initPlayerSettings();
+                const savedMode = localStorage.getItem('characterSheetViewMode') || 'auto';
+                const selectEl = document.getElementById('setting-viewport-mode');
+                if (selectEl) selectEl.value = savedMode;
+            } else if (tabName === 'sandbox') {
                 initSandboxDropdowns();
                 calculateSandboxDetails();
             } else if (tabName === 'campfire') {
                 initCampfireHub();
+            } else if (tabName === 'map') {
+                if (window.initPlayerMobileMap) window.initPlayerMobileMap();
             }
         }
 
@@ -2120,10 +2920,16 @@
 
         // Render functions
         function renderCharacterSheet() {
+            if (window.characterEngine && character) {
+                character = window.characterEngine.calculate(character);
+            }
             window.character = character;
+            initPlayerSettings();
+
             // Setup Visual Style Preset
             const activeTheme = character.theme || 'violet';
-            document.body.className = `theme-${activeTheme}`;
+            document.body.classList.remove('theme-violet', 'theme-crimson', 'theme-amber', 'theme-emerald', 'theme-sapphire');
+            document.body.classList.add(`theme-${activeTheme}`);
             document.querySelectorAll('.theme-preset-circle').forEach(btn => {
                 if (btn.id === `theme-btn-${activeTheme}`) {
                     btn.classList.add('active');
@@ -2134,15 +2940,18 @@
 
             // Header Elements
             document.getElementById('char-name').innerText = character.name;
-            document.getElementById('char-meta').innerText = `Level ${character.level} ${character.race} ${character.class}`;
+            const levelRaceStr = `Level ${character.level}${character.race ? ' ' + character.race : ''}`;
+            const classSubStr = character.subclass ? `${character.class || 'Fighter'} (${character.subclass})` : (character.class || 'Fighter');
+            document.getElementById('char-meta').innerHTML = `<div>${levelRaceStr}</div><div>${classSubStr}</div>`;
             const defaultArt = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400';
             document.getElementById('char-avatar').style.backgroundImage = `url('${character.art || defaultArt}')`;
 
             // Combat Vitals
             document.getElementById('hp-current-val').innerText = character.hp_current;
             document.getElementById('hp-temp-val').innerText = character.hp_temp;
-            document.getElementById('ac-display-val').innerText = character.ac || 10;
+            document.getElementById('ac-display-val').innerText = character.ac_calculated || character.ac || 10;
             document.getElementById('maxhp-display-val').innerText = character.hp_max;
+
 
             const prof = character.level >= 17 ? 6 : (character.level >= 13 ? 5 : (character.level >= 9 ? 4 : (character.level >= 5 ? 3 : 2)));
             document.getElementById('prof-display-val').innerText = `+${prof}`;
@@ -2160,7 +2969,8 @@
             renderCompactSpellSlots();
 
             // Exhaustion
-            highlightExhaustionPipsSheet(character.exhaustion || 0);
+            const exLvl = character.exhaustion_level !== undefined ? character.exhaustion_level : (character.exhaustion || 0);
+            highlightExhaustionPipsSheet(exLvl);
 
             // TAB 2: ABILITIES
             renderAbilitiesList();
@@ -2173,12 +2983,43 @@
             // TAB 4: EQUIPMENT
             document.getElementById('equip-armor-select').value = character.equipped_armor || 'none';
             document.getElementById('equip-shield-checkbox').checked = !!character.equipped_shield;
+            const mageArmorCb = document.getElementById('equip-mage-armor-checkbox');
+            if (mageArmorCb) mageArmorCb.checked = !!character.mage_armor_active;
+            const acOverrideIn = document.getElementById('ac-override-input');
+            if (acOverrideIn) acOverrideIn.value = character.ac_override || '';
+
+            // Encumbrance UI Sync
+            const enc = character.encumbrance || {};
+            const encCb = document.getElementById('encumbrance-toggle-checkbox');
+            if (encCb) encCb.checked = !!enc.enabled;
+            const weightLbl = document.getElementById('encumbrance-weight-label');
+            const encBadge = document.getElementById('encumbrance-badge');
+            const encFill = document.getElementById('encumbrance-bar-fill');
+            if (weightLbl && encBadge && encFill) {
+                if (enc.enabled) {
+                    weightLbl.textContent = `Weight: ${enc.total_weight || 0} / ${enc.max_capacity || 150} lbs (Coins: ${enc.coin_weight || 0} lbs)`;
+                    const pct = Math.min(100, Math.round(((enc.total_weight || 0) / (enc.max_capacity || 150)) * 100));
+                    encFill.style.width = pct + '%';
+                    encFill.style.background = enc.is_encumbered ? '#ef4444' : '#10b981';
+                    encBadge.textContent = enc.is_encumbered ? '⚠️ OVER ENCUMBERED!' : 'Normal Carry';
+                    encBadge.style.color = enc.is_encumbered ? '#ef4444' : '#10b981';
+                } else {
+                    weightLbl.textContent = 'Weight Tracking OFF (Toggle to enable)';
+                    encFill.style.width = '0%';
+                    encBadge.textContent = 'Disabled';
+                    encBadge.style.color = 'var(--text-muted)';
+                }
+            }
+
             renderAttunedItems();
             renderCustomInventoryList();
+            renderCurrencyPouch();
+            renderWeaponsList();
 
             // TAB 5: DETAILS
             document.getElementById('details-secrets-text').innerText = character.secrets || 'No dark secrets recorded in campaign files.';
             renderTrophyCaseListSheet(character.badges || []);
+            populateSubclassDropdownsSheet();
             
             const wishlistArea = document.getElementById('wishlist-text-area-sheet');
             if (wishlistArea && !window.wishlistEditedOnSheet) {
@@ -2196,7 +3037,13 @@
 
             // Sync proximity check for guided level up
             checkLevelUpProximity();
+
+            // Render Wild Shape & Companion Manager UI
+            if (typeof renderWildShapeAndCompanionsUI === 'function') {
+                renderWildShapeAndCompanionsUI();
+            }
         }
+
 
         // Render death saves
         function renderDeathSavesMini() {
@@ -2217,54 +3064,84 @@
             queueUpdateAndSync();
         }
 
-        // Render Compact Spell slots
+        // Render Active Spell slots (Spellbook Tab)
         function renderCompactSpellSlots() {
-            const container = document.getElementById('spell-slots-compact-row');
-            container.innerHTML = '';
+            const mainContainer = document.getElementById('spell-slots-main-row');
+            if (!mainContainer) return;
+
+            // Recalculate spell slots from engine if missing or empty
+            if (!character.spell_slots || character.spell_slots.length === 0 || character.spell_slots.every(v => v === 0)) {
+                if (window.characterEngine) {
+                    character = window.characterEngine.calculate(character);
+                }
+            }
+
+            const maxSlots = character.spell_slots || [0, 0, 0, 0, 0, 0, 0, 0, 0];
             
-            const slots = character.spell_slots || [];
-            const maxSlots = character.spell_slots || []; // Max defined by level
-            
+            if (!character.spell_slots_current) {
+                character.spell_slots_current = [...maxSlots];
+            }
+
             let hasAnySlots = false;
-            for (let lvl = 1; lvl <= 5; lvl++) {
+            let html = '';
+
+            for (let lvl = 1; lvl <= 9; lvl++) {
                 const max = maxSlots[lvl - 1] || 0;
-                const current = character.spell_slots_current ? (character.spell_slots_current[lvl - 1] !== undefined ? character.spell_slots_current[lvl - 1] : max) : max;
+                const current = character.spell_slots_current[lvl - 1] !== undefined ? character.spell_slots_current[lvl - 1] : max;
 
                 if (max > 0) {
                     hasAnySlots = true;
-                    const div = document.createElement('div');
-                    div.style = "display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; background:#0d0d12; border:1px solid var(--border-iron); padding:6px; border-radius:4px;";
-                    
                     let pipsHtml = '';
                     for (let p = 1; p <= max; p++) {
-                        const isSpent = p > current;
-                        pipsHtml += `<div class="slot-pip ${!isSpent ? 'active' : ''}" style="width:14px; height:14px; border:1.5px solid var(--border-iron); background:#15151b; border-radius:3px; cursor:pointer;" onclick="event.stopPropagation(); toggleCompactSpellSlot(${lvl}, ${p})"></div>`;
+                        const isAvailable = p <= current;
+                        const style = isAvailable 
+                            ? "width:20px; height:20px; background:#8b5cf6; border:1.5px solid #a78bfa; box-shadow:0 0 8px rgba(139,92,246,0.8); border-radius:4px; cursor:pointer; transition:all 0.15s ease;"
+                            : "width:20px; height:20px; background:#111116; border:1.5px solid #334155; opacity:0.4; border-radius:4px; cursor:pointer; transition:all 0.15s ease;";
+
+                        pipsHtml += `<div class="slot-pip ${isAvailable ? 'active' : 'spent'}" style="${style}" title="Lvl ${lvl} Slot ${p} (${isAvailable ? 'Available' : 'Spent'})" onclick="event.stopPropagation(); toggleCompactSpellSlot(${lvl}, ${p})"></div>`;
                     }
-                    
-                    div.innerHTML = `
-                        <span style="color:#a78bfa; font-weight:600;">Lvl ${lvl} Slots</span>
-                        <div style="display:flex; gap:5px;">${pipsHtml}</div>
+
+                    html += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; background:#0d0d12; border:1px solid var(--border-iron); padding:8px 12px; border-radius:6px;">
+                            <span style="color:#a78bfa; font-weight:bold; font-family:'Cinzel', serif;">Lvl ${lvl} Slots (${current}/${max})</span>
+                            <div style="display:flex; gap:6px; align-items:center;">${pipsHtml}</div>
+                        </div>
                     `;
-                    container.appendChild(div);
                 }
             }
+
             if (!hasAnySlots) {
-                container.innerHTML = `<span style="font-size:0.7rem; color:var(--text-muted); font-style:italic; text-align:center;">No spellcasting abilities unlocked...</span>`;
+                html = `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic; text-align:center; display:block; padding:8px;">No spellcasting slots unlocked for Level ${character.level} ${character.class || ''}...</span>`;
             }
+
+            mainContainer.innerHTML = html;
         }
 
         function toggleCompactSpellSlot(lvl, pipIndex) {
+            const maxSlots = character.spell_slots || [0, 0, 0, 0, 0, 0, 0, 0, 0];
             if (!character.spell_slots_current) {
-                character.spell_slots_current = [...(character.spell_slots || [0,0,0,0,0,0,0,0,0])];
+                character.spell_slots_current = [...maxSlots];
             }
-            const current = character.spell_slots_current[lvl - 1];
-            if (current === pipIndex) {
+
+            const max = maxSlots[lvl - 1] || 0;
+            const current = character.spell_slots_current[lvl - 1] !== undefined ? character.spell_slots_current[lvl - 1] : max;
+
+            if (current >= pipIndex) {
                 character.spell_slots_current[lvl - 1] = pipIndex - 1;
             } else {
                 character.spell_slots_current[lvl - 1] = pipIndex;
             }
+
             renderCompactSpellSlots();
             queueUpdateAndSync();
+        }
+
+        function resetAllSpellSlots() {
+            const maxSlots = character.spell_slots || [0, 0, 0, 0, 0, 0, 0, 0, 0];
+            character.spell_slots_current = [...maxSlots];
+            renderCompactSpellSlots();
+            queueUpdateAndSync();
+            alert("All spell slots restored to maximum!");
         }
 
         // Adjust HP field by delta (+1 / -1)
@@ -2309,9 +3186,11 @@
         }
 
         function setExhaustionLevelLocalSheet(level) {
-            const currentLevel = character.exhaustion || 0;
-            character.exhaustion = currentLevel === level ? level - 1 : level;
-            if (character.exhaustion === 6) {
+            const currentLevel = character.exhaustion !== undefined ? character.exhaustion : (character.exhaustion_level || 0);
+            const newLevel = currentLevel === level ? level - 1 : level;
+            character.exhaustion = newLevel;
+            character.exhaustion_level = newLevel;
+            if (newLevel === 6) {
                 character.hp_current = 0;
                 character.death_saves = { successes: 0, failures: 3 };
             }
@@ -2330,9 +3209,32 @@
                 int: "Intelligence", wis: "Wisdom", cha: "Charisma"
             };
 
+            // Calculate item ability bonuses
+            const itemBonuses = { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 };
+            const allItems = (character.inventory || []).concat(character.weapons || []);
+            allItems.forEach(item => {
+                if (typeof item === 'object' && item) {
+                    const abObj = item.ability || item.abilityBonus || item.bonusAbility;
+                    if (abObj && typeof abObj === 'object') {
+                        Object.keys(abObj).forEach(k => {
+                            const lk = k.toLowerCase();
+                            if (itemBonuses[lk] !== undefined) {
+                                itemBonuses[lk] += (parseInt(abObj[k]) || 0);
+                            }
+                        });
+                    }
+                }
+            });
+
             Object.keys(namesMapping).forEach(key => {
                 const baseScore = stats[key] || 10;
-                const modText = getAbilityModifier(baseScore);
+                const bonus = itemBonuses[key] || 0;
+                const totalScore = baseScore + bonus;
+                const modText = getAbilityModifier(totalScore);
+
+                const subText = bonus !== 0 
+                    ? `Base: ${baseScore} (<span style="color:#38bdf8; font-weight:bold;">${bonus >= 0 ? '+' : ''}${bonus} Item</span>)` 
+                    : `Base Core Score: ${baseScore}`;
 
                 const div = document.createElement('div');
                 div.className = 'ability-row-item';
@@ -2344,12 +3246,12 @@
                         </div>
                         <div class="ability-names">
                             <span class="ability-full-name">${namesMapping[key]}</span>
-                            <span class="ability-short-name">Base Core Score: ${baseScore}</span>
+                            <span class="ability-short-name">${subText}</span>
                         </div>
                     </div>
                     <div class="ability-edit-controls" onclick="event.stopPropagation()">
                         <button class="btn-edit-score" onclick="event.stopPropagation(); adjustBaseAbilityScore('${key}', -1)">-</button>
-                        <span class="ability-score-display">${baseScore}</span>
+                        <span class="ability-score-display">${totalScore}</span>
                         <button class="btn-edit-score" onclick="event.stopPropagation(); adjustBaseAbilityScore('${key}', 1)">+</button>
                     </div>
                 `;
@@ -2438,7 +3340,7 @@
             return levels;
         }
 
-        function getDynamicClassFeatures(charObj) {
+        function getDynamicClassFeatures(charObj, showAll = true) {
             const features = [];
             if (!charObj) return features;
 
@@ -2455,14 +3357,15 @@
             if (clsObj && Array.isArray(clsObj.classFeatures)) {
                 clsObj.classFeatures.forEach((lvlFeats, idx) => {
                     const level = idx + 1;
-                    if (level <= charLevel && Array.isArray(lvlFeats)) {
+                    if ((showAll || level <= charLevel) && Array.isArray(lvlFeats)) {
                         lvlFeats.forEach(feat => {
                             if (feat && feat.name && !feat.gainSubclassFeature) {
                                 features.push({
                                     name: feat.name,
                                     entries: feat.entries || [],
                                     level: level,
-                                    isSubclass: false
+                                    isSubclass: false,
+                                    isUnlocked: level <= charLevel
                                 });
                             }
                         });
@@ -2476,9 +3379,10 @@
                     );
                     if (subObj && Array.isArray(subObj.subclassFeatures)) {
                         const levelsGained = getSubclassFeatureLevels(clsObj);
+                        const defaultSubclassLevels = [3, 6, 10, 14, 18, 20];
                         subObj.subclassFeatures.forEach((featuresAtIdx, idx) => {
-                            const levelGained = levelsGained[idx];
-                            if (levelGained && levelGained <= charLevel) {
+                            const levelGained = levelsGained[idx] || defaultSubclassLevels[idx] || (idx + 1);
+                            if (showAll || levelGained <= charLevel) {
                                 if (Array.isArray(featuresAtIdx)) {
                                     featuresAtIdx.forEach(f => {
                                         if (f) {
@@ -2487,7 +3391,8 @@
                                                 entries: f.entries || (f.type === 'entries' ? f.entries : []),
                                                 level: levelGained,
                                                 isSubclass: true,
-                                                subclassName: subObj.name
+                                                subclassName: subObj.name,
+                                                isUnlocked: levelGained <= charLevel
                                             });
                                         }
                                     });
@@ -2498,7 +3403,21 @@
                 }
             }
 
+            // Sort features chronologically by level ascending
+            features.sort((a, b) => (a.level || 0) - (b.level || 0));
+
             return features;
+        }
+
+        let showAllFeaturesMode = true; // Default to showing all 1-20 levels from backend
+
+        function toggleFeaturesViewMode() {
+            showAllFeaturesMode = !showAllFeaturesMode;
+            const btn = document.getElementById('toggle-features-view-btn');
+            if (btn) {
+                btn.innerText = showAllFeaturesMode ? 'Show: All 1-20 Levels' : 'Show: Current Lvl Only';
+            }
+            renderClassFeaturesSrdList();
         }
 
         // Render Class & Subclass Features from SRD data if present on the character
@@ -2509,7 +3428,7 @@
 
             let features = [];
             if (Object.keys(sandboxClasses).length > 0) {
-                features = getDynamicClassFeatures(character);
+                features = getDynamicClassFeatures(character, showAllFeaturesMode);
             } else {
                 features = character.class_features_srd || [];
             }
@@ -2525,14 +3444,25 @@
             features.forEach(feat => {
                 const card = document.createElement('div');
                 card.className = 'detail-item-card';
-                card.style.background = 'rgba(255,255,255,0.02)';
-                card.style.border = '1px solid var(--border-iron)';
+                card.style.background = feat.isUnlocked ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.2)';
+                card.style.border = feat.isUnlocked ? '1px solid var(--border-iron)' : '1px dashed #475569';
                 card.style.padding = '12px';
                 card.style.borderRadius = '6px';
                 card.style.marginBottom = '6px';
+                if (!feat.isUnlocked) {
+                    card.style.opacity = '0.75';
+                }
 
-                const badgeLabel = feat.level ? `Lvl ${feat.level} ${feat.isSubclass ? 'Subclass' : 'Class'}` : 'Feature';
-                const badgeColor = feat.isSubclass ? 'var(--arcane-violet)' : 'var(--gold-amber)';
+                const isSub = feat.isSubclass;
+                const levelText = feat.level ? `Lvl ${feat.level}` : 'Feature';
+                const typeText = isSub ? 'Subclass' : 'Class';
+                const statusText = feat.isUnlocked ? '' : ' (Upcoming)';
+                const badgeLabel = `${levelText} ${typeText}${statusText}`;
+
+                let badgeColor = isSub ? 'var(--arcane-violet)' : 'var(--gold-amber)';
+                if (!feat.isUnlocked) {
+                    badgeColor = '#64748b'; // Slate grey for future levels
+                }
 
                 let htmlDesc = '';
                 if (feat.entries) {
@@ -2545,7 +3475,9 @@
 
                 card.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                        <span style="font-family: 'Cinzel', serif; color: var(--gold-amber); font-size: 0.85rem; font-weight: bold;">${feat.name}</span>
+                        <span style="font-family: 'Cinzel', serif; color: ${feat.isUnlocked ? 'var(--gold-amber)' : '#94a3b8'}; font-size: 0.85rem; font-weight: bold;">
+                            ${feat.name} ${!feat.isUnlocked ? '🔒' : ''}
+                        </span>
                         <span style="font-size:0.6rem; background:${badgeColor}22; color:${badgeColor}; border:1px solid ${badgeColor}44; padding:2px 6px; border-radius:10px; font-weight:bold; text-transform:uppercase;">${badgeLabel}</span>
                     </div>
                     <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; display:flex; flex-direction:column; gap:6px;">
@@ -2624,55 +3556,346 @@
             renderSpellsList();
         }
 
-        function renderSpellsList() {
-            const container = document.getElementById('spells-main-list');
-            container.innerHTML = '';
+        function getOrdinalSuffix(i) {
+            const j = i % 10, k = i % 100;
+            if (j === 1 && k !== 11) return i + "st";
+            if (j === 2 && k !== 12) return i + "nd";
+            if (j === 3 && k !== 13) return i + "rd";
+            return i + "th";
+        }
 
-            let filteredList = [];
-            if (currentSpellFilter === 'all') {
-                filteredList = campaignSpells;
-            } else if (currentSpellFilter === 'known') {
-                filteredList = campaignSpells.filter(s => character.known_spells && character.known_spells.includes(s.name));
-            } else if (currentSpellFilter === 'prep') {
-                filteredList = campaignSpells.filter(s => character.prepared_spells && character.prepared_spells.includes(s.name));
+        function renderSpellRowElement(spell) {
+            const isKnown = character.known_spells && character.known_spells.includes(spell.name);
+            const isPrep = character.prepared_spells && character.prepared_spells.includes(spell.name);
+
+            const div = document.createElement('div');
+            div.className = 'spell-row-item';
+            div.onclick = () => openSpellDetailModal(spell);
+
+            let badgeHtml = '';
+            if (isKnown) {
+                badgeHtml += `<button class="badge-prep ${isPrep ? 'prepared' : ''}" onclick="event.stopPropagation(); togglePrepareSpell('${spell.name}')">${isPrep ? 'Prepared' : 'Known'}</button>`;
+                badgeHtml += `<button style="background:transparent; color:var(--crimson-rage); font-size:0.75rem; font-weight:bold; margin-left:8px; border:none; cursor:pointer;" onclick="event.stopPropagation(); unlearnSpell('${spell.name}')">✕</button>`;
+            } else {
+                badgeHtml += `<button class="btn-learn" onclick="event.stopPropagation(); learnSpell('${spell.name}')">Learn</button>`;
             }
 
-            const searchInput = document.getElementById('spell-search-input').value.toLowerCase().trim();
+            const lvlNum = getSpellLevelNumber(spell);
+            const levelLabel = lvlNum === 0 ? 'Cantrip' : `Lvl ${lvlNum}`;
+
+            div.innerHTML = `
+                <div class="spell-item-info">
+                    <span class="spell-name-title">${spell.name}</span>
+                    <span class="spell-meta-desc">${levelLabel} ${spell.school || ''} | Time: ${spell.casting_time || '1 action'}</span>
+                </div>
+                <div class="spell-item-actions">
+                    ${badgeHtml}
+                </div>
+            `;
+            return div;
+        }
+
+        function getSpellcastingLimits(charObj) {
+            const cls = charObj.class || 'Fighter';
+            const lvl = parseInt(charObj.level) || 1;
+            const stats = charObj.stats || { int: 10, wis: 10, cha: 10 };
+
+            const intMod = Math.floor(((stats.int || 10) - 10) / 2);
+            const wisMod = Math.floor(((stats.wis || 10) - 10) / 2);
+            const chaMod = Math.floor(((stats.cha || 10) - 10) / 2);
+
+            let maxCantrips = 0;
+            let maxKnown = 0;
+            let maxPrep = 0;
+            let isPreparedCaster = false;
+
+            if (['Sorcerer'].includes(cls)) {
+                maxCantrips = lvl >= 10 ? 6 : (lvl >= 4 ? 5 : 4);
+            } else if (['Cleric', 'Wizard'].includes(cls)) {
+                maxCantrips = lvl >= 10 ? 5 : (lvl >= 4 ? 4 : 3);
+            } else if (['Bard', 'Druid', 'Warlock'].includes(cls)) {
+                maxCantrips = lvl >= 10 ? 4 : (lvl >= 4 ? 3 : 2);
+            } else if (['Rogue', 'Fighter'].includes(cls)) {
+                maxCantrips = lvl >= 10 ? 3 : 2;
+            }
+
+            if (cls === 'Bard') {
+                const bardKnown = [0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 15, 15, 18, 19, 19, 19, 22, 22, 22];
+                maxKnown = bardKnown[lvl] || 4;
+            } else if (cls === 'Sorcerer') {
+                const sorcKnown = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15, 15];
+                maxKnown = sorcKnown[lvl] || 2;
+            } else if (cls === 'Warlock') {
+                const warKnown = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 11, 11, 12, 12, 12, 12, 12, 12, 15, 15];
+                maxKnown = warKnown[lvl] || 2;
+            } else if (cls === 'Ranger') {
+                const ranKnown = [0, 0, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11];
+                maxKnown = ranKnown[lvl] || 2;
+            } else if (['Fighter', 'Rogue'].includes(cls)) {
+                const ekKnown = [0, 0, 0, 3, 4, 4, 4, 5, 6, 6, 7, 8, 8, 9, 10, 10, 11, 11, 11, 12, 13];
+                maxKnown = ekKnown[lvl] || 3;
+            } else if (cls === 'Wizard') {
+                isPreparedCaster = true;
+                maxPrep = Math.max(1, lvl + intMod);
+                maxKnown = 99;
+            } else if (cls === 'Cleric' || cls === 'Druid') {
+                isPreparedCaster = true;
+                maxPrep = Math.max(1, lvl + wisMod);
+                maxKnown = 99;
+            } else if (cls === 'Paladin') {
+                isPreparedCaster = true;
+                maxPrep = Math.max(1, Math.floor(lvl / 2) + chaMod);
+                maxKnown = 99;
+            }
+
+            return { maxCantrips, maxKnown, maxPrep, isPreparedCaster };
+        }
+
+        function isCantripSpell(spellOrName) {
+            if (!spellOrName) return false;
+            let nameStr = typeof spellOrName === 'string' ? spellOrName : (spellOrName.name || '');
+            let lvlStr = typeof spellOrName === 'object' && spellOrName.level !== undefined ? String(spellOrName.level) : '';
+
+            const knownCantripNames = ['acid splash', 'blade ward', 'chill touch', 'dancing lights', 'druidcraft', 'eldritch blast', 'fire bolt', 'guidance', 'light', 'mage hand', 'mending', 'message', 'minor illusion', 'poison spray', 'prestidigitation', 'produce flame', 'ray of frost', 'resistance', 'sacred flame', 'shillelagh', 'shocking grasp', 'spare the dying', 'thaumaturgy', 'thorn whip', 'true strike', 'vicious mockery'];
+
+            if (lvlStr) {
+                const cleanLvl = lvlStr.toLowerCase();
+                if (cleanLvl === '0' || cleanLvl === 'cantrip' || cleanLvl.includes('cantrip')) return true;
+            }
+
+            const matchedInDb = (campaignSpells || []).find(s => s && s.name && s.name.toLowerCase() === nameStr.toLowerCase());
+            if (matchedInDb) {
+                const dbLvl = String(matchedInDb.level || '').toLowerCase();
+                if (dbLvl === '0' || dbLvl === 'cantrip' || dbLvl.includes('cantrip')) return true;
+            }
+
+            return knownCantripNames.includes(nameStr.toLowerCase()) || nameStr.toLowerCase().includes('cantrip');
+        }
+
+        function getSpellLevelNumber(spellOrName) {
+            if (!spellOrName) return 0;
+            if (isCantripSpell(spellOrName)) return 0;
+
+            let lvlStr = typeof spellOrName === 'object' && spellOrName.level !== undefined ? String(spellOrName.level) : '';
+            let nameStr = typeof spellOrName === 'string' ? spellOrName : (spellOrName.name || '');
+
+            if (!lvlStr) {
+                const matchedInDb = (campaignSpells || []).find(s => s && s.name && s.name.toLowerCase() === nameStr.toLowerCase());
+                if (matchedInDb) lvlStr = String(matchedInDb.level || '');
+            }
+
+            const match = lvlStr.match(/\d+/);
+            return match ? parseInt(match[0], 10) : 1;
+        }
+
+        function renderSpellCapacitySummary() {
+            const pill = document.getElementById('spell-capacity-summary-pill');
+            if (!pill) return;
+
+            const limits = getSpellcastingLimits(character);
+            const known = character.known_spells || [];
+            const prep = character.prepared_spells || [];
+
+            let cantripsCount = 0;
+            let knownLevelSpells = 0;
+
+            known.forEach(n => {
+                if (isCantripSpell(n)) {
+                    cantripsCount++;
+                } else {
+                    knownLevelSpells++;
+                }
+            });
+
+            let prepLevelSpells = 0;
+            prep.forEach(n => {
+                if (!isCantripSpell(n)) {
+                    prepLevelSpells++;
+                }
+            });
+
+            if (currentSpellFilter === 'prep') {
+                if (limits.isPreparedCaster) {
+                    pill.innerHTML = `Prep: <strong>${prepLevelSpells} / ${limits.maxPrep}</strong> | Cantrips: <strong>${cantripsCount} / ${limits.maxCantrips}</strong>`;
+                } else {
+                    pill.innerHTML = `Prep: <strong>${prep.length}</strong> | Cantrips: <strong>${cantripsCount} / ${limits.maxCantrips}</strong>`;
+                }
+            } else if (currentSpellFilter === 'known') {
+                if (!limits.isPreparedCaster) {
+                    pill.innerHTML = `Known: <strong>${knownLevelSpells} / ${limits.maxKnown}</strong> | Cantrips: <strong>${cantripsCount} / ${limits.maxCantrips}</strong>`;
+                } else {
+                    pill.innerHTML = `Known: <strong>${known.length}</strong> | Cantrips: <strong>${cantripsCount} / ${limits.maxCantrips}</strong>`;
+                }
+            } else {
+                const knownCapStr = limits.maxKnown && limits.maxKnown < 90 ? ` / ${limits.maxKnown}` : '';
+                pill.innerHTML = `Known: <strong>${knownLevelSpells}${knownCapStr}</strong> | Cantrips: <strong>${cantripsCount} / ${limits.maxCantrips}</strong>`;
+            }
+        }
+
+        let activeSpellFilters = {
+            schools: [],
+            castingTimes: [],
+            ranges: [],
+            durations: []
+        };
+
+        function openSpellFilterModal() {
+            populateFilterOptionsDOM();
+            document.getElementById('spell-filter-modal').style.display = 'flex';
+        }
+
+        function closeSpellFilterModal() {
+            document.getElementById('spell-filter-modal').style.display = 'none';
+        }
+
+        function toggleSpellFilterChip(category, value) {
+            const arr = activeSpellFilters[category];
+            const idx = arr.indexOf(value);
+            if (idx === -1) {
+                arr.push(value);
+            } else {
+                arr.splice(idx, 1);
+            }
+            populateFilterOptionsDOM();
+        }
+
+        function resetSpellFilterOptions() {
+            activeSpellFilters = { schools: [], castingTimes: [], ranges: [], durations: [] };
+            populateFilterOptionsDOM();
+            updateActiveFilterBadge();
+            renderSpellsList();
+        }
+
+        function applySpellFilterOptions() {
+            closeSpellFilterModal();
+            updateActiveFilterBadge();
+            renderSpellsList();
+        }
+
+        function updateActiveFilterBadge() {
+            const count = activeSpellFilters.schools.length + activeSpellFilters.castingTimes.length + activeSpellFilters.ranges.length + activeSpellFilters.durations.length;
+            const badge = document.getElementById('spell-filter-active-count');
+            if (badge) {
+                if (count > 0) {
+                    badge.innerText = count;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+
+        function populateFilterOptionsDOM() {
+            const schoolsList = ['Abjuration', 'Conjuration', 'Divination', 'Enchantment', 'Evocation', 'Illusion', 'Necromancy', 'Transmutation'];
+            const castingList = ['1 action', '1 bonus action', '1 reaction', '1 minute', '10 minutes', '1 hour', '8 hours'];
+            const rangeList = ['Self', 'Touch', '30 feet', '60 feet', '90 feet', '120 feet', '150 feet', '500 feet', 'Sight', 'Special'];
+            const durationList = ['Instantaneous', '1 round', '1 minute', '10 minutes', '1 hour', '8 hours', '24 hours', 'Concentration'];
+
+            const renderCategoryChips = (containerId, items, categoryKey) => {
+                const el = document.getElementById(containerId);
+                if (!el) return;
+                el.innerHTML = '';
+                items.forEach(item => {
+                    const itemLower = item.toLowerCase();
+                    const isActive = activeSpellFilters[categoryKey].includes(itemLower);
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = `filter-chip ${isActive ? 'active' : ''}`;
+                    btn.innerText = item;
+                    btn.onclick = () => toggleSpellFilterChip(categoryKey, itemLower);
+                    el.appendChild(btn);
+                });
+            };
+
+            renderCategoryChips('filter-school-options', schoolsList, 'schools');
+            renderCategoryChips('filter-casting-options', castingList, 'castingTimes');
+            renderCategoryChips('filter-range-options', rangeList, 'ranges');
+            renderCategoryChips('filter-duration-options', durationList, 'durations');
+        }
+
+        function renderSpellsList() {
+            const container = document.getElementById('spells-main-list');
+            if (!container) return;
+            container.innerHTML = '';
+            renderSpellCapacitySummary();
+
+            let filteredList = [];
+            const allSpells = campaignSpells || [];
+
+            if (currentSpellFilter === 'all') {
+                filteredList = [...allSpells];
+            } else if (currentSpellFilter === 'known') {
+                filteredList = allSpells.filter(s => character.known_spells && character.known_spells.includes(s.name));
+            } else if (currentSpellFilter === 'prep') {
+                filteredList = allSpells.filter(s => character.prepared_spells && character.prepared_spells.includes(s.name));
+            }
+
+            // 1. Search text filter
+            const searchInput = (document.getElementById('spell-search-input')?.value || '').toLowerCase().trim();
             if (searchInput) {
                 filteredList = filteredList.filter(s => s.name.toLowerCase().includes(searchInput));
             }
 
+            // 2. Multi-option Modal Filters (School, Casting Time, Range, Duration)
+            if (activeSpellFilters.schools.length > 0) {
+                filteredList = filteredList.filter(s => s.school && activeSpellFilters.schools.includes(s.school.toLowerCase()));
+            }
+            if (activeSpellFilters.castingTimes.length > 0) {
+                filteredList = filteredList.filter(s => {
+                    const ct = (s.casting_time || '').toLowerCase();
+                    return activeSpellFilters.castingTimes.some(f => ct.includes(f));
+                });
+            }
+            if (activeSpellFilters.ranges.length > 0) {
+                filteredList = filteredList.filter(s => {
+                    const r = (s.range || '').toLowerCase();
+                    return activeSpellFilters.ranges.some(f => r.includes(f));
+                });
+            }
+            if (activeSpellFilters.durations.length > 0) {
+                filteredList = filteredList.filter(s => {
+                    const d = (s.duration || '').toLowerCase();
+                    return activeSpellFilters.durations.some(f => d.includes(f));
+                });
+            }
+
             if (filteredList.length === 0) {
-                container.innerHTML = `<div style="text-align:center; font-size:0.8rem; color:var(--text-muted); padding:30px; font-style:italic;">No matching spells found in library...</div>`;
+                const emptyMsg = currentSpellFilter === 'prep'
+                    ? 'No spells currently prepared matching active filters...'
+                    : (currentSpellFilter === 'known' ? 'No learned spells matching active filters...' : 'No matching spells found in library...');
+                container.innerHTML = `<div style="text-align:center; font-size:0.8rem; color:var(--text-muted); padding:30px; font-style:italic;">${emptyMsg}</div>`;
                 return;
             }
 
-            filteredList.forEach(spell => {
-                const isKnown = character.known_spells && character.known_spells.includes(spell.name);
-                const isPrep = character.prepared_spells && character.prepared_spells.includes(spell.name);
+            // Group by Level (Cantrips Lvl 0 first, then 1, 2, 3...)
+            const groups = {};
+            filteredList.forEach(s => {
+                const lvl = getSpellLevelNumber(s);
+                if (!groups[lvl]) groups[lvl] = [];
+                groups[lvl].push(s);
+            });
 
-                const div = document.createElement('div');
-                div.className = 'spell-row-item';
-                div.onclick = () => openSpellDetailModal(spell);
+            const sortedLevels = Object.keys(groups).map(Number).sort((a, b) => a - b);
 
-                let badgeHtml = '';
-                if (isKnown) {
-                    badgeHtml += `<button class="badge-prep ${isPrep ? 'prepared' : ''}" onclick="event.stopPropagation(); togglePrepareSpell('${spell.name}')">${isPrep ? 'Prepared' : 'Known'}</button>`;
-                    badgeHtml += `<button style="background:transparent; color:var(--crimson-rage); font-size:0.6rem; font-weight:bold; margin-left:8px; border:none;" onclick="event.stopPropagation(); unlearnSpell('${spell.name}')"></button>`;
-                } else {
-                    badgeHtml += `<button class="btn-learn" onclick="event.stopPropagation(); learnSpell('${spell.name}')">Learn</button>`;
-                }
+            sortedLevels.forEach(lvl => {
+                // Sort spells within level group alphabetically by Name
+                groups[lvl].sort((a, b) => a.name.localeCompare(b.name));
 
-                div.innerHTML = `
-                    <div class="spell-item-info">
-                        <span class="spell-name-title">${spell.name}</span>
-                        <span class="spell-meta-desc">Lvl ${spell.level} ${spell.school} | Time: ${spell.casting_time || '1 action'}</span>
-                    </div>
-                    <div class="spell-item-actions">
-                        ${badgeHtml}
-                    </div>
+                const levelHeader = document.createElement('div');
+                levelHeader.style = "font-family: 'Cinzel', serif; font-size: 0.85rem; color: var(--gold-amber); font-weight: bold; border-bottom: 1px solid var(--border-iron); padding-bottom: 4px; margin-top: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;";
+                
+                const titleText = lvl === 0 ? "✨ Cantrips (Level 0)" : `🔮 ${getOrdinalSuffix(lvl)} Level Spells`;
+                const labelType = currentSpellFilter === 'prep' ? 'prepared' : (currentSpellFilter === 'known' ? 'known' : 'spells');
+                
+                levelHeader.innerHTML = `
+                    <span>${titleText}</span>
+                    <span style="font-size: 0.7rem; color: var(--text-muted); font-family: sans-serif;">(${groups[lvl].length} ${labelType})</span>
                 `;
-                container.appendChild(div);
+                container.appendChild(levelHeader);
+
+                groups[lvl].forEach(spell => {
+                    container.appendChild(renderSpellRowElement(spell));
+                });
             });
         }
 
@@ -2682,9 +3905,37 @@
 
         function learnSpell(spellName) {
             if (!character.known_spells) character.known_spells = [];
-            if (!character.known_spells.includes(spellName)) {
-                character.known_spells.push(spellName);
+            if (character.known_spells.includes(spellName)) return;
+
+            const spellObj = (campaignSpells || []).find(s => s.name === spellName) || { level: 1 };
+            const isCantrip = spellObj.level === 0 || spellObj.level === '0';
+            const limits = getSpellcastingLimits(character);
+
+            if (isCantrip) {
+                const currentCantrips = (character.known_spells || []).filter(n => {
+                    const sp = (campaignSpells || []).find(s => s.name === n);
+                    return sp && (sp.level === 0 || sp.level === '0');
+                }).length;
+
+                if (limits.maxCantrips > 0 && currentCantrips >= limits.maxCantrips) {
+                    const confirmOverride = confirm(`⚠️ CANTRIP LIMIT REACHED!\nLevel ${character.level} ${character.class || ''} allows up to ${limits.maxCantrips} cantrips (you currently have ${currentCantrips}).\n\nDo you want to override and learn anyway?`);
+                    if (!confirmOverride) return;
+                }
+            } else {
+                if (!limits.isPreparedCaster) {
+                    const currentKnownSpells = (character.known_spells || []).filter(n => {
+                        const sp = (campaignSpells || []).find(s => s.name === n);
+                        return sp && sp.level > 0;
+                    }).length;
+
+                    if (limits.maxKnown > 0 && currentKnownSpells >= limits.maxKnown) {
+                        const confirmOverride = confirm(`⚠️ SPELLS KNOWN LIMIT REACHED!\nLevel ${character.level} ${character.class || ''} allows up to ${limits.maxKnown} known spells (you currently have ${currentKnownSpells}).\n\nDo you want to override and learn anyway?`);
+                        if (!confirmOverride) return;
+                    }
+                }
             }
+
+            character.known_spells.push(spellName);
             renderSpellsList();
             queueUpdateAndSync();
         }
@@ -2703,11 +3954,31 @@
         function togglePrepareSpell(spellName) {
             if (!character.prepared_spells) character.prepared_spells = [];
             const idx = character.prepared_spells.indexOf(spellName);
+
             if (idx === -1) {
+                const spellObj = (campaignSpells || []).find(s => s.name === spellName) || { level: 1 };
+                const isCantrip = spellObj.level === 0 || spellObj.level === '0';
+
+                if (!isCantrip) {
+                    const limits = getSpellcastingLimits(character);
+                    if (limits.isPreparedCaster) {
+                        const currentPrep = character.prepared_spells.filter(n => {
+                            const sp = (campaignSpells || []).find(s => s.name === n);
+                            return sp && sp.level > 0;
+                        }).length;
+
+                        if (limits.maxPrep > 0 && currentPrep >= limits.maxPrep) {
+                            const confirmOverride = confirm(`⚠️ PREPARED SPELLS LIMIT REACHED!\nLevel ${character.level} ${character.class || ''} allows up to ${limits.maxPrep} prepared spells (you currently have ${currentPrep}).\n\nDo you want to override and prepare anyway?`);
+                            if (!confirmOverride) return;
+                        }
+                    }
+                }
+
                 character.prepared_spells.push(spellName);
             } else {
                 character.prepared_spells.splice(idx, 1);
             }
+
             renderSpellsList();
             queueUpdateAndSync();
         }
@@ -2804,21 +4075,37 @@
 
         function renderAttunedItems() {
             const container = document.getElementById('attuned-items-container');
+            if (!container) return;
             container.innerHTML = '';
 
-            const items = character.magic_items || [];
+            const maxAttunement = character.attunement_max || 3;
+            const items = (character.magic_items || []).map(i => typeof i === 'string' ? { name: i, attuned: true } : i);
+            if (Array.isArray(character.inventory)) {
+                character.inventory.forEach(i => {
+                    if (typeof i === 'object' && (i.attuned || i.is_attuned)) {
+                        if (!items.some(m => m.name === i.name)) items.push(i);
+                    }
+                });
+            }
+
+            const headerTitle = document.getElementById('attuned-items-title');
+            if (headerTitle) {
+                headerTitle.textContent = `Attuned Magic Items (${items.length}/${maxAttunement} Max)`;
+            }
+
             items.forEach(item => {
+                const itemName = typeof item === 'string' ? item : item.name;
                 const div = document.createElement('div');
                 div.style = "display:flex; justify-content:space-between; align-items:center; background:#0d0d12; border:1px solid var(--gold-amber); padding:8px 12px; border-radius:6px; font-size:0.8rem;";
                 div.innerHTML = `
-                    <span style="color:var(--gold-amber); font-weight:600;">[Attuned] ${item}</span>
-                    <button style="color:var(--crimson-rage); background:transparent; font-weight:bold; cursor:pointer;" onclick="unattuneItemFromSheet('${item}')">Unattune</button>
+                    <span style="color:var(--gold-amber); font-weight:600;">💍 [Attuned] ${itemName}</span>
+                    <button style="color:var(--crimson-rage); background:transparent; font-weight:bold; cursor:pointer;" onclick="toggleItemAttunement('${itemName}')">Unattune</button>
                 `;
                 container.appendChild(div);
             });
 
             if (items.length === 0) {
-                container.innerHTML = `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic; text-align:center; display:block; padding:8px;">No attuned magic items active...</span>`;
+                container.innerHTML = `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic; text-align:center; display:block; padding:8px;">No attuned magic items active (${items.length}/${maxAttunement} Max slots available)...</span>`;
             }
         }
 
@@ -2896,6 +4183,493 @@
             }
         }
 
+        // --- 1. WEAPONS & ATTACK ACTIONS ENGINE ---
+        function renderWeaponsList() {
+            if (!character.weapons || character.weapons.length === 0) {
+                character.weapons = [
+                    { id: 'w1', name: 'Scimitar', type: 'Melee', attribute: 'dex', damage: '1d6', damageType: 'Slashing', bonus: 0, proficient: true },
+                    { id: 'w2', name: 'Shortbow', type: 'Ranged', attribute: 'dex', damage: '1d6', damageType: 'Piercing', bonus: 0, proficient: true },
+                    { id: 'w3', name: 'Unarmed Strike', type: 'Melee', attribute: 'str', damage: '1d4', damageType: 'Bludgeoning', bonus: 0, proficient: true }
+                ];
+            }
+
+            const vitalsContainer = document.getElementById('weapons-list-vitals-container');
+            const equipContainer = document.getElementById('weapons-list-equip-container');
+
+            const prof = character.level >= 17 ? 6 : (character.level >= 13 ? 5 : (character.level >= 9 ? 4 : (character.level >= 5 ? 3 : 2)));
+
+            let html = '';
+            character.weapons.forEach(w => {
+                const statVal = character.stats ? (character.stats[w.attribute] || 10) : 10;
+                const statMod = Math.floor((statVal - 10) / 2);
+                const atkBonus = statMod + (w.proficient ? prof : 0) + (parseInt(w.bonus) || 0);
+                const dmgBonus = statMod + (parseInt(w.bonus) || 0);
+
+                const atkSign = atkBonus >= 0 ? '+' : '';
+                const dmgSign = dmgBonus >= 0 ? '+' : '';
+                const dmgBonusStr = dmgBonus !== 0 ? ` ${dmgSign}${dmgBonus}` : '';
+
+                html += `
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-iron); padding: 10px 12px; border-radius: 6px; display: flex; flex-direction: column; gap: 6px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="color: var(--gold-amber); font-size: 0.85rem;">${w.name}</strong>
+                                <span style="font-size: 0.65rem; color: var(--text-muted); margin-left: 6px;">(${w.type || 'Melee'} - ${w.attribute.toUpperCase()})</span>
+                            </div>
+                            <button style="background: transparent; border: none; color: var(--crimson-rage); font-weight: bold; cursor: pointer; font-size: 0.85rem;" onclick="deleteWeaponOnSheet('${w.id}')">✕</button>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <button class="btn-primary digital-dice-only" style="background: #2563eb; padding: 6px 12px; font-size: 0.75rem; font-weight: bold; flex: 1;" onclick="rollWeaponAttack('${w.id}')">
+                                ⚔️ Attack (${atkSign}${atkBonus})
+                            </button>
+                            <button class="btn-primary digital-dice-only" style="background: #dc2626; padding: 6px 12px; font-size: 0.75rem; font-weight: bold; flex: 1;" onclick="rollWeaponDamage('${w.id}')">
+                                💥 Damage (${w.damage}${dmgBonusStr} ${w.damageType || ''})
+                            </button>
+                            <div class="physical-dice-only" style="display: none; font-size: 0.8rem; color: var(--text-main); background: rgba(255,255,255,0.03); border: 1px solid var(--border-iron); border-radius: 4px; padding: 6px 10px; width: 100%; justify-content: space-between; align-items: center;">
+                                <span>Atk Bonus: <strong style="color: var(--gold-amber);">${atkSign}${atkBonus}</strong></span>
+                                <span>Damage: <strong style="color: #ef4444;">${w.damage}${dmgBonusStr} ${w.damageType || ''}</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (vitalsContainer) vitalsContainer.innerHTML = html;
+            if (equipContainer) equipContainer.innerHTML = html;
+        }
+
+        function rollWeaponAttack(weaponId) {
+            const w = (character.weapons || []).find(item => item.id === weaponId);
+            if (!w) return;
+
+            const statVal = character.stats ? (character.stats[w.attribute] || 10) : 10;
+            const statMod = Math.floor((statVal - 10) / 2);
+            const prof = character.level >= 17 ? 6 : (character.level >= 13 ? 5 : (character.level >= 9 ? 4 : (character.level >= 5 ? 3 : 2)));
+            const atkBonus = statMod + (w.proficient ? prof : 0) + (parseInt(w.bonus) || 0);
+
+            if (window.openDiceRollerModal) {
+                window.openDiceRollerModal({
+                    title: `⚔️ ${w.name} Attack Roll`,
+                    notation: '1d20',
+                    modifier: atkBonus,
+                    statName: w.attribute,
+                    rollType: 'attack'
+                });
+            } else {
+                alert(`⚔️ ${w.name} Attack: Roll d20 + ${atkBonus}`);
+            }
+        }
+
+        function rollWeaponDamage(weaponId) {
+            const w = (character.weapons || []).find(item => item.id === weaponId);
+            if (!w) return;
+
+            const statVal = character.stats ? (character.stats[w.attribute] || 10) : 10;
+            const statMod = Math.floor((statVal - 10) / 2);
+            const dmgBonus = statMod + (parseInt(w.bonus) || 0);
+
+            const match = (w.damage || '1d6').match(/(\d+)d(\d+)/i);
+            let diceTotal = 0;
+            if (match) {
+                const count = parseInt(match[1]) || 1;
+                const sides = parseInt(match[2]) || 6;
+                for (let i = 0; i < count; i++) {
+                    diceTotal += Math.floor(Math.random() * sides) + 1;
+                }
+            } else {
+                diceTotal = 4;
+            }
+
+            const totalDamage = Math.max(1, diceTotal + dmgBonus);
+            const msg = `💥 ${character.name} rolled ${w.name} Damage!\nResult: ${totalDamage} ${w.damageType || ''} (Dice: ${diceTotal} + Mod: ${dmgBonus})`;
+            
+            alert(msg);
+
+            if (socket && socket.connected) {
+                socket.emit('whisper-to-dm', {
+                    characterId: charId,
+                    characterName: character.name,
+                    message: `Damage Roll (${w.name}): ${totalDamage} ${w.damageType || ''}`
+                });
+            }
+        }
+
+        function openAddWeaponModal() {
+            document.getElementById('add-weapon-modal').style.display = 'flex';
+        }
+
+        function closeAddWeaponModal() {
+            document.getElementById('add-weapon-modal').style.display = 'none';
+        }
+
+        function saveNewWeapon() {
+            const name = document.getElementById('new-weapon-name').value.trim() || 'Custom Weapon';
+            const stat = document.getElementById('new-weapon-stat').value || 'dex';
+            const damage = document.getElementById('new-weapon-damage').value.trim() || '1d6';
+            const type = document.getElementById('new-weapon-type').value || 'Slashing';
+            const bonus = parseInt(document.getElementById('new-weapon-bonus').value) || 0;
+
+            if (!character.weapons) character.weapons = [];
+            character.weapons.push({
+                id: 'w_' + Date.now(),
+                name: name,
+                type: stat === 'dex' ? 'Melee/Finesse' : 'Melee',
+                attribute: stat,
+                damage: damage,
+                damageType: type,
+                bonus: bonus,
+                proficient: true
+            });
+
+            closeAddWeaponModal();
+            renderWeaponsList();
+            queueUpdateAndSync();
+        }
+
+        function deleteWeaponOnSheet(weaponId) {
+            if (character.weapons) {
+                character.weapons = character.weapons.filter(w => w.id !== weaponId);
+                renderWeaponsList();
+                queueUpdateAndSync();
+            }
+        }
+
+
+        // --- 2. 5E CURRENCY POUCH ENGINE ---
+        function initPlayerCurrency() {
+            if (!character.currency) {
+                character.currency = {
+                    pp: 0,
+                    gp: parseInt(character.gp) || 150,
+                    ep: 0,
+                    sp: 0,
+                    cp: 0
+                };
+            }
+        }
+
+        function renderCurrencyPouch() {
+            initPlayerCurrency();
+            const c = character.currency;
+
+            const ppInput = document.getElementById('coin-pp-input');
+            const gpInput = document.getElementById('coin-gp-input');
+            const epInput = document.getElementById('coin-ep-input');
+            const spInput = document.getElementById('coin-sp-input');
+            const cpInput = document.getElementById('coin-cp-input');
+
+            if (ppInput) ppInput.value = c.pp || 0;
+            if (gpInput) gpInput.value = c.gp || 0;
+            if (epInput) epInput.value = c.ep || 0;
+            if (spInput) spInput.value = c.sp || 0;
+            if (cpInput) cpInput.value = c.cp || 0;
+
+            calculateTotalWealthDisplay();
+        }
+
+        function updateCoinValue(coinType, val) {
+            initPlayerCurrency();
+            character.currency[coinType] = Math.max(0, parseInt(val) || 0);
+            calculateTotalWealthDisplay();
+            queueUpdateAndSync();
+        }
+
+        function adjustCoin(coinType, delta) {
+            initPlayerCurrency();
+            const cur = character.currency[coinType] || 0;
+            character.currency[coinType] = Math.max(0, cur + delta);
+            renderCurrencyPouch();
+            queueUpdateAndSync();
+        }
+
+        function calculateTotalWealthDisplay() {
+            initPlayerCurrency();
+            const c = character.currency;
+            const totalGp = (c.pp * 10) + c.gp + (c.ep * 0.5) + (c.sp * 0.1) + (c.cp * 0.01);
+            character.gp = Math.round(totalGp);
+
+            const display = document.getElementById('total-wealth-gold-display');
+            if (display) {
+                display.innerText = `${totalGp.toFixed(2)} gp`;
+            }
+        }
+
+        function convertCurrencyToGp() {
+            initPlayerCurrency();
+            const c = character.currency;
+            const totalGp = (c.pp * 10) + c.gp + (c.ep * 0.5) + (c.sp * 0.1) + (c.cp * 0.01);
+            
+            character.currency = {
+                pp: 0,
+                gp: Math.floor(totalGp),
+                ep: 0,
+                sp: 0,
+                cp: Math.round((totalGp - Math.floor(totalGp)) * 100)
+            };
+
+            renderCurrencyPouch();
+            queueUpdateAndSync();
+            alert(`Converted all currency! New balance: ${character.currency.gp} gp, ${character.currency.cp} cp.`);
+        }
+
+
+        // --- 4. GUIDED STEP-BY-STEP LEVEL UP WIZARD ---
+        let wizardCurrentStep = 1;
+        let wizardSelectedHpGain = 0;
+
+        function openLevelUpWizardModal() {
+            wizardCurrentStep = 1;
+            wizardSelectedHpGain = 0;
+            
+            document.getElementById('level-up-wizard-modal').style.display = 'flex';
+            renderWizardStep(1);
+        }
+
+        function closeLevelUpWizardModal() {
+            document.getElementById('level-up-wizard-modal').style.display = 'none';
+        }
+
+        function populateSubclassDropdownsSheet() {
+            const detailsSelect = document.getElementById('details-subclass-select');
+            if (!detailsSelect) return;
+
+            detailsSelect.innerHTML = '';
+
+            const charClass = character.class || 'Fighter';
+            const curSubclass = character.subclass || '';
+
+            const optNone = document.createElement('option');
+            optNone.value = '';
+            optNone.innerText = '-- None Selected --';
+            detailsSelect.appendChild(optNone);
+
+            const filtered = (sandboxSubclasses || []).filter(sc => {
+                if (!sc || !sc.name) return false;
+                const name = sc.name;
+                const source = sc.source || '';
+                if (name.includes('UA') || name.includes('(UA)') || name.includes('Playtest') || name.includes('Sidekick')) {
+                    return false;
+                }
+                if (source.startsWith('UA') || source.includes('Modern') || source.includes('Mystic')) {
+                    return false;
+                }
+                const cName = sc.class && (typeof sc.class === 'string' ? sc.class : sc.class.name);
+                return cName && cName.toLowerCase() === charClass.toLowerCase();
+            });
+
+            filtered.forEach(sc => {
+                const opt = document.createElement('option');
+                opt.value = sc.name;
+                opt.innerText = sc.subclass_flavor ? `${sc.name} (${sc.subclass_flavor})` : sc.name;
+                if (sc.name.toLowerCase() === curSubclass.toLowerCase()) {
+                    opt.selected = true;
+                }
+                detailsSelect.appendChild(opt);
+            });
+        }
+
+        function updateSubclassFromSheet(subName) {
+            character.subclass = subName;
+            renderCharacterSheet();
+            queueUpdateAndSync();
+        }
+
+        function renderWizardStep(step) {
+            wizardCurrentStep = step;
+            const body = document.getElementById('lvl-wizard-body-content');
+            const title = document.getElementById('lvl-wizard-title');
+            const prevBtn = document.getElementById('lvl-wizard-prev-btn');
+            const nextBtn = document.getElementById('lvl-wizard-next-btn');
+
+            const curLvl = parseInt(character.level) || 1;
+            const newLvl = curLvl + 1;
+            const charClass = character.class || 'Fighter';
+            const conVal = character.stats ? (character.stats.con || 10) : 10;
+            const conMod = Math.floor((conVal - 10) / 2);
+
+            let dieSides = 8;
+            if (['Barbarian'].includes(charClass)) dieSides = 12;
+            else if (['Fighter', 'Paladin', 'Ranger'].includes(charClass)) dieSides = 10;
+            else if (['Sorcerer', 'Wizard'].includes(charClass)) dieSides = 6;
+
+            const avgIncrease = Math.floor(dieSides / 2) + 1 + conMod;
+
+            if (prevBtn) prevBtn.style.display = step > 1 ? 'block' : 'none';
+
+            if (step === 1) {
+                title.innerText = `🧙 Step 1/3: Hit Points (Level ${curLvl} ➔ ${newLvl})`;
+                if (nextBtn) nextBtn.innerText = "Next Step ➔";
+
+                body.innerHTML = `
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">
+                        Congratulations on leveling up to <strong>Level ${newLvl}</strong>! Choose how you wish to increase your Max Hit Points:
+                    </p>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <label style="background: rgba(255,255,255,0.03); border: 2px solid var(--border-iron); border-radius: 6px; padding: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px;" id="hp-opt-avg-label" onclick="selectWizardHpOption('average', ${avgIncrease})">
+                            <input type="radio" name="hp_choice" id="hp-opt-avg" value="average" checked style="accent-color: var(--gold-amber);">
+                            <div>
+                                <strong style="color: var(--gold-amber); font-size: 0.9rem;">Take Average HP (+${avgIncrease} Max HP)</strong>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">Fixed average: ${Math.floor(dieSides / 2) + 1} (${dieSides / 2 + 0.5}) + CON mod (${conMod >= 0 ? '+' : ''}${conMod})</div>
+                            </div>
+                        </label>
+                        <label style="background: rgba(255,255,255,0.03); border: 2px solid var(--border-iron); border-radius: 6px; padding: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px;" id="hp-opt-roll-label" onclick="selectWizardHpOption('roll', ${dieSides})">
+                            <input type="radio" name="hp_choice" id="hp-opt-roll" value="roll" style="accent-color: var(--gold-amber);">
+                            <div style="flex: 1;">
+                                <strong style="color: white; font-size: 0.9rem;">Roll 1d${dieSides} Hit Die</strong>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);" id="hp-roll-result-text">Tap to roll 1d${dieSides} + CON mod (${conMod >= 0 ? '+' : ''}${conMod})</div>
+                            </div>
+                            <button class="btn-primary" style="background: #3b82f6; font-size: 0.75rem; padding: 4px 8px;" onclick="rollHitDieWizard(${dieSides}, ${conMod}); event.stopPropagation();">🎲 Roll</button>
+                        </label>
+                    </div>
+                `;
+                wizardSelectedHpGain = avgIncrease;
+
+            } else if (step === 2) {
+                title.innerText = `🧙 Step 2/3: Unlocked Level ${newLvl} Features & Subclass`;
+                if (nextBtn) nextBtn.innerText = "Next Step ➔";
+
+                const upcomingFeats = getDynamicClassFeatures({ class: charClass, level: newLvl, subclass: character.subclass || '' }, true).filter(f => f.level === newLvl);
+
+                let featsHtml = '';
+                if (upcomingFeats.length > 0) {
+                    upcomingFeats.forEach(f => {
+                        featsHtml += `
+                            <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid var(--arcane-violet); padding: 10px; border-radius: 6px; margin-bottom: 6px;">
+                                <strong style="color: var(--gold-amber); font-size: 0.85rem;">⭐ ${f.name}</strong>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Unlocked at Level ${newLvl} ${f.isSubclass ? `(${f.subclassName} Subclass)` : ''}</div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    featsHtml = `<div style="font-size:0.8rem; color:var(--text-muted); font-style:italic; padding:10px;">Proficiency bonus &amp; spell slot scaling active at Level ${newLvl}.</div>`;
+                }
+
+                let subclassPromptHtml = '';
+                const availableForClass = (sandboxSubclasses || []).filter(sc => {
+                    if (!sc || !sc.name) return false;
+                    const name = sc.name;
+                    const source = sc.source || '';
+                    if (name.includes('UA') || name.includes('(UA)') || name.includes('Playtest') || name.includes('Sidekick')) {
+                        return false;
+                    }
+                    if (source.startsWith('UA') || source.includes('Modern') || source.includes('Mystic')) {
+                        return false;
+                    }
+                    const cName = sc.class && (typeof sc.class === 'string' ? sc.class : sc.class.name);
+                    return cName && cName.toLowerCase() === charClass.toLowerCase();
+                });
+
+                if (availableForClass.length > 0) {
+                    let opts = `<option value="">-- Select Subclass Archetype --</option>`;
+                    availableForClass.forEach(sc => {
+                        const label = sc.subclass_flavor ? `${sc.name} (${sc.subclass_flavor})` : sc.name;
+                        opts += `<option value="${sc.name}" ${character.subclass === sc.name ? 'selected' : ''}>${label}</option>`;
+                    });
+                    subclassPromptHtml = `
+                        <div style="margin-top: 12px; border-top: 1px solid var(--border-iron); padding-top: 10px;">
+                            <label style="font-size: 0.8rem; color: var(--gold-amber); font-weight: bold; display: block; margin-bottom: 4px;">⭐ Choose / Confirm Subclass Archetype</label>
+                            <select id="wizard-subclass-dropdown" onchange="character.subclass = this.value; renderWizardStep(2);" style="width: 100%; background: var(--bg-abyss); color: white; border: 1px solid var(--gold-amber); padding: 6px 10px; border-radius: 4px; font-size: 0.85rem; font-weight: bold;">
+                                ${opts}
+                            </select>
+                        </div>
+                    `;
+                }
+
+                body.innerHTML = `
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+                        Review features granted to your <strong>${charClass}</strong> at Level ${newLvl}:
+                    </p>
+                    <div style="max-height: 140px; overflow-y: auto;">
+                        ${featsHtml}
+                    </div>
+                    ${subclassPromptHtml}
+                `;
+
+            } else if (step === 3) {
+                title.innerText = `🧙 Step 3/3: Confirm & Commit Level ${newLvl}`;
+                if (nextBtn) nextBtn.innerText = "Complete Level Up 🎉";
+
+                const curHpMax = parseInt(character.hp_max) || 30;
+                const newHpMax = curHpMax + wizardSelectedHpGain;
+
+                body.innerHTML = `
+                    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success-green); padding: 15px; border-radius: 8px; text-align: center;">
+                        <h4 style="font-family: 'Cinzel', serif; color: var(--success-green); margin-top: 0; margin-bottom: 8px; font-size: 1.1rem;">Ready to Level Up!</h4>
+                        <div style="font-size: 0.85rem; color: white; display: flex; justify-content: space-around; margin: 15px 0;">
+                            <div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">New Level</div>
+                                <strong style="font-size: 1.2rem; color: var(--gold-amber);">Level ${newLvl}</strong>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">Max HP Increase</div>
+                                <strong style="font-size: 1.2rem; color: #22c55e;">+${wizardSelectedHpGain} HP (${newHpMax})</strong>
+                            </div>
+                        </div>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">
+                            Clicking complete will update your character sheet and notify the DM Command Center dashboard for audit.
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        function selectWizardHpOption(opt, val) {
+            if (opt === 'average') {
+                wizardSelectedHpGain = val;
+            }
+        }
+
+        function rollHitDieWizard(sides, conMod) {
+            const die = Math.floor(Math.random() * sides) + 1;
+            const total = Math.max(1, die + conMod);
+            wizardSelectedHpGain = total;
+
+            const optRadio = document.getElementById('hp-opt-roll');
+            if (optRadio) optRadio.checked = true;
+
+            const resText = document.getElementById('hp-roll-result-text');
+            if (resText) {
+                resText.innerHTML = `<span style="color: #22c55e; font-weight: bold;">Rolled 1d${sides} (${die}) + CON (${conMod >= 0 ? '+' : ''}${conMod}) = +${total} HP!</span>`;
+            }
+        }
+
+        function nextLevelUpStep() {
+            if (wizardCurrentStep < 3) {
+                renderWizardStep(wizardCurrentStep + 1);
+            } else {
+                completeLevelUpWizard();
+            }
+        }
+
+        function prevLevelUpStep() {
+            if (wizardCurrentStep > 1) {
+                renderWizardStep(wizardCurrentStep - 1);
+            }
+        }
+
+        function completeLevelUpWizard() {
+            const curLvl = parseInt(character.level) || 1;
+            character.level = curLvl + 1;
+            character.hp_max = (parseInt(character.hp_max) || 30) + wizardSelectedHpGain;
+            character.hp_current = (parseInt(character.hp_current) || 30) + wizardSelectedHpGain;
+
+            character.level_up_audit = true;
+            character.unapproved_level = character.level;
+
+            if (character.classes && character.classes.length > 0) {
+                character.classes[0].level = character.level;
+            } else {
+                character.classes = [{ class: character.class || 'Fighter', level: character.level }];
+            }
+
+            character = window.characterEngine.calculate(character);
+            renderCharacterSheet();
+            queueUpdateAndSync();
+
+            closeLevelUpWizardModal();
+            alert(`🎉 LEVEL UP COMPLETE! You are now Level ${character.level}. The DM dashboard has been notified.`);
+        }
+
         function saveWishlistOnSheet() {
             const val = document.getElementById('wishlist-text-area-sheet').value.trim();
             const lines = val.split('\n').map(l => l.trim()).filter(l => l.length > 0);
@@ -2959,7 +4733,8 @@
         // Styling Custom Theme selectors
         function selectThemePreset(themeName) {
             character.theme = themeName;
-            document.body.className = `theme-${themeName}`;
+            document.body.classList.remove('theme-violet', 'theme-crimson', 'theme-amber', 'theme-emerald', 'theme-sapphire');
+            document.body.classList.add(`theme-${themeName}`);
             
             document.querySelectorAll('.theme-preset-circle').forEach(btn => {
                 if (btn.id === `theme-btn-${themeName}`) {
@@ -2969,7 +4744,107 @@
                 }
             });
 
+            applyAllPlayerSettings();
             queueUpdateAndSync();
+        }
+
+        // --- PLAYER SHEET CUSTOMIZATION SETTINGS ENGINE ---
+        function initPlayerSettings() {
+            if (!window.character || typeof window.character !== 'object') {
+                window.character = {};
+            }
+            if (!window.character.settings) {
+                window.character.settings = {
+                    densityMode: 'standard',
+                    scorePriority: 'modifier',
+                    fontStyle: 'cinematic',
+                    rollMode: 'interactive',
+                    digitalDiceEnabled: true,
+                    autoExhaustion: true,
+                    sfxEnabled: true
+                };
+            }
+            if (window.character.settings.digitalDiceEnabled === undefined) {
+                window.character.settings.digitalDiceEnabled = true;
+            }
+            applyAllPlayerSettings();
+        }
+
+        function updatePlayerSetting(key, value) {
+            if (!window.character || typeof window.character !== 'object') {
+                window.character = {};
+            }
+            if (!window.character.settings) {
+                window.character.settings = {};
+            }
+            window.character.settings[key] = value;
+            applyAllPlayerSettings();
+            if (typeof queueUpdateAndSync === 'function') queueUpdateAndSync();
+        }
+
+        function applyAllPlayerSettings() {
+            try {
+                const char = window.character || {};
+                const s = char.settings || {
+                    densityMode: 'standard',
+                    scorePriority: 'modifier',
+                    fontStyle: 'cinematic',
+                    rollMode: 'interactive',
+                    digitalDiceEnabled: true,
+                    autoExhaustion: true,
+                    sfxEnabled: true
+                };
+
+                // Density Mode
+                if (s.densityMode === 'compact') {
+                    document.body.classList.add('density-compact');
+                } else {
+                    document.body.classList.remove('density-compact');
+                }
+
+                // Typography Style
+                if (s.fontStyle === 'modern') {
+                    document.body.classList.add('font-modern');
+                } else {
+                    document.body.classList.remove('font-modern');
+                }
+
+                // Digital Dice Enabled / Disabled Mode
+                if (s.digitalDiceEnabled === false) {
+                    document.body.classList.add('digital-dice-disabled');
+                } else {
+                    document.body.classList.remove('digital-dice-disabled');
+                }
+
+                // Re-render ability scores with selected priority (Modifier vs Score)
+                if (typeof renderAbilitiesList === 'function' && window.character && window.character.abilities) {
+                    renderAbilitiesList();
+                }
+
+                // Sync UI control inputs on Settings tab
+                const densitySelect = document.getElementById('setting-density-mode');
+                if (densitySelect) densitySelect.value = s.densityMode || 'standard';
+
+                const prioritySelect = document.getElementById('setting-score-priority');
+                if (prioritySelect) prioritySelect.value = s.scorePriority || 'modifier';
+
+                const fontSelect = document.getElementById('setting-font-style');
+                if (fontSelect) fontSelect.value = s.fontStyle || 'cinematic';
+
+                const rollSelect = document.getElementById('setting-roll-mode');
+                if (rollSelect) rollSelect.value = s.rollMode || 'interactive';
+
+                const digitalDiceCheckbox = document.getElementById('setting-digital-dice');
+                if (digitalDiceCheckbox) digitalDiceCheckbox.checked = s.digitalDiceEnabled !== false;
+
+                const autoExhCheckbox = document.getElementById('setting-auto-exhaustion');
+                if (autoExhCheckbox) autoExhCheckbox.checked = s.autoExhaustion !== false;
+
+                const sfxCheckbox = document.getElementById('setting-sfx-enabled');
+                if (sfxCheckbox) sfxCheckbox.checked = s.sfxEnabled !== false;
+            } catch (e) {
+                console.error("Error in applyAllPlayerSettings:", e);
+            }
         }
 
         // Sandbox What-If Simulator on details
@@ -3754,7 +5629,264 @@
         </div>
     </div>
 
-    <script src="/app_player_extensions.js"></script>
+    <!-- INTERACTIVE DICE ROLLER MODAL OVERLAY -->
+    <div id="dice-roller-modal" class="overlay-modal" style="display: none; z-index: 10005;" onclick="closeDiceRollerModal()">
+        <div class="modal-content" style="width: 420px; background: #121218; border: 2px solid var(--gold-amber); border-radius: 12px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);" onclick="event.stopPropagation()">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-iron); padding-bottom: 10px; margin-bottom: 15px;">
+                <h3 id="roller-modal-title" style="color: var(--gold-amber); font-family: 'Cinzel'; margin: 0; font-size: 1.2rem;">🎲 d20 Roll</h3>
+                <button onclick="closeDiceRollerModal()" style="background: none; border: none; color: #ef4444; font-size: 1.4rem; cursor: pointer; line-height: 1;">×</button>
+            </div>
+
+            <!-- Top Target Selector (Sorted: Skills -> Saves -> Stats -> Attacks) -->
+            <div style="margin-bottom: 12px;">
+                <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Target Action / Stat Selector:</label>
+                <select id="roller-target-select" onchange="onRollerTargetChange(this)" style="width: 100%; background: #09090d; border: 1.5px solid var(--gold-amber); color: #fff; padding: 8px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; outline: none; cursor: pointer;">
+                </select>
+            </div>
+
+            <!-- Advantage / Normal / Disadvantage Radio Selectors -->
+            <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                <button id="roller-btn-adv" onclick="setRollerMode('advantage')" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid var(--border-iron); background: rgba(255,255,255,0.05); color: var(--text-main); font-size: 0.8rem; cursor: pointer; transition: all 0.15s ease;">⚡ Advantage</button>
+                <button id="roller-btn-norm" onclick="setRollerMode('normal')" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid var(--gold-amber); background: var(--gold-amber); color: #000; font-weight: bold; font-size: 0.8rem; cursor: pointer; transition: all 0.15s ease;">Normal</button>
+                <button id="roller-btn-dis" onclick="setRollerMode('disadvantage')" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid var(--border-iron); background: rgba(255,255,255,0.05); color: var(--text-main); font-size: 0.8rem; cursor: pointer; transition: all 0.15s ease;">💀 Disadvantage</button>
+            </div>
+
+            <!-- Condition Warning Banners -->
+            <div id="roller-condition-warnings" style="margin-bottom: 15px;"></div>
+
+            <!-- Dice Display Area -->
+            <div style="background: #09090d; border: 1px solid var(--border-iron); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 15px;">
+                <div id="roller-dice-display" style="margin-bottom: 6px;"></div>
+                <div id="roller-breakdown-display" style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;"></div>
+            </div>
+
+            <!-- Final Result Box -->
+            <div id="roller-total-display" style="text-align: center; background: rgba(245,158,11,0.05); border: 1px dashed var(--gold-amber); border-radius: 8px; padding: 10px 15px; margin-bottom: 15px;">
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-primary" onclick="executeDiceRoll()" style="flex: 1; padding: 10px; background: #3b82f6; border-radius: 6px; font-weight: bold; cursor: pointer;">🎲 Re-Roll</button>
+                <button class="btn-secondary" onclick="closeDiceRollerModal()" style="padding: 10px 20px; background: #374151; border-radius: 6px; cursor: pointer;">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOM HOMEBREW WEAPON & ACTION BUILDER MODAL -->
+    <div id="homebrew-builder-modal" class="overlay-modal" style="display: none; z-index: 10005;" onclick="closeHomebrewModal()">
+        <div class="modal-content" style="width: 450px; background: #121218; border: 2px solid var(--gold-amber); border-radius: 12px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);" onclick="event.stopPropagation()">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-iron); padding-bottom: 10px; margin-bottom: 15px;">
+                <h3 style="color: var(--gold-amber); font-family: 'Cinzel'; margin: 0; font-size: 1.2rem;">🧪 Create Homebrew Action / Weapon</h3>
+                <button onclick="closeHomebrewModal()" style="background: none; border: none; color: #ef4444; font-size: 1.4rem; cursor: pointer; line-height: 1;">×</button>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px;">
+                <div>
+                    <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Name</label>
+                    <input type="text" id="hb-name-input" placeholder="e.g. Flamebringer Greatsword" style="width: 100%; background: #09090d; border: 1px solid var(--border-iron); color: #fff; padding: 8px; border-radius: 4px; font-size: 0.85rem;">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Type</label>
+                        <select id="hb-type-input" style="width: 100%; background: #09090d; border: 1px solid var(--border-iron); color: #fff; padding: 8px; border-radius: 4px; font-size: 0.85rem;">
+                            <option value="weapon">Weapon / Melee</option>
+                            <option value="ranged">Ranged Weapon</option>
+                            <option value="action">Custom Action</option>
+                            <option value="spell">Custom Spell</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Attribute</label>
+                        <select id="hb-attr-input" style="width: 100%; background: #09090d; border: 1px solid var(--border-iron); color: #fff; padding: 8px; border-radius: 4px; font-size: 0.85rem;">
+                            <option value="str">Strength (STR)</option>
+                            <option value="dex">Dexterity (DEX)</option>
+                            <option value="int">Intelligence (INT)</option>
+                            <option value="wis">Wisdom (WIS)</option>
+                            <option value="cha">Charisma (CHA)</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Damage / Effect Roll Formula</label>
+                    <input type="text" id="hb-formula-input" placeholder="e.g. 2d6 Slashing + 1d6 Radiant" style="width: 100%; background: #09090d; border: 1px solid var(--border-iron); color: #fff; padding: 8px; border-radius: 4px; font-size: 0.85rem;">
+                </div>
+                <div>
+                    <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Notes / Special Rules</label>
+                    <textarea id="hb-notes-input" placeholder="e.g. On critical hit, target ignites for 1d4 fire damage per turn." style="width: 100%; height: 60px; background: #09090d; border: 1px solid var(--border-iron); color: #fff; padding: 8px; border-radius: 4px; font-size: 0.85rem; resize: none;"></textarea>
+                </div>
+            </div>
+
+            <div style="font-size: 0.75rem; color: #f59e0b; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); padding: 8px; border-radius: 4px; margin-bottom: 15px;">
+                ℹ️ Homebrew creations will appear on your sheet in <strong>Provisional Mode (Pending DM Approval)</strong> until approved by the DM.
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-primary" onclick="submitCustomHomebrewItem()" style="flex: 1; padding: 10px; background: #10b981; border-radius: 6px; font-weight: bold; cursor: pointer;">Submit for DM Approval</button>
+                <button class="btn-secondary" onclick="closeHomebrewModal()" style="padding: 10px 20px; background: #374151; border-radius: 6px; cursor: pointer;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEVEL-UP & MULTICLASSING MODAL -->
+    <div id="level-up-modal" class="overlay-modal" style="display: none; z-index: 10005;" onclick="closeLevelUpModal()">
+        <div class="modal-content" style="width: 480px; background: #121218; border: 2px solid var(--gold-amber); border-radius: 12px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);" onclick="event.stopPropagation()">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-iron); padding-bottom: 10px; margin-bottom: 15px;">
+                <h3 style="color: var(--gold-amber); font-family: 'Cinzel'; margin: 0; font-size: 1.2rem;">📜 Level-Up & Multiclassing Engine</h3>
+                <button onclick="closeLevelUpModal()" style="background: none; border: none; color: #ef4444; font-size: 1.4rem; cursor: pointer; line-height: 1;">×</button>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Existing Classes:</div>
+                <div id="levelup-class-list" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px;"></div>
+
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Multiclass into a New Class:</div>
+                <div style="display: flex; gap: 10px;">
+                    <select id="levelup-new-class-select" style="flex: 1; background: #09090d; border: 1px solid var(--border-iron); color: #fff; padding: 8px; border-radius: 4px; font-size: 0.85rem;">
+                        <option value="">-- Select Class --</option>
+                        <option value="Fighter">Fighter</option>
+                        <option value="Wizard">Wizard</option>
+                        <option value="Rogue">Rogue</option>
+                        <option value="Cleric">Cleric</option>
+                        <option value="Paladin">Paladin</option>
+                        <option value="Warlock">Warlock</option>
+                        <option value="Sorcerer">Sorcerer</option>
+                        <option value="Druid">Druid</option>
+                        <option value="Bard">Bard</option>
+                        <option value="Barbarian">Barbarian</option>
+                        <option value="Monk">Monk</option>
+                        <option value="Ranger">Ranger</option>
+                        <option value="Artificer">Artificer</option>
+                    </select>
+                    <button class="btn-primary" onclick="addNewMulticlass()" style="padding: 8px 14px; background: #10b981; border-radius: 4px; font-weight: bold; cursor: pointer;">+ Add Class</button>
+                </div>
+            </div>
+
+            <div style="font-size: 0.75rem; color: var(--text-muted); background: rgba(255,255,255,0.03); border: 1px solid var(--border-iron); padding: 10px; border-radius: 6px; margin-bottom: 15px;">
+                💡 <strong>Multiclassing Rules:</strong> Subclass selection unlocks at Level 1 (Cleric/Sorcerer/Warlock), Level 2 (Wizard/Druid), or Level 3 (Fighter/Rogue/Paladin/etc.). Multiclass spell slot matrix will recalculate automatically.
+            </div>
+
+            <div style="display: flex; justify-content: flex-end;">
+                <button class="btn-secondary" onclick="closeLevelUpModal()" style="padding: 8px 20px; background: #374151; border-radius: 6px; cursor: pointer;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DM HOMEBREW ITEM OFFER MODAL -->
+    <div id="dm-item-offer-modal" class="overlay-modal" style="display: none; z-index: 10010;" onclick="declineOfferedItem()">
+        <div class="modal-content" style="width: 460px; max-width: 90vw; background: #12131c; border: 2px solid var(--gold-amber); border-radius: 12px; padding: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); font-family: 'Inter', sans-serif; color: #fff;" onclick="event.stopPropagation()">
+            
+            <div style="text-align: center; margin-bottom: 12px;">
+                <div style="font-size: 2.2rem; margin-bottom: 4px;">🎁</div>
+                <h3 style="font-family: 'Cinzel', serif; color: var(--gold-amber); margin: 0; font-size: 1.25rem;">Item Offered by DM</h3>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">The Dungeon Master is sending an item to your character sheet</div>
+            </div>
+
+            <div style="background: #090a10; border: 1.5px solid var(--border-iron); border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                    <h4 id="offered-item-name" style="font-family: 'Cinzel', serif; color: #fff; margin: 0; font-size: 1.05rem;">Item Name</h4>
+                    <span id="offered-item-rarity" style="font-size: 0.75rem; background: rgba(245,158,11,0.2); color: var(--gold-amber); border: 1px solid var(--gold-amber); padding: 2px 8px; border-radius: 4px; font-weight: bold;">Rare</span>
+                </div>
+
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; display: flex; gap: 12px; flex-wrap: wrap;" id="offered-item-stats">
+                    <!-- Filled dynamically -->
+                </div>
+
+                <div id="offered-item-description" style="font-size: 0.8rem; color: #cbd5e1; font-style: italic; line-height: 1.4; background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1); padding: 10px; border-radius: 6px; max-height: 120px; overflow-y: auto;">
+                    <!-- Description text -->
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn-secondary" onclick="declineOfferedItem()" style="padding: 10px 16px; background: #374151; border: 1px solid #4b5563; border-radius: 6px; font-weight: bold; cursor: pointer; color: #d1d5db;">❌ Decline</button>
+                <button class="btn-primary" onclick="acceptOfferedItem()" style="padding: 10px 20px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);">✅ Accept &amp; Add to Sheet</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.pendingOfferedItem = null;
+
+        function getItemTypeName(type) {
+            const types = {
+                'M': 'Melee Weapon', 'R': 'Ranged Weapon', 'LA': 'Light Armor',
+                'MA': 'Medium Armor', 'HA': 'Heavy Armor', 'S': 'Shield',
+                'W': 'Wondrous Item', 'P': 'Potion', 'RG': 'Ring',
+                'WD': 'Wand', 'ST': 'Staff', 'RD': 'Rod', 'SC': 'Scroll',
+                'G': 'Adventuring Gear', 'A': 'Ammunition'
+            };
+            return types[type] || type || 'Item';
+        }
+
+        function showOfferedItemModal(item) {
+            const modal = document.getElementById('dm-item-offer-modal');
+            if (!modal) return;
+
+            document.getElementById('offered-item-name').innerText = item.name || 'Custom Item';
+            const raritySpan = document.getElementById('offered-item-rarity');
+            raritySpan.innerText = item.rarity || 'Common';
+            
+            // Stats line
+            const statsDiv = document.getElementById('offered-item-stats');
+            let statsHtml = `<span><strong>Type:</strong> ${getItemTypeName(item.type)}</span>`;
+            if (item.dmg1) statsHtml += `<span><strong>Damage:</strong> ${item.dmg1} ${item.dmgType || ''}</span>`;
+            if (item.ac) statsHtml += `<span><strong>AC:</strong> ${item.ac}</span>`;
+            if (item.value) statsHtml += `<span><strong>Value:</strong> ${(typeof item.value === 'number' ? item.value / 100 : item.value)} GP</span>`;
+            
+            const abObj = item.ability || item.abilityBonus || item.bonusAbility;
+            if (abObj && typeof abObj === 'object') {
+                const parts = [];
+                Object.keys(abObj).forEach(k => {
+                    const sign = abObj[k] >= 0 ? '+' : '';
+                    parts.push(`${k.toUpperCase()} ${sign}${abObj[k]}`);
+                });
+                if (parts.length > 0) {
+                    statsHtml += `<span style="color: #38bdf8;">💪 <strong>Bonus:</strong> ${parts.join(', ')}</span>`;
+                }
+            }
+
+            if (item.reqAttune) statsHtml += `<span style="color: #a78bfa;">🔒 Attunement</span>`;
+            statsDiv.innerHTML = statsHtml;
+
+            // Description
+            const descDiv = document.getElementById('offered-item-description');
+            if (Array.isArray(item.entries)) {
+                descDiv.innerText = item.entries.map(e => (typeof e === 'string' ? e : (e.entries ? e.entries.join('\n') : JSON.stringify(e)))).join('\n\n');
+            } else if (item.entries) {
+                descDiv.innerText = item.entries;
+            } else {
+                descDiv.innerText = 'No description provided.';
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function acceptOfferedItem() {
+            if (window.pendingOfferedItem && window.socket) {
+                window.socket.emit('player-accept-item', { charId: typeof charId !== 'undefined' ? charId : window.charId, item: window.pendingOfferedItem });
+                alert(`🎁 Added "${window.pendingOfferedItem.name}" to your inventory!`);
+                window.pendingOfferedItem = null;
+            }
+            const modal = document.getElementById('dm-item-offer-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function declineOfferedItem() {
+            if (window.pendingOfferedItem && window.socket) {
+                window.socket.emit('player-decline-item', { charId: typeof charId !== 'undefined' ? charId : window.charId, item: window.pendingOfferedItem });
+                window.pendingOfferedItem = null;
+            }
+            const modal = document.getElementById('dm-item-offer-modal');
+            if (modal) modal.style.display = 'none';
+        }
     </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/pixi.js@8.x/dist/pixi.min.js"></script>
+    <script src="/js/lighting_fog.js?v=999"></script>
+    <script src="/js/scene_engine.js?v=999"></script>
+    <script src="/js/dice_parser.js"></script>
+    <script src="/app_player_extensions.js"></script>
+    <script src="/js/player-sheet-engine-v2.js"></script>
+    <script src="/js/wildshape-companion-engine.js"></script>
+    <script src="/js/resource-vault-engine.js"></script>
 </body>
+
 </html>

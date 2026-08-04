@@ -6,7 +6,7 @@
     "class": "Bard",
     "level": 7,
     "hp": 45,
-    "ac": 12,
+    "ac": 18,
     "passives": {
       "perception": 11,
       "insight": 11,
@@ -37,12 +37,21 @@
     },
     "inventory": [],
     "known_spells": [
+      "Animal Friendship",
+      "Acid Arrow",
+      "Aid",
+      "Acid Splash",
+      "Animal Messenger"
+    ],
+    "prepared_spells": [
+      "Acid Arrow",
+      "Acid Splash",
+      "Aid",
       "Animal Friendship"
     ],
-    "prepared_spells": [],
-    "equipped_armor": "none",
-    "equipped_shield": false,
-    "theme": "sapphire",
+    "equipped_armor": "scale mail",
+    "equipped_shield": true,
+    "theme": "crimson",
     "proficiency_bonus": 3,
     "ability_scores_calculated": {
       "str": 8,
@@ -75,10 +84,10 @@
       0
     ],
     "spell_slots_current": [
-      0,
-      2,
+      4,
       3,
-      0,
+      3,
+      1,
       0,
       0,
       0,
@@ -93,9 +102,58 @@
       }
     ],
     "wishlist": [
-      "Testing Arrric whispers"
+      "Testing valorie whisper"
     ],
     "exhaustion": 0,
+    "settings": {
+      "densityMode": "compact",
+      "scorePriority": "modifier",
+      "fontStyle": "modern",
+      "rollMode": "interactive",
+      "autoExhaustion": true,
+      "sfxEnabled": true
+    },
+    "currency": {
+      "pp": 0,
+      "gp": 150,
+      "ep": 0,
+      "sp": 0,
+      "cp": 0
+    },
+    "gp": 150,
+    "weapons": [
+      {
+        "id": "w1",
+        "name": "Scimitar",
+        "type": "Melee",
+        "attribute": "dex",
+        "damage": "1d6",
+        "damageType": "Slashing",
+        "bonus": 0,
+        "proficient": true
+      },
+      {
+        "id": "w2",
+        "name": "Shortbow",
+        "type": "Ranged",
+        "attribute": "dex",
+        "damage": "1d6",
+        "damageType": "Piercing",
+        "bonus": 0,
+        "proficient": true
+      },
+      {
+        "id": "w3",
+        "name": "Unarmed Strike",
+        "type": "Melee",
+        "attribute": "str",
+        "damage": "1d4",
+        "damageType": "Bludgeoning",
+        "bonus": 0,
+        "proficient": true
+      }
+    ],
+    "subclass": "College of Whispers",
     "proposals": {
       "level": 7,
       "feats": [
@@ -116,6 +174,27 @@
           "level": 7
         }
       ]
+    },
+    "attunement_max": 3,
+    "attuned_bonuses": {
+      "ac": 0,
+      "saves": 0,
+      "attack": 0
+    },
+    "encumbrance": {
+      "enabled": false,
+      "coin_weight": 0,
+      "item_weight": 0,
+      "total_weight": 0,
+      "max_capacity": 120,
+      "is_encumbered": false
+    },
+    "exhaustion_level": 0,
+    "exhaustion_penalty": 0,
+    "is_dead": false,
+    "pact_slots": {
+      "count": 0,
+      "level": 0
     }
   },
   {
@@ -219,28 +298,7 @@
     ],
     "prepared_spells": [],
     "equipped_shield": false,
-    "exhaustion": 0,
-    "proposals": {
-      "level": 7,
-      "feats": [
-        "Lucky"
-      ],
-      "stats": {
-        "str": 10,
-        "dex": 16,
-        "con": 14,
-        "int": 16,
-        "wis": 12,
-        "cha": 8
-      },
-      "hp_max": 52,
-      "classes": [
-        {
-          "class": "Artificer",
-          "level": 7
-        }
-      ]
-    }
+    "exhaustion": 0
   },
   {
     "id": "char_3",
@@ -257,7 +315,8 @@
     },
     "magic_items": [
       "+1 Longsword",
-      "Bag of Holding"
+      "Bag of Holding",
+      "Bag of Devouring"
     ],
     "feats": [
       "Great Weapon Master"
@@ -312,17 +371,23 @@
     "initiative_bonus": 1,
     "spell_save_dc": 11,
     "spell_attack_bonus": 3,
-    "spell_slots": [
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-    ],
+    "spell_slots": {
+      "standard": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "pact": {
+        "count": 0,
+        "level": 0
+      }
+    },
     "spell_slots_current": [
       0,
       2,
@@ -335,9 +400,74 @@
       0
     ],
     "level_up_audit": false,
-    "exhaustion": 0,
+    "exhaustion": 2,
     "wishlist": [
       "Testing Arrric whispers"
+    ],
+    "settings": {
+      "densityMode": "standard",
+      "scorePriority": "modifier",
+      "fontStyle": "cinematic",
+      "rollMode": "interactive",
+      "autoExhaustion": true,
+      "sfxEnabled": true
+    },
+    "attunement_max": 3,
+    "attuned_bonuses": {
+      "ac": 0,
+      "saves": 0,
+      "attack": 0
+    },
+    "encumbrance": {
+      "enabled": false,
+      "coin_weight": 0,
+      "item_weight": 0,
+      "total_weight": 0,
+      "max_capacity": 270,
+      "is_encumbered": false
+    },
+    "exhaustion_level": 2,
+    "exhaustion_penalty": -2,
+    "is_dead": false,
+    "currency": {
+      "pp": 0,
+      "gp": 152,
+      "ep": 0,
+      "sp": 0,
+      "cp": 30
+    },
+    "gp": 152,
+    "weapons": [
+      {
+        "id": "w1",
+        "name": "Scimitar",
+        "type": "Melee",
+        "attribute": "dex",
+        "damage": "1d6",
+        "damageType": "Slashing",
+        "bonus": 0,
+        "proficient": true
+      },
+      {
+        "id": "w2",
+        "name": "Shortbow",
+        "type": "Ranged",
+        "attribute": "dex",
+        "damage": "1d6",
+        "damageType": "Piercing",
+        "bonus": 0,
+        "proficient": true
+      },
+      {
+        "id": "w3",
+        "name": "Unarmed Strike",
+        "type": "Melee",
+        "attribute": "str",
+        "damage": "1d4",
+        "damageType": "Bludgeoning",
+        "bonus": 0,
+        "proficient": true
+      }
     ]
   },
   {
@@ -345,7 +475,7 @@
     "name": "Gnoah",
     "race": "Rock Gnome",
     "class": "Wizard",
-    "level": 7,
+    "level": 8,
     "hp": 50,
     "ac": 13,
     "passives": {
@@ -369,8 +499,8 @@
       "wis": 12,
       "cha": 10
     },
-    "hp_max": 44,
-    "hp_current": 2,
+    "hp_max": 50,
+    "hp_current": 50,
     "hp_temp": 2,
     "class_resources": {
       "name": "Resource Points",
@@ -403,7 +533,7 @@
     "classes": [
       {
         "class": "Wizard",
-        "level": 7
+        "level": 8
       }
     ],
     "proficiency_bonus": 3,
@@ -413,7 +543,7 @@
       "con": 14,
       "int": 18,
       "wis": 12,
-      "cha": 10
+      "cha": 11
     },
     "ability_modifiers": {
       "str": -1,
@@ -427,10 +557,10 @@
     "spell_save_dc": 16,
     "spell_attack_bonus": 8,
     "spell_slots_current": [
-      2,
+      4,
       3,
+      4,
       2,
-      1,
       0,
       0,
       0,
@@ -450,30 +580,79 @@
     "wishlist": [
       "Testing Arrric whispers"
     ],
-    "theme": "crimson",
-    "proposals": {
-      "level": 8,
-      "feats": [
-        "War Caster"
-      ],
-      "stats": {
-        "str": 8,
-        "dex": 14,
-        "con": 14,
-        "int": 18,
-        "wis": 12,
-        "cha": 10
-      },
-      "hp_max": 50,
-      "classes": [
-        {
-          "class": "Wizard",
-          "level": 8
-        }
-      ]
+    "theme": "violet",
+    "level_up_audit": false,
+    "settings": {
+      "densityMode": "compact",
+      "scorePriority": "modifier",
+      "fontStyle": "cinematic",
+      "rollMode": "interactive",
+      "autoExhaustion": true,
+      "sfxEnabled": false
     },
-    "level_up_audit": true,
-    "unapproved_level": 8
+    "languages": [
+      "Common",
+      "Aarakocra"
+    ],
+    "background": "Archaeologist",
+    "proficiencies": {
+      "skills": [
+        "history",
+        "survival"
+      ],
+      "saving_throws": [],
+      "armor": [],
+      "weapons": []
+    },
+    "currency": {
+      "pp": 0,
+      "gp": 150,
+      "ep": 0,
+      "sp": 0,
+      "cp": 0
+    },
+    "gp": 150,
+    "weapons": [
+      {
+        "id": "w1",
+        "name": "Scimitar",
+        "type": "Melee",
+        "attribute": "dex",
+        "damage": "1d6",
+        "damageType": "Slashing",
+        "bonus": 0,
+        "proficient": true
+      },
+      {
+        "id": "w2",
+        "name": "Shortbow",
+        "type": "Ranged",
+        "attribute": "dex",
+        "damage": "1d6",
+        "damageType": "Piercing",
+        "bonus": 0,
+        "proficient": true
+      },
+      {
+        "id": "w3",
+        "name": "Unarmed Strike",
+        "type": "Melee",
+        "attribute": "str",
+        "damage": "1d4",
+        "damageType": "Bludgeoning",
+        "bonus": 0,
+        "proficient": true
+      }
+    ],
+    "subclass": "School of Evocation",
+    "ability_scores": {
+      "base": {},
+      "racial": {},
+      "asi": {
+        "cha": 1
+      },
+      "overrides": {}
+    }
   },
   {
     "id": "char_5",
@@ -482,14 +661,16 @@
     "class": "Cleric",
     "level": 6,
     "hp": 45,
-    "ac": 10,
+    "ac": 16,
     "passives": {
       "perception": 14,
       "insight": 14,
       "investigation": 10
     },
     "magic_items": [
-      "Amulet of the Devout"
+      "+1 Longsword",
+      "Bag of Holding",
+      "Bag of Devouring"
     ],
     "feats": [
       "Alert"
@@ -511,17 +692,23 @@
       "name": "Resource Points",
       "current": 0
     },
-    "spell_slots": [
-      4,
-      3,
-      3,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-    ],
+    "spell_slots": {
+      "standard": [
+        4,
+        3,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "pact": {
+        "count": 0,
+        "level": 0
+      }
+    },
     "max_spell_slots": {
       "1": 4,
       "2": 3,
@@ -559,8 +746,8 @@
       "cha": 1
     },
     "initiative_bonus": 5,
-    "spell_save_dc": 16,
-    "spell_attack_bonus": 8,
+    "spell_save_dc": 15,
+    "spell_attack_bonus": 7,
     "spell_slots_current": [
       2,
       2,
@@ -572,21 +759,117 @@
       0,
       0
     ],
-    "exhaustion": 0,
+    "exhaustion": 1,
     "concentration_spell": "",
     "theme": "crimson",
     "wishlist": [
-      "Testing Arrric whispers"
-    ]
+      "Testing valorie whisper"
+    ],
+    "proposals": {
+      "level": 6,
+      "feats": [
+        "Alert"
+      ],
+      "stats": {
+        "str": 12,
+        "dex": 10,
+        "con": 14,
+        "int": 10,
+        "wis": 18,
+        "cha": 12
+      },
+      "hp_max": 45,
+      "classes": [
+        {
+          "class": "Cleric",
+          "level": 6
+        }
+      ]
+    },
+    "settings": {
+      "densityMode": "standard",
+      "scorePriority": "modifier",
+      "fontStyle": "cinematic",
+      "rollMode": "interactive",
+      "autoExhaustion": true,
+      "sfxEnabled": true
+    },
+    "currency": {
+      "pp": 0,
+      "gp": 163,
+      "ep": 0,
+      "sp": 0,
+      "cp": 0
+    },
+    "gp": 163,
+    "weapons": [
+      {
+        "id": "w1",
+        "name": "Scimitar",
+        "type": "Melee",
+        "attribute": "dex",
+        "damage": "1d6",
+        "damageType": "Slashing",
+        "bonus": 0,
+        "proficient": true
+      },
+      {
+        "id": "w2",
+        "name": "Shortbow",
+        "type": "Ranged",
+        "attribute": "dex",
+        "damage": "1d6",
+        "damageType": "Piercing",
+        "bonus": 0,
+        "proficient": true
+      },
+      {
+        "id": "w3",
+        "name": "Unarmed Strike",
+        "type": "Melee",
+        "attribute": "str",
+        "damage": "1d4",
+        "damageType": "Bludgeoning",
+        "bonus": 0,
+        "proficient": true
+      }
+    ],
+    "attunement_max": 3,
+    "attuned_bonuses": {
+      "ac": 0,
+      "saves": 0,
+      "attack": 0
+    },
+    "encumbrance": {
+      "enabled": true,
+      "coin_weight": 12,
+      "item_weight": 0,
+      "total_weight": 12,
+      "max_capacity": 180,
+      "is_encumbered": false
+    },
+    "exhaustion_level": 1,
+    "exhaustion_penalty": -1,
+    "is_dead": false,
+    "encumbrance_enabled": true,
+    "coins": {
+      "cp": 0,
+      "sp": 0,
+      "ep": 0,
+      "gp": 600,
+      "pp": 0
+    },
+    "equipped_armor": "scale mail",
+    "equipped_shield": true
   },
   {
     "name": "Test",
     "race": "Elf",
     "class": "Fighter",
-    "subclass": "Champion",
+    "subclass": "Samurai",
     "level": 1,
     "hp": 10,
-    "ac": 16,
+    "ac": 10,
     "art": "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=400",
     "stats": {
       "str": 10,
@@ -640,7 +923,10 @@
     },
     "spell_slots": [
       0,
-      2,
+      0,
+      0,
+      0,
+      0,
       0,
       0,
       0,
@@ -675,6 +961,80 @@
       0,
       0
     ],
-    "exhaustion": 0
+    "exhaustion": 0,
+    "settings": {
+      "densityMode": "standard",
+      "scorePriority": "modifier",
+      "fontStyle": "cinematic",
+      "rollMode": "interactive",
+      "autoExhaustion": true,
+      "sfxEnabled": true
+    },
+    "currency": {
+      "pp": 0,
+      "gp": 150,
+      "ep": 0,
+      "sp": 0,
+      "cp": 0
+    },
+    "gp": 150,
+    "weapons": [
+      {
+        "id": "w1",
+        "name": "Scimitar",
+        "type": "Melee",
+        "attribute": "dex",
+        "damage": "1d6",
+        "damageType": "Slashing",
+        "bonus": 0,
+        "proficient": true
+      },
+      {
+        "id": "w2",
+        "name": "Shortbow",
+        "type": "Ranged",
+        "attribute": "dex",
+        "damage": "1d6",
+        "damageType": "Piercing",
+        "bonus": 0,
+        "proficient": true
+      },
+      {
+        "id": "w3",
+        "name": "Unarmed Strike",
+        "type": "Melee",
+        "attribute": "str",
+        "damage": "1d4",
+        "damageType": "Bludgeoning",
+        "bonus": 0,
+        "proficient": true
+      }
+    ],
+    "proficiency_bonus": 2,
+    "ability_scores_calculated": {
+      "str": 10,
+      "dex": 10,
+      "con": 10,
+      "int": 10,
+      "wis": 10,
+      "cha": 10
+    },
+    "ability_modifiers": {
+      "str": 0,
+      "dex": 0,
+      "con": 0,
+      "int": 0,
+      "wis": 0,
+      "cha": 0
+    },
+    "initiative_bonus": 0,
+    "spell_save_dc": 10,
+    "spell_attack_bonus": 2,
+    "classes": [
+      {
+        "class": "Fighter",
+        "level": 1
+      }
+    ]
   }
 ]

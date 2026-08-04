@@ -59,22 +59,50 @@ class SyncEngine {
     }
 
     updateBanner(status, message) {
-        if (!this.offlineBanner) return;
+        if (this.offlineBanner) {
+            this.offlineBanner.innerText = message;
+        }
 
-        this.offlineBanner.innerText = message;
+        const pill = document.getElementById('pwa-network-pill');
+        const dot = document.getElementById('pwa-dot');
+        const text = document.getElementById('pwa-status-text');
 
         if (status === 'offline') {
-            this.offlineBanner.style.display = 'block';
-            this.offlineBanner.style.backgroundColor = '#7f1d1d'; // Crimson red
-            this.offlineBanner.style.color = '#fecaca';
+            if (this.offlineBanner) {
+                this.offlineBanner.style.display = 'block';
+                this.offlineBanner.style.backgroundColor = '#7f1d1d'; // Crimson red
+                this.offlineBanner.style.color = '#fecaca';
+            }
+            if (pill && dot && text) {
+                pill.style.background = 'rgba(239, 68, 68, 0.15)';
+                pill.style.borderColor = '#ef4444';
+                pill.style.color = '#fca5a5';
+                dot.style.background = '#ef4444';
+                dot.style.boxShadow = '0 0 6px #ef4444';
+                text.innerText = 'Offline Mode (Saved on Device)';
+            }
         } else if (status === 'syncing') {
-            // Silence normal background syncing messages from taking over the screen
             console.log(`[Sync Engine] Background Syncing: ${message}`);
-            this.offlineBanner.style.display = 'none';
+            if (this.offlineBanner) this.offlineBanner.style.display = 'none';
+            if (pill && dot && text) {
+                pill.style.background = 'rgba(245, 158, 11, 0.15)';
+                pill.style.borderColor = '#fbbf24';
+                pill.style.color = '#fde047';
+                dot.style.background = '#fbbf24';
+                dot.style.boxShadow = '0 0 6px #fbbf24';
+                text.innerText = 'Syncing...';
+            }
         } else if (status === 'success') {
-            // Silence normal success messages from taking over the screen
             console.log(`[Sync Engine] Background Sync Success: ${message}`);
-            this.offlineBanner.style.display = 'none';
+            if (this.offlineBanner) this.offlineBanner.style.display = 'none';
+            if (pill && dot && text) {
+                pill.style.background = 'rgba(34, 197, 94, 0.15)';
+                pill.style.borderColor = '#22c55e';
+                pill.style.color = '#4ade80';
+                dot.style.background = '#22c55e';
+                dot.style.boxShadow = '0 0 6px #22c55e';
+                text.innerText = 'Online';
+            }
         }
     }
 

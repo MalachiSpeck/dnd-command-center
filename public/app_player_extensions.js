@@ -1,4 +1,4 @@
-// --- PLAYER SHEET SUBSYSTEM EXTENSIONS (FEATS, BACKGROUNDS, LANGUAGES) ---
+// --- PLAYER SHEET SUBSYSTEM EXTENSIONS (FEATS, BACKGROUNDS, LANGUAGES, MOBILE MAP & AOE) ---
 // Integrates with player-sheet.html dynamically and unobtrusively
 
 window.availableFeats = null;
@@ -18,9 +18,85 @@ document.addEventListener('DOMContentLoaded', () => {
             renderFeats();
             renderBackground();
             renderLanguages();
+            if (window.resourceVaultEngine) {
+                window.resourceVaultEngine.renderVaultCard(window.character);
+            }
         };
     }
 });
+
+// --- MOBILE MAP VIEWPORT, D-PAD NUDGER & AOE PLACER ---
+
+window.initPlayerMobileMap = async function() {
+    var container = document.getElementById('player-mobile-map-container');
+    if (!container) return;
+
+    var socket = window.socket || (typeof io === 'function' ? io() : null);
+
+    if (window.GrailSceneEngine) {
+        await window.GrailSceneEngine.init(container, false, socket);
+        window.GrailSceneEngine.resize();
+
+        fetch('/api/scene')
+            .then(res => res.json())
+            .then(scene => {
+                if (scene) {
+                    window.GrailSceneEngine.loadScene(scene);
+                    window.GrailSceneEngine.resize();
+                }
+            })
+            .catch(err => console.warn('Could not load mobile map scene:', err));
+    }
+};
+
+window.nudgePlayerToken = function(direction) {
+    var charId = (window.character && window.character.id) || localStorage.getItem('dnd_active_char_id');
+    if (!charId) return alert('No active character loaded!');
+    var socket = window.socket || (typeof io === 'function' ? io() : null);
+    if (socket) {
+        socket.emit('token:nudge', { character_id: charId, direction: direction });
+    } else {
+        alert('Socket connection disconnected.');
+    }
+};
+
+window.placeMobileAoETemplate = function() {
+    var shapeEl = document.getElementById('mobile-aoe-shape');
+    var sizeEl = document.getElementById('mobile-aoe-size');
+    var shape = shapeEl ? shapeEl.value : 'sphere';
+    var size = sizeEl ? parseInt(sizeEl.value, 10) : 20;
+
+    if (window.GrailSceneEngine) {
+        window.GrailSceneEngine.setAoEConfig(shape, size, 0);
+        window.GrailSceneEngine.setTool('template');
+        alert(`Click anywhere on the mobile map to place your ${size}ft ${shape.toUpperCase()} spell template! Drag middle to move, drag yellow handle to rotate.`);
+    }
+};
+
+window.clearMobileAoETemplates = function() {
+    if (window.GrailSceneEngine) {
+        window.GrailSceneEngine.clearAoETemplates();
+    }
+};
+
+window.mobileZoomIn = function() {
+    if (window.GrailSceneEngine) window.GrailSceneEngine.zoomIn();
+};
+
+window.mobileZoomOut = function() {
+    if (window.GrailSceneEngine) window.GrailSceneEngine.zoomOut();
+};
+
+window.mobileZoomFit = function() {
+    if (window.GrailSceneEngine) window.GrailSceneEngine.zoomFit();
+};
+
+window.mobileCenterToken = function() {
+    var charId = (window.character && window.character.id) || localStorage.getItem('dnd_active_char_id');
+    if (window.GrailSceneEngine && charId) {
+        window.GrailSceneEngine.centerOnToken(charId);
+    }
+};
 
 // --- FEATS MODULE ---
 
@@ -58,233 +134,124 @@ window.closeFeatSelector = function() {
     if (modal) modal.style.display = 'none';
 };
 
-window.closeFeatSelectorOnOuterClick = function(e) {
-    if (e.target.id === 'feat-selector-modal') {
-        closeFeatSelector();
-    }
-};
+function showFeatList() {
+    document.getElementById('feat-list-view').style.display = 'block';
+    document.getElementById('feat-detail-view').style.display = 'none';
+}
 
 function populateFeatsList(feats) {
     const scrollList = document.getElementById('feat-scroll-list');
-    if (!scrollList) return;
-
     scrollList.innerHTML = '';
-    const sorted = [...feats].sort((a, b) => a.name.localeCompare(b.name));
 
-    sorted.forEach(feat => {
+    const currentFeats = (window.character && window.character.feats) || [];
+
+    feats.forEach(f => {
+        const hasFeat = currentFeats.some(cf => (typeof cf === 'string' ? cf : cf.name) === f.name);
         const div = document.createElement('div');
-        div.style.cssText = "background:#0f0f13; border:1px solid var(--border-iron); border-radius:4px; padding:10px; cursor:pointer; transition:all 0.15s ease;";
-        div.onmouseover = () => { div.style.borderColor = 'var(--gold-amber)'; };
-        div.onmouseout = () => { div.style.borderColor = 'var(--border-iron)'; };
-        div.onclick = () => showFeatDetails(feat);
+        div.className = 'spell-row-item';
+        div.onclick = () => showFeatDetails(f);
 
-        const scoreText = getFeatScoreText(feat);
+        let prerequisiteText = f.prerequisite ? f.prerequisite.map(p => parseFeatPrerequisite(p)).join(', ') : 'None';
 
         div.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <strong style="color:var(--gold-amber);">${feat.name}</strong>
-                ${scoreText ? `<span style="font-size:0.75rem; color:#10b981; background:rgba(16,185,129,0.1); padding:2px 6px; border-radius:3px;">${scoreText}</span>` : ''}
+            <div>
+                <strong style="color:var(--gold-amber); font-size:0.9rem; font-family:'Cinzel';">${f.name}</strong>
+                <div style="font-size:0.75rem; color:var(--text-muted);">Prerequisite: ${prerequisiteText}</div>
             </div>
-            <p style="font-size:0.75rem; color:var(--text-muted); margin:4px 0 0 0; line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">
-                ${getFeatSimpleDesc(feat)}
-            </p>
+            <div>
+                ${hasFeat ? '<span style="color:#10b981; font-weight:bold; font-size:0.75rem;">[Acquired]</span>' : '<span style="color:var(--text-muted); font-size:0.8rem;">›</span>'}
+            </div>
         `;
         scrollList.appendChild(div);
     });
 }
 
-window.filterFeatsList = function() {
-    if (!window.availableFeats) return;
-    const searchVal = document.getElementById('feat-search-input').value.toLowerCase();
-    const filtered = window.availableFeats.filter(f => 
-        f.name.toLowerCase().includes(searchVal) ||
-        getFeatSimpleDesc(f).toLowerCase().includes(searchVal)
-    );
-    populateFeatsList(filtered);
-};
+function parseFeatPrerequisite(prereq) {
+    if (prereq.ability) {
+        return prereq.ability.map(a => Object.keys(a).map(k => `${k.toUpperCase()} ${a[k]}`).join('/')).join(', ');
+    }
+    if (prereq.proficiency) {
+        return prereq.proficiency.map(p => Object.keys(p).map(k => `${k} ${p[k]}`).join('/')).join(', ');
+    }
+    if (prereq.spellcasting) return 'Spellcasting capability';
+    if (prereq.other) return prereq.other;
+    return 'Special';
+}
 
 function showFeatDetails(feat) {
     window.selectedFeatObj = feat;
-    document.getElementById('feat-search-and-list').style.display = 'none';
-    document.getElementById('feat-detail-view').style.display = 'flex';
+    document.getElementById('feat-list-view').style.display = 'none';
+    document.getElementById('feat-detail-view').style.display = 'block';
 
     document.getElementById('feat-detail-name').innerText = feat.name;
     
-    // Format prerequisite
-    let prereqStr = "Prerequisite: None";
-    if (feat.prerequisite && Array.isArray(feat.prerequisite)) {
-        const list = [];
-        feat.prerequisite.forEach(p => {
-            if (p.race) p.race.forEach(r => list.push(`Race: ${r.name}`));
-            if (p.proficiency) p.proficiency.forEach(pr => {
-                if (pr.armor) list.push(`Armor proficiency: ${pr.armor}`);
-                if (pr.weapon) list.push(`Weapon proficiency: ${pr.weapon}`);
-            });
-            if (p.ability) p.ability.forEach(ab => {
-                Object.keys(ab).forEach(k => list.push(`${k.toUpperCase()} ${ab[k]}+`));
-            });
-            if (p.spellcasting) list.push("Ability to cast at least one spell");
-        });
-        if (list.length > 0) prereqStr = "Prerequisite: " + list.join(', ');
-    }
+    let prereqStr = feat.prerequisite ? feat.prerequisite.map(p => parseFeatPrerequisite(p)).join(', ') : 'None';
     document.getElementById('feat-detail-prereq').innerText = prereqStr;
 
-    // Description text parsing links
-    const descDiv = document.getElementById('feat-detail-desc');
-    descDiv.innerHTML = formatFeatTextEntries(feat.entries);
+    let entriesHtml = feat.entries ? feat.entries.map(e => parseEntryToHtml(e)).join('') : 'No description available.';
+    document.getElementById('feat-detail-desc').innerHTML = entriesHtml;
 
-    // Show choice selectors if the feat provides stats choice
-    const choiceContainer = document.getElementById('feat-stat-choice-container');
-    const select = document.getElementById('feat-stat-choice-select');
-    choiceContainer.style.display = 'none';
-    select.innerHTML = '';
-
-    const scoreIncreases = getAbilityIncreasesFromFeat(feat);
-    const choiceObj = scoreIncreases.find(si => si.type === 'choose');
-
-    if (choiceObj) {
-        choiceContainer.style.display = 'block';
-        choiceObj.from.forEach(stat => {
-            const opt = document.createElement('option');
-            opt.value = stat;
-            opt.innerText = `+1 to ${stat.toUpperCase()}`;
-            select.appendChild(opt);
-        });
+    const currentFeats = (window.character && window.character.feats) || [];
+    const hasFeat = currentFeats.some(cf => (typeof cf === 'string' ? cf : cf.name) === feat.name);
+    
+    const applyBtn = document.getElementById('feat-apply-btn');
+    if (hasFeat) {
+        applyBtn.innerText = 'Acquired (Click to Remove)';
+        applyBtn.style.background = '#ef4444';
+    } else {
+        applyBtn.innerText = 'Learn Feat';
+        applyBtn.style.background = '#10b981';
     }
 }
 
-window.showFeatList = function() {
-    window.selectedFeatObj = null;
-    document.getElementById('feat-search-and-list').style.display = 'flex';
-    document.getElementById('feat-detail-view').style.display = 'none';
-};
-
 window.applySelectedFeat = function() {
-    if (!window.selectedFeatObj) return;
-
-    if (!window.character.feats) window.character.feats = [];
-
-    // Avoid duplicate feats
-    if (window.character.feats.some(f => f.toLowerCase() === window.selectedFeatObj.name.toLowerCase())) {
-        alert(`Your character already has the "${window.selectedFeatObj.name}" feat.`);
-        return;
-    }
-
-    // Process Ability Score Increase (ASI)
-    const scoreIncreases = getAbilityIncreasesFromFeat(window.selectedFeatObj);
+    if (!window.selectedFeatObj || !window.character) return;
     
-    if (!window.character.ability_scores) {
-        window.character.ability_scores = { base: {}, racial: {}, asi: {}, overrides: {} };
-    }
-    if (!window.character.ability_scores.asi) {
-        window.character.ability_scores.asi = {};
-    }
+    if (!window.character.feats) window.character.feats = [];
+    
+    const featName = window.selectedFeatObj.name;
+    const existingIndex = window.character.feats.findIndex(cf => (typeof cf === 'string' ? cf : cf.name) === featName);
 
-    // 1. Direct increases
-    scoreIncreases.forEach(si => {
-        if (si.type === 'direct') {
-            const stat = si.stat;
-            const amt = si.amount;
-            window.character.ability_scores.asi[stat] = (window.character.ability_scores.asi[stat] || 0) + amt;
-        }
-    });
-
-    // 2. Choice increases
-    const choiceObj = scoreIncreases.find(si => si.type === 'choose');
-    if (choiceObj) {
-        const select = document.getElementById('feat-stat-choice-select');
-        const chosenStat = select.value;
-        if (!chosenStat) {
-            alert("Please select which ability score you want to increase.");
-            return;
-        }
-        window.character.ability_scores.asi[chosenStat] = (window.character.ability_scores.asi[chosenStat] || 0) + 1;
+    if (existingIndex !== -1) {
+        window.character.feats.splice(existingIndex, 1);
+    } else {
+        window.character.feats.push({
+            name: featName,
+            source: window.selectedFeatObj.source || 'PHB',
+            entries: window.selectedFeatObj.entries
+        });
     }
 
-    // Add feat
-    window.character.feats.push(window.selectedFeatObj.name);
-
-    // Sync, recalculate and render!
-    window.character = window.characterEngine.calculate(window.character);
-    window.renderCharacterSheet();
-    window.queueUpdateAndSync();
-
+    if (window.queueUpdateAndSync) window.queueUpdateAndSync();
+    if (window.renderCharacterSheet) window.renderCharacterSheet();
     closeFeatSelector();
-    alert(`Applied the "${window.selectedFeatObj.name}" feat to your character sheet!`);
 };
 
-window.renderFeats = function() {
-    const container = document.getElementById('feats-list-container');
+function renderFeats() {
+    const container = document.getElementById('feats-acquired-list');
     if (!container) return;
 
     container.innerHTML = '';
-    const feats = window.character?.feats || [];
+    const feats = (window.character && window.character.feats) || [];
 
     if (feats.length === 0) {
-        container.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 10px;">No feats selected yet.</div>';
+        container.innerHTML = '<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">No feats acquired...</span>';
         return;
     }
 
-    feats.forEach(featName => {
-        const card = document.createElement('div');
-        card.className = 'feature-card';
-        card.style.cssText = 'background: rgba(139, 92, 246, 0.05); border: 1px solid var(--border-iron); border-radius: 6px; padding: 10px; margin-bottom: 5px; cursor: pointer; position: relative;';
-        card.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <strong style="color:#fbbf24; font-size:0.85rem;">${featName}</strong>
-                <button onclick="removeFeat('${featName}', event)" style="background:none; border:none; color:#ef4444; font-size:0.75rem; cursor:pointer;" title="Remove Feat">Remove</button>
-            </div>
-            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Tap to expand details and read features.</div>
+    feats.forEach(f => {
+        const featName = typeof f === 'string' ? f : f.name;
+        const div = document.createElement('div');
+        div.style = "display:flex; justify-content:space-between; align-items:center; background:#0d0d12; border:1px solid var(--border-iron); padding:8px 12px; border-radius:6px; font-size:0.8rem; cursor:pointer;";
+        div.onclick = () => openCustomDetailPopup(featName, f.entries ? f.entries.map(e => parseEntryToHtml(e)).join('') : 'Feat acquired.');
+        
+        div.innerHTML = `
+            <strong style="color:var(--gold-amber);">${featName}</strong>
+            <span style="color:var(--text-muted); font-size:0.75rem;">View Details ›</span>
         `;
-        card.onclick = () => viewFeatCardDetails(featName);
-        container.appendChild(card);
+        container.appendChild(div);
     });
-};
-
-window.viewFeatCardDetails = async function(featName) {
-    let featObj = null;
-    if (window.availableFeats) {
-        featObj = window.availableFeats.find(f => f.name.toLowerCase() === featName.toLowerCase());
-    }
-
-    if (!featObj) {
-        try {
-            const res = await fetch('/api/reference/feats');
-            const data = await res.json();
-            if (data && data.feat) {
-                window.availableFeats = data.feat;
-                featObj = window.availableFeats.find(f => f.name.toLowerCase() === featName.toLowerCase());
-            }
-        } catch(e) {}
-    }
-
-    if (featObj) {
-        // Render in a popup or simple details alert card
-        const title = featObj.name;
-        const html = formatFeatTextEntries(featObj.entries);
-        openCustomDetailPopup(title, html);
-    } else {
-        alert(`Feat details for "${featName}" not found in database.`);
-    }
-};
-
-window.removeFeat = function(featName, event) {
-    if (event) event.stopPropagation();
-
-    if (!confirm(`Are you sure you want to remove the "${featName}" feat?`)) return;
-
-    if (!window.character.feats) return;
-    window.character.feats = window.character.feats.filter(f => f !== featName);
-
-    // Roll back stat updates if we can identify them (simple reverse approximation)
-    // To keep it safe and avoid corrupting manually edited ASIs, we don't automatically deduct stats, 
-    // but we let the player know they can adjust their base stats under Ability Scores if needed.
-    window.character = window.characterEngine.calculate(window.character);
-    window.renderCharacterSheet();
-    window.queueUpdateAndSync();
-
-    alert(`Removed feat "${featName}". You can manually adjust your Base Ability Scores on this tab if necessary.`);
-};
+}
 
 // --- BACKGROUNDS MODULE ---
 
@@ -322,168 +289,72 @@ window.closeBackgroundSelector = function() {
     if (modal) modal.style.display = 'none';
 };
 
-window.closeBackgroundSelectorOnOuterClick = function(e) {
-    if (e.target.id === 'background-selector-modal') {
-        closeBackgroundSelector();
-    }
-};
+function showBackgroundList() {
+    document.getElementById('background-list-view').style.display = 'block';
+    document.getElementById('background-detail-view').style.display = 'none';
+}
 
-function populateBackgroundsList(backgrounds) {
+function populateBackgroundsList(bgs) {
     const scrollList = document.getElementById('background-scroll-list');
-    if (!scrollList) return;
-
     scrollList.innerHTML = '';
-    const sorted = [...backgrounds].sort((a, b) => a.name.localeCompare(b.name));
 
-    sorted.forEach(bg => {
+    const currentBg = (window.character && window.character.background) || '';
+
+    bgs.forEach(b => {
+        const isCurrent = currentBg === b.name;
         const div = document.createElement('div');
-        div.style.cssText = "background:#0f0f13; border:1px solid var(--border-iron); border-radius:4px; padding:10px; cursor:pointer; transition:all 0.15s ease;";
-        div.onmouseover = () => { div.style.borderColor = 'var(--gold-amber)'; };
-        div.onmouseout = () => { div.style.borderColor = 'var(--border-iron)'; };
-        div.onclick = () => showBackgroundDetails(bg);
-
-        // Extract skills display name
-        const skillsText = getBackgroundSkillsText(bg);
+        div.className = 'spell-row-item';
+        div.onclick = () => showBackgroundDetails(b);
 
         div.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <strong style="color:var(--gold-amber);">${bg.name}</strong>
-                ${skillsText ? `<span style="font-size:0.75rem; color:#a78bfa; background:rgba(167,139,250,0.1); padding:2px 6px; border-radius:3px;">${skillsText}</span>` : ''}
+            <div>
+                <strong style="color:var(--gold-amber); font-size:0.9rem; font-family:'Cinzel';">${b.name}</strong>
+                <div style="font-size:0.75rem; color:var(--text-muted);">${b.source || 'PHB'}</div>
             </div>
-            <p style="font-size:0.75rem; color:var(--text-muted); margin:4px 0 0 0; line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">
-                ${getBackgroundSimpleDesc(bg)}
-            </p>
+            <div>
+                ${isCurrent ? '<span style="color:#10b981; font-weight:bold; font-size:0.75rem;">[Active]</span>' : '<span style="color:var(--text-muted); font-size:0.8rem;">›</span>'}
+            </div>
         `;
         scrollList.appendChild(div);
     });
 }
 
-window.filterBackgroundsList = function() {
-    if (!window.availableBackgrounds) return;
-    const searchVal = document.getElementById('background-search-input').value.toLowerCase();
-    const filtered = window.availableBackgrounds.filter(b => 
-        b.name.toLowerCase().includes(searchVal) ||
-        getBackgroundSimpleDesc(b).toLowerCase().includes(searchVal)
-    );
-    populateBackgroundsList(filtered);
-};
-
 function showBackgroundDetails(bg) {
     window.selectedBackgroundObj = bg;
-    document.getElementById('background-search-and-list').style.display = 'none';
-    document.getElementById('background-detail-view').style.display = 'flex';
+    document.getElementById('background-list-view').style.display = 'none';
+    document.getElementById('background-detail-view').style.display = 'block';
 
     document.getElementById('background-detail-name').innerText = bg.name;
-    document.getElementById('background-detail-desc').innerHTML = formatFeatTextEntries(bg.entries);
+    
+    let entriesHtml = bg.entries ? bg.entries.map(e => parseEntryToHtml(e)).join('') : 'No background feature description available.';
+    document.getElementById('background-detail-desc').innerHTML = entriesHtml;
 }
 
-window.showBackgroundList = function() {
-    window.selectedBackgroundObj = null;
-    document.getElementById('background-search-and-list').style.display = 'flex';
-    document.getElementById('background-detail-view').style.display = 'none';
-};
-
 window.applySelectedBackground = function() {
-    if (!window.selectedBackgroundObj) return;
-
-    // Apply Background name
-    window.character.background = window.selectedBackgroundObj.name;
-
-    // Grant skill proficiencies automatically!
-    const textDesc = JSON.stringify(window.selectedBackgroundObj.entries);
-    const skillRegex = /\{@skill ([a-zA-Z0-9 ]+)\}/g;
-    let match;
-    const detectedSkills = [];
+    if (!window.selectedBackgroundObj || !window.character) return;
     
-    while ((match = skillRegex.exec(textDesc)) !== null) {
-        const skillName = match[1].trim().toLowerCase();
-        if (!detectedSkills.includes(skillName)) {
-            detectedSkills.push(skillName);
-        }
-    }
+    window.character.background = window.selectedBackgroundObj.name;
+    window.character.background_feature = window.selectedBackgroundObj.entries ? window.selectedBackgroundObj.entries.map(e => parseEntryToHtml(e)).join('') : '';
 
-    if (!window.character.proficiencies) {
-        window.character.proficiencies = { skills: [], saving_throws: [], armor: [], weapons: [] };
-    }
-    if (!window.character.proficiencies.skills) {
-        window.character.proficiencies.skills = [];
-    }
-
-    // Add newly granted background proficiencies if not already present
-    let newlyAdded = [];
-    detectedSkills.forEach(skill => {
-        if (!window.character.proficiencies.skills.includes(skill)) {
-            window.character.proficiencies.skills.push(skill);
-            newlyAdded.push(skill.toUpperCase());
-        }
-    });
-
-    // Alert and sync
-    window.character = window.characterEngine.calculate(window.character);
-    window.renderCharacterSheet();
-    window.queueUpdateAndSync();
-
+    if (window.queueUpdateAndSync) window.queueUpdateAndSync();
+    if (window.renderCharacterSheet) window.renderCharacterSheet();
     closeBackgroundSelector();
-
-    let msg = `Successfully applied the "${window.selectedBackgroundObj.name}" background to your character sheet!`;
-    if (newlyAdded.length > 0) {
-        msg += `\n\nSkill proficiencies granted: ${newlyAdded.join(', ')} (proficiency bonus added automatically!)`;
-    }
-    alert(msg);
 };
 
-window.renderBackground = function() {
-    const container = document.getElementById('background-details-container');
-    if (!container) return;
+function renderBackground() {
+    const titleEl = document.getElementById('bg-active-title');
+    const descEl = document.getElementById('bg-active-desc');
+    if (!titleEl || !descEl) return;
 
-    container.innerHTML = '';
-    const bgName = window.character?.background;
-
-    if (!bgName) {
-        container.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 10px;">No background selected yet.</div>';
-        return;
-    }
-
-    const card = document.createElement('div');
-    card.style.cssText = 'background: rgba(167, 139, 250, 0.05); border: 1px solid var(--border-iron); border-radius: 6px; padding: 12px; cursor: pointer;';
-    card.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom:6px; margin-bottom:8px;">
-            <strong style="color:#fbbf24; font-size:0.9rem;">${bgName}</strong>
-            <span style="font-size:0.7rem; color:var(--text-muted); font-style:italic;">Tap to view details</span>
-        </div>
-        <p style="font-size:0.8rem; color:#cbd5e1; margin:0; line-height:1.4;">
-            Your active background is <strong>${bgName}</strong>. Tap this card to explore full features, equipment lists, and specialties.
-        </p>
-    `;
-    card.onclick = () => viewBackgroundCardDetails(bgName);
-    container.appendChild(card);
-};
-
-window.viewBackgroundCardDetails = async function(bgName) {
-    let bgObj = null;
-    if (window.availableBackgrounds) {
-        bgObj = window.availableBackgrounds.find(b => b.name.toLowerCase() === bgName.toLowerCase());
-    }
-
-    if (!bgObj) {
-        try {
-            const res = await fetch('/api/reference/backgrounds');
-            const data = await res.json();
-            if (data && data.background) {
-                window.availableBackgrounds = data.background;
-                bgObj = window.availableBackgrounds.find(b => b.name.toLowerCase() === bgName.toLowerCase());
-            }
-        } catch(e) {}
-    }
-
-    if (bgObj) {
-        const title = bgObj.name;
-        const html = formatFeatTextEntries(bgObj.entries);
-        openCustomDetailPopup(title, html);
+    const bgName = (window.character && window.character.background) || 'None Selected';
+    titleEl.innerText = bgName;
+    
+    if (window.character && window.character.background_feature) {
+        descEl.innerHTML = window.character.background_feature;
     } else {
-        alert(`Background details for "${bgName}" not found in database.`);
+        descEl.innerText = 'Tap to select an official background (Acolyte, Criminal, Folk Hero, Soldier, etc.) and apply background features.';
     }
-};
+}
 
 // --- LANGUAGES MODULE ---
 
@@ -520,223 +391,80 @@ window.closeLanguageSelector = function() {
     if (modal) modal.style.display = 'none';
 };
 
-window.closeLanguageSelectorOnOuterClick = function(e) {
-    if (e.target.id === 'language-selector-modal') {
-        closeLanguageSelector();
-    }
-};
-
-function populateLanguagesList(languages) {
+function populateLanguagesList(langs) {
     const scrollList = document.getElementById('languages-scroll-list');
-    if (!scrollList) return;
-
     scrollList.innerHTML = '';
-    const sorted = [...languages].sort((a, b) => a.name.localeCompare(b.name));
 
-    const known = window.character?.languages || ["Common"];
+    const currentLangs = (window.character && window.character.languages) || [];
 
-    sorted.forEach(lang => {
-        const isKnown = known.some(k => k.toLowerCase() === lang.name.toLowerCase());
-
+    langs.forEach(l => {
+        const hasLang = currentLangs.includes(l.name);
         const div = document.createElement('div');
-        div.style.cssText = `background:#0f0f13; border:1px solid ${isKnown ? '#10b981' : 'var(--border-iron)'}; border-radius:4px; padding:10px; display:flex; justify-content:space-between; align-items:center; opacity:${isKnown ? 0.6 : 1};`;
+        div.className = 'spell-row-item';
+        div.onclick = () => toggleLanguage(l.name);
 
         div.innerHTML = `
             <div>
-                <strong style="color:${isKnown ? '#10b981' : 'var(--gold-amber)'};">${lang.name}</strong>
-                <span style="font-size:0.7rem; color:var(--text-muted); display:block; margin-top:2px;">Speakers: ${lang.typicalSpeakers ? lang.typicalSpeakers.join(', ').replace(/\{@creature (.*?)\}/g, '$1') : 'Various'}</span>
+                <strong style="color:var(--gold-amber); font-size:0.9rem; font-family:'Cinzel';">${l.name}</strong>
+                <div style="font-size:0.75rem; color:var(--text-muted);">${l.type || 'Standard'} | Script: ${l.script || 'None'}</div>
             </div>
-            ${isKnown ? 
-                `<span style="font-size:0.75rem; color:#10b981; font-weight:bold;">Learned</span>` : 
-                `<button onclick="applySelectedLanguage('${lang.name}')" style="background:#10b981; color:white; border:none; border-radius:4px; padding:4px 10px; font-size:0.75rem; font-weight:bold; cursor:pointer;">Learn</button>`
-            }
+            <div>
+                ${hasLang ? '<span style="color:#10b981; font-weight:bold; font-size:0.8rem;">✓ Known</span>' : '<span style="color:var(--text-muted); font-size:0.8rem;">+ Add</span>'}
+            </div>
         `;
         scrollList.appendChild(div);
     });
 }
 
-window.applySelectedLanguage = function(langName) {
-    if (!window.character.languages) window.character.languages = ["Common"];
+function toggleLanguage(langName) {
+    if (!window.character) return;
+    if (!window.character.languages) window.character.languages = [];
 
-    if (window.character.languages.some(l => l.toLowerCase() === langName.toLowerCase())) {
-        alert("You already speak this language.");
-        return;
+    const idx = window.character.languages.indexOf(langName);
+    if (idx !== -1) {
+        window.character.languages.splice(idx, 1);
+    } else {
+        window.character.languages.push(langName);
     }
 
-    window.character.languages.push(langName);
-
-    // Sync
-    window.renderCharacterSheet();
-    window.queueUpdateAndSync();
-
+    if (window.queueUpdateAndSync) window.queueUpdateAndSync();
+    if (window.renderCharacterSheet) window.renderCharacterSheet();
     populateLanguagesList(window.availableLanguages);
-    alert(`Learned language: ${langName}!`);
-};
+}
 
-window.renderLanguages = function() {
-    const container = document.getElementById('languages-list-container');
+function renderLanguages() {
+    const container = document.getElementById('languages-known-badges');
     if (!container) return;
 
     container.innerHTML = '';
-    const languages = window.character?.languages || ["Common"];
+    const langs = (window.character && window.character.languages) || ['Common'];
 
-    languages.forEach(lang => {
-        const badge = document.createElement('div');
-        badge.style.cssText = 'background: rgba(167, 139, 250, 0.1); border: 1px solid var(--border-iron); border-radius: 4px; padding: 4px 10px; font-size: 0.8rem; font-weight: 500; color: white; display: flex; align-items: center; gap: 8px;';
-        badge.innerHTML = `
-            <span>${lang}</span>
-            ${lang.toLowerCase() !== 'common' ? `<button onclick="removeLanguage('${lang}', event)" style="background:none; border:none; color:#ef4444; font-size:0.7rem; cursor:pointer; padding:0 0 0 4px; font-weight:bold;">x</button>` : ''}
-        `;
-        container.appendChild(badge);
+    langs.forEach(l => {
+        const span = document.createElement('span');
+        span.style = "background:var(--bg-abyss); color:var(--text-main); border:1px solid var(--border-iron); padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold;";
+        span.innerText = l;
+        container.appendChild(span);
     });
-};
-
-window.removeLanguage = function(langName, event) {
-    if (event) event.stopPropagation();
-
-    if (!confirm(`Are you sure you want to forget the "${langName}" language?`)) return;
-
-    if (!window.character.languages) return;
-    window.character.languages = window.character.languages.filter(l => l !== langName);
-
-    window.renderCharacterSheet();
-    window.queueUpdateAndSync();
-};
-
-// --- GENERAL PARSER & UI HELPERS ---
-
-function formatFeatTextEntries(entries) {
-    if (!entries) return '';
-    
-    // Parse entries
-    let html = '';
-    entries.forEach(entry => {
-        if (typeof entry === 'string') {
-            html += `<p style="margin-bottom:8px; line-height:1.4;">${parseFeatMarkupLinks(entry)}</p>`;
-        } else if (entry.type === 'list' && entry.items) {
-            html += `<ul style="margin-bottom:8px; padding-left:20px; list-style-type:disc; line-height:1.4;">`;
-            entry.items.forEach(item => {
-                html += `<li style="margin-bottom:4px;">${parseFeatMarkupLinks(typeof item === 'string' ? item : item.entry || '')}</li>`;
-            });
-            html += `</ul>`;
-        } else if (entry.type === 'entries') {
-            html += `<div style="margin-bottom:8px; border-left:2px solid var(--gold-amber); padding-left:8px; margin-left:4px;">`;
-            if (entry.name) html += `<strong style="color:var(--gold-amber); display:block; margin-bottom:4px;">${entry.name}</strong>`;
-            html += formatFeatTextEntries(entry.entries);
-            html += `</div>`;
-        }
-    });
-
-    return html;
 }
 
-function parseFeatMarkupLinks(text) {
-    if (!text) return '';
+// --- UTILITY ENTRY PARSER ---
 
-    // Convert {@spell name} to beautiful clickable links that trigger spell details pop-up modal on player sheet!
-    text = text.replace(/\{@spell (.*?)\}/g, (match, contents) => {
-        const parts = contents.split('|');
-        const spellName = parts[0].trim();
-        return `<a href="#" onclick="event.preventDefault(); window.openSpellByName('${spellName}')" style="color: #a78bfa; font-weight: bold; text-decoration: underline; cursor: pointer;">${spellName}</a>`;
-    });
-
-    // Strip other tags
-    text = text.replace(/\{@skill (.*?)\}/g, '$1');
-    text = text.replace(/\{@condition (.*?)\}/g, '$1');
-    text = text.replace(/\{@item (.*?)\}/g, '$1');
-    text = text.replace(/\{@creature (.*?)\}/g, '$1');
-
-    return text;
-}
-
-window.openSpellByName = async function(spellName) {
-    try {
-        const response = await fetch(`/api/spells/lookup/${encodeURIComponent(spellName)}`);
-        if (response.ok) {
-            const spell = await response.json();
-            if (window.openSpellDetailModal) {
-                window.openSpellDetailModal(spell);
-            } else {
-                alert(`Spell: ${spell.name}\n\n${spell.description}`);
-            }
-        } else {
-            alert(`Spell details for "${spellName}" not found.`);
-        }
-    } catch (e) {
-        console.error("Failed to load spell:", e);
+function parseEntryToHtml(entry) {
+    if (typeof entry === 'string') {
+        return `<p style="margin-bottom:8px;">${entry.replace(/\{@feat (.*?)\}/g, '$1').replace(/\{@spell (.*?)\}/g, '$1').replace(/\{@item (.*?)\}/g, '$1')}</p>`;
     }
-};
-
-function getFeatSimpleDesc(feat) {
-    if (!feat.entries) return '';
-    const firstStr = feat.entries.find(e => typeof e === 'string');
-    if (firstStr) return firstStr;
-    return "Click to view description details.";
-}
-
-function getFeatScoreText(feat) {
-    const list = getAbilityIncreasesFromFeat(feat);
-    if (list.length === 0) return null;
-    const textParts = [];
-    list.forEach(si => {
-        if (si.type === 'direct') {
-            textParts.push(`+1 ${si.stat.toUpperCase()}`);
-        } else if (si.type === 'choose') {
-            textParts.push(`+1 Any`);
-        }
-    });
-    return textParts.join(', ');
-}
-
-function getAbilityIncreasesFromFeat(feat) {
-    const list = [];
-    if (!feat.ability) return list;
-    
-    feat.ability.forEach(ab => {
-        Object.keys(ab).forEach(key => {
-            if (key !== 'choose' && typeof ab[key] === 'number') {
-                list.push({ type: 'direct', stat: key, amount: ab[key] });
-            }
-        });
-        
-        if (ab.choose) {
-            list.push({
-                type: 'choose',
-                from: ab.choose.from || ['str', 'dex', 'con', 'int', 'wis', 'cha'],
-                amount: ab.choose.amount || 1
-            });
-        }
-    });
-    
-    return list;
-}
-
-function getBackgroundSimpleDesc(bg) {
-    if (!bg.entries) return '';
-    // Look for Skill Proficiencies item or descriptive text
-    const listCard = bg.entries.find(e => e.type === 'list');
-    if (listCard && listCard.items) {
-        const skillItem = listCard.items.find(i => i.name === 'Skill Proficiencies');
-        if (skillItem) return "Skill Proficiencies: " + skillItem.entry.replace(/\{@skill (.*?)\}/g, '$1');
+    if (entry.type === 'entries' || entry.entries) {
+        let title = entry.name ? `<strong style="color:var(--gold-amber); display:block; margin-top:6px;">${entry.name}</strong>` : '';
+        let sub = entry.entries ? entry.entries.map(e => parseEntryToHtml(e)).join('') : '';
+        return title + sub;
     }
-    return "D&D 5e official background. Click to view proficiencies, languages, and specialties.";
-}
-
-function getBackgroundSkillsText(bg) {
-    if (!bg.entries) return null;
-    const listCard = bg.entries.find(e => e.type === 'list');
-    if (listCard && listCard.items) {
-        const skillItem = listCard.items.find(i => i.name === 'Skill Proficiencies');
-        if (skillItem) {
-            return skillItem.entry.replace(/\{@skill (.*?)\}/g, '$1');
-        }
+    if (entry.type === 'list' && entry.items) {
+        return `<ul style="margin-left:15px; margin-bottom:8px;">${entry.items.map(i => `<li>${typeof i === 'string' ? i : (i.name || '')}</li>`).join('')}</ul>`;
     }
-    return null;
+    return '';
 }
 
-// Opens a beautiful, generic full details modal for feats, backgrounds, languages
 function openCustomDetailPopup(title, htmlContent) {
-    // We can reuse the class-table-modal or spell-detail-modal structure, or create a simple modal dynamically
     let modal = document.getElementById('extension-detail-popover-modal');
     if (!modal) {
         modal = document.createElement('div');

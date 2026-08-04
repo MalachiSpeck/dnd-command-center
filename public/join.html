@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <title>Join Campaign - D&D DM Command Center</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#8b5cf6">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            });
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -394,30 +403,16 @@
             noneOpt.innerText = '-- None Selected --';
             subclassSelect.appendChild(noneOpt);
 
-            // Filter subclasses from our array
-            let filtered = availableSubclasses.filter(sc => {
-                const cName = sc.class && sc.class.name;
+            // Filter subclasses from our array strictly matching the selected class
+            let filtered = (availableSubclasses || []).filter(sc => {
+                const cName = sc.class && (typeof sc.class === 'string' ? sc.class : sc.class.name);
                 return cName && cName.toLowerCase() === selectedClass.toLowerCase();
-            });
-
-            // Filter standard core subclasses
-            filtered = filtered.filter(sc => {
-                if (!sc || !sc.name) return false;
-                const name = sc.name;
-                const source = sc.source || '';
-                if (name.includes('UA') || name.includes('(UA)') || name.includes('Playtest') || name.includes('Sidekick')) {
-                    return false;
-                }
-                if (source.startsWith('UA') || source.includes('Modern') || source.includes('Mystic')) {
-                    return false;
-                }
-                return true;
             });
 
             filtered.forEach(sc => {
                 const opt = document.createElement('option');
                 opt.value = sc.name;
-                opt.innerText = sc.name;
+                opt.innerText = sc.subclass_flavor ? `${sc.name} (${sc.subclass_flavor})` : sc.name;
                 subclassSelect.appendChild(opt);
             });
 

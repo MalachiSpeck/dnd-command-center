@@ -108,8 +108,6 @@ window.rollWildMagicSurgeTracker = async function() {
                 <div style="color:var(--crimson-rage); font-weight:bold; font-size:0.95rem; margin-bottom:4px;">WILD MAGIC SURGE TRIGGERED (Rolled 1!)</div>
                 <div style="color:var(--text-main); font-style:italic; font-family:'Cinzel', serif;">${result}</div>
             `;
-            // Trigger sound cast
-            triggerSound('spell-cast.mp3');
         } catch (e) {
             display.innerHTML = '<span style="color:var(--crimson-rage);">Wild Magic Surge triggered! Roll on wild_magic.json.</span>';
         }

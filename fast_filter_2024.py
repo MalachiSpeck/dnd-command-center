@@ -40,8 +40,10 @@ for b_file in batch_files:
             if diff > 0:
                 filtered_batch_items += diff
                 print(f" -> Removed {diff} items from {os.path.basename(b_file)}.")
-                with open(b_file, 'w', encoding='utf-8') as f_out:
+                tmp_b_file = b_file + '.tmp'
+                with open(tmp_b_file, 'w', encoding='utf-8') as f_out:
                     json.dump(filtered_data, f_out, indent=2)
+                os.replace(tmp_b_file, b_file)
     except Exception as e:
         print(f"Error processing batch file {b_file}: {e}")
 
@@ -53,20 +55,25 @@ target_str_2 = '"book" : "Free Basic Rules (2024)"'
 
 for idx, f_path in enumerate(individual_files):
     try:
+        if not os.path.exists(f_path):
+            continue
         with open(f_path, 'r', encoding='utf-8') as f:
             content = f.read(chunk_size)
             
         if target_str_1 in content or target_str_2 in content:
             os.remove(f_path)
             deleted_individual_files += 1
+    except FileNotFoundError:
+        pass
     except Exception as e:
         # Fallback to full parse if read error
         try:
-            with open(f_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            if isinstance(data, dict) and str(data.get("book", "")).strip() == "Free Basic Rules (2024)":
-                os.remove(f_path)
-                deleted_individual_files += 1
+            if os.path.exists(f_path):
+                with open(f_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                if isinstance(data, dict) and str(data.get("book", "")).strip() == "Free Basic Rules (2024)":
+                    os.remove(f_path)
+                    deleted_individual_files += 1
         except:
             pass
 

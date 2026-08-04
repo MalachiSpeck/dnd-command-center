@@ -72,7 +72,10 @@ window.initializeFogOfWarPainter = function() {
         <div style="background: #0f0f13; border: 1px solid var(--border-iron); border-radius: 6px; padding: 10px; margin-top: 10px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
                 <strong style="color: var(--text-muted); font-size: 0.8rem;">Fog of War Brush</strong>
-                <button class="btn-danger" style="background:#ef4444; font-size:0.7rem; padding: 2px 6px;" onclick="nuclearFogOfWarRevealAll()">Reveal All</button>
+                <div style="display:flex; gap:4px;">
+                    <button class="btn-danger" style="background:#ef4444; font-size:0.7rem; padding: 2px 6px;" onclick="nuclearFogOfWarHideAll()">Hide All</button>
+                    <button class="btn-primary" style="background:#10b981; font-size:0.7rem; padding: 2px 6px;" onclick="nuclearFogOfWarRevealAll()">Reveal All</button>
+                </div>
             </div>
             <div style="display:flex; gap: 8px; margin-bottom: 10px;">
                 <button class="btn-primary" id="btn-fog-reveal" style="font-size:0.75rem; padding: 6px 10px; background:#10b981;" onclick="setFogBrushMode('reveal')">Reveal Brush</button>
@@ -90,7 +93,8 @@ window.initializeFogOfWarPainter = function() {
     fetch('/api/projector/fog')
         .then(res => res.json())
         .then(data => {
-            window.fogGridState = data.fogGrid || Array(12).fill(null).map(() => Array(12).fill(true)); // default hidden grid
+            const hasGrid = Array.isArray(data.fogGrid) && data.fogGrid.length > 0;
+            window.fogGridState = hasGrid ? data.fogGrid : Array(12).fill(null).map(() => Array(12).fill(false)); // default revealed grid
             drawConsoleFogPreviewGrid();
         });
 };
@@ -108,7 +112,7 @@ function drawConsoleFogPreviewGrid() {
 
     for (let r = 0; r < 12; r++) {
         for (let c = 0; c < 12; c++) {
-            const isHidden = window.fogGridState[r] ? window.fogGridState[r][c] : true;
+            const isHidden = (window.fogGridState && window.fogGridState[r] && window.fogGridState[r][c] !== undefined) ? window.fogGridState[r][c] : false;
             const cell = document.createElement('div');
             cell.style.cssText = "aspect-ratio: 1; border-radius: 1px; cursor: pointer; transition: background 0.1s;";
             cell.style.backgroundColor = isHidden ? 'black' : '#8b5cf6';
@@ -130,7 +134,7 @@ function drawConsoleFogPreviewGrid() {
 }
 
 function applyFogBrush(r, c, cell) {
-    if (!window.fogGridState[r]) window.fogGridState[r] = Array(12).fill(true);
+    if (!window.fogGridState[r]) window.fogGridState[r] = Array(12).fill(false);
     const newVal = activeFogBrushMode === 'hide'; // Hide sets to true (hidden fog divs)
     window.fogGridState[r][c] = newVal;
     cell.style.backgroundColor = newVal ? 'black' : '#8b5cf6';
@@ -145,6 +149,16 @@ function applyFogBrush(r, c, cell) {
 
 window.nuclearFogOfWarRevealAll = function() {
     window.fogGridState = Array(12).fill(null).map(() => Array(12).fill(false));
+    drawConsoleFogPreviewGrid();
+    fetch('/api/projector/fog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fogGrid: window.fogGridState })
+    });
+};
+
+window.nuclearFogOfWarHideAll = function() {
+    window.fogGridState = Array(12).fill(null).map(() => Array(12).fill(true));
     drawConsoleFogPreviewGrid();
     fetch('/api/projector/fog', {
         method: 'POST',

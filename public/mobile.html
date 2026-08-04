@@ -133,9 +133,27 @@
         <p style="text-align: center; color: var(--text-muted);">Awaiting combat state...</p>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script>
         let encounter = [];
         let activeIndex = 0;
+        let socket = null;
+
+        try {
+            socket = io();
+            socket.on('board-state-updated', (data) => {
+                if (data) {
+                    encounter = data.encounter || data;
+                    if (data.activeCombatIndex !== undefined) activeIndex = data.activeCombatIndex;
+                    if (data.activeRound !== undefined) {
+                        document.getElementById('round-counter').innerText = `Round ${data.activeRound || 1}`;
+                    }
+                    render();
+                }
+            });
+        } catch (e) {
+            console.warn('[Mobile] Socket.IO unavailable, falling back to HTTP');
+        }
 
         async function fetchState() {
             try {
@@ -193,7 +211,6 @@
                 com.currentDamage = Math.max(0, (com.currentDamage || 0) - val);
             }
 
-            // Sync states
             const hpMax = parseInt(com.maxHp || com.hp || 10, 10);
             if (com.currentDamage >= hpMax) {
                 com.isDefeated = true;
@@ -212,7 +229,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(encounter)
                 });
-                fetchState();
+                render();
             } catch (e) {}
         }
 
@@ -231,7 +248,7 @@
         }
 
         fetchState();
-        setInterval(fetchState, 1500);
+        setInterval(fetchState, 10000);
     </script>
 </body>
 </html>

@@ -2,115 +2,17 @@
 // WAVE 3 ENCHANTED DND COMMAND CENTER ENGINE
 // ==========================================
 
-// Web Audio Synth Engine
+// Web Audio Synth Engine (Neutralized - Soundboard handles all audio)
 const Wave3Synth = {
     ctx: null,
-    init() {
-        if (!this.ctx) {
-            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-    },
-    playHeroicFanfare() {
-        this.init();
-        const now = this.ctx.currentTime;
-        const notes = [261.63, 329.63, 392.00, 523.25];
-        notes.forEach((freq, idx) => {
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.frequency.setValueAtTime(freq, now + idx * 0.15);
-            osc.type = 'triangle';
-            gain.gain.setValueAtTime(0.15, now + idx * 0.15);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.15 + 0.6);
-            osc.start(now + idx * 0.15);
-            osc.stop(now + idx * 0.15 + 0.6);
-        });
-    },
-    playMenacingGrowl() {
-        this.init();
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const osc2 = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.connect(gain);
-        osc2.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.frequency.setValueAtTime(65, now);
-        osc2.frequency.setValueAtTime(67, now);
-        osc.type = 'sawtooth';
-        osc2.type = 'sawtooth';
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
-        osc.start(now);
-        osc2.start(now);
-        osc.stop(now + 1.2);
-        osc2.stop(now + 1.2);
-    },
-    playChime() {
-        this.init();
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.frequency.setValueAtTime(880, now);
-        osc.type = 'sine';
-        gain.gain.setValueAtTime(0.15, now);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
-        osc.start(now);
-        osc.stop(now + 0.8);
-    },
-    playWarningChime() {
-        this.init();
-        const now = this.ctx.currentTime;
-        for (let i = 0; i < 3; i++) {
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.frequency.setValueAtTime(660, now + i * 0.15);
-            osc.type = 'triangle';
-            gain.gain.setValueAtTime(0.12, now + i * 0.15);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.15 + 0.4);
-            osc.start(now + i * 0.15);
-            osc.stop(now + i * 0.15 + 0.4);
-        }
-    },
-    playSuccess() {
-        this.init();
-        const now = this.ctx.currentTime;
-        const notes = [523.25, 659.25, 783.99, 1046.50];
-        notes.forEach((freq, idx) => {
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.frequency.setValueAtTime(freq, now + idx * 0.08);
-            osc.type = 'sine';
-            gain.gain.setValueAtTime(0.12, now + idx * 0.08);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + 0.4);
-            osc.start(now + idx * 0.08);
-            osc.stop(now + idx * 0.08 + 0.4);
-        });
-    },
-    playFailure() {
-        this.init();
-        const now = this.ctx.currentTime;
-        const notes = [392.00, 349.23, 311.13, 261.63];
-        notes.forEach((freq, idx) => {
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.frequency.setValueAtTime(freq, now + idx * 0.12);
-            osc.type = 'triangle';
-            gain.gain.setValueAtTime(0.12, now + idx * 0.12);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.12 + 0.5);
-            osc.start(now + idx * 0.12);
-            osc.stop(now + idx * 0.12 + 0.5);
-        });
-    }
+    init() {},
+    playHeroicFanfare() {},
+    playMenacingGrowl() {},
+    playChime() {},
+    playWarningChime() {},
+    playSuccess() {},
+    playSuccessChime() {},
+    playFailure() {}
 };
 
 // Global State

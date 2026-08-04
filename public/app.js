@@ -336,13 +336,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setupKeyboardShortcuts();
 });
 
-// Sound Board Local Player Context activation on click
-function initAudio() {
-    if (!currentAudioContext) {
-        currentAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
-}
-document.body.addEventListener('click', initAudio, { once: true });
+// Audio handled exclusively by Standalone Soundboard
+function initAudio() {}
 
 // Poll the server state for round counter, active turn, and templates list
 async function pollServerState() {
@@ -458,15 +453,15 @@ async function loadPartyMatrix() {
             }
 
             charCard.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1;">
                         ${dotHtml}
-                        <h3 style="margin: 0; color: var(--text-main); font-family: 'Inter', sans-serif; font-size: 1rem;">${character.name}</h3>
-                        <button class="btn-primary" style="padding: 2px 6px; font-size: 0.7rem; background: #ef4444;" onclick="addPartyToCombat('${character.id}')">Fight</button>
-                        <button class="btn-primary" style="padding: 2px 6px; font-size: 0.7rem; background: #22c55e;" onclick="openLevelUpModal('${character.id}', '${character.name}')">LVL</button>
-                        <button class="btn-primary" style="padding: 2px 6px; font-size: 0.7rem; background: #8b5cf6;" onclick="event.stopPropagation(); showCharacterQR('${character.id}', '${character.name}')">QR</button>
+                        <h3 style="margin: 0; color: var(--text-main); font-family: 'Inter', sans-serif; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;" title="${character.name}">${character.name}</h3>
+                        <button class="btn-primary" style="padding: 2px 6px; font-size: 0.7rem; background: #ef4444; flex-shrink: 0;" onclick="addPartyToCombat('${character.id}')">Fight</button>
+                        <button class="btn-primary" style="padding: 2px 6px; font-size: 0.7rem; background: #22c55e; flex-shrink: 0;" onclick="openLevelUpModal('${character.id}', '${character.name}')">LVL</button>
+                        <button class="btn-primary" style="padding: 2px 6px; font-size: 0.7rem; background: #8b5cf6; flex-shrink: 0;" onclick="event.stopPropagation(); showCharacterQR('${character.id}', '${character.name}')">QR</button>
                     </div>
-                    <span style="font-size: 0.75rem; color: var(--text-muted);">Lvl ${character.level} ${character.race}</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); flex-shrink: 0; margin-left: 6px;">Lvl ${character.level} ${character.race}</span>
                 </div>
                 <div style="display: flex; gap: 12px; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">
                     <div><strong>AC:</strong> <span style="color: white;" id="matrix-ac-${character.id}">${ac}</span></div>

@@ -1,1 +1,31 @@
-[]
+[
+  {
+    "value": 50000,
+    "name": "Flame-Forged Greataxe",
+    "weight": 7,
+    "source": "Homebrew",
+    "type": "M",
+    "rarity": "Rare",
+    "entries": [
+      "Deals extra fire damage"
+    ],
+    "id": "hb_item_1785698635748_epmx",
+    "isHomebrew": true
+  },
+  {
+    "weight": 1,
+    "ability": {
+      "int": 1
+    },
+    "rarity": "Uncommon",
+    "name": "Hat of Intelligence",
+    "type": "W",
+    "source": "Homebrew",
+    "value": 25000,
+    "entries": [
+      "Wondrous item. Increases your Intelligence score by +1 while worn."
+    ],
+    "id": "hb_item_1785698857810_36o5",
+    "isHomebrew": true
+  }
+]

@@ -128,7 +128,6 @@ const Wave4Engine = {
 
         setTimeout(() => {
             overlay.style.opacity = '1';
-            if (typeof Wave3Synth !== 'undefined') Wave3Synth.playHeroicFanfare();
         }, 100);
 
         setTimeout(() => {
@@ -1641,6 +1640,8 @@ D20 Distribution Graph:
             }
 
             queueContainer.innerHTML = '';
+
+            // 1. Render Level-Up Approvals
             keys.forEach(charId => {
                 const req = approvals[charId];
                 const card = document.createElement('div');
@@ -1669,7 +1670,7 @@ D20 Distribution Graph:
 
                 card.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:6px;">
-                        <h4 style="margin:0; font-family:'Cinzel', serif; color:#fbbf24; font-size:0.9rem;">${req.name}</h4>
+                        <h4 style="margin:0; font-family:'Cinzel', serif; color:#fbbf24; font-size:0.9rem;">📜 ${req.name} (Level-Up)</h4>
                         <span style="font-size:0.65rem; color:#94a3b8;">${new Date(req.timestamp).toLocaleTimeString()}</span>
                     </div>
                     ${choicesHtml}
@@ -1678,26 +1679,66 @@ D20 Distribution Graph:
                 queueContainer.appendChild(card);
             });
 
+            // 2. Render Pending Homebrew Proposals from Party
+            const partyRes = await fetch('/api/party');
+            if (partyRes.ok) {
+                const party = await partyRes.json();
+                party.forEach(char => {
+                    if (char.homebrew_proposals && char.homebrew_proposals.length > 0) {
+                        char.homebrew_proposals.forEach(item => {
+                            const hbCard = document.createElement('div');
+                            hbCard.style.cssText = 'background: #090e17; border: 1.5px solid #a78bfa; padding: 12px; border-radius: 6px; display:flex; flex-direction:column; gap:6px;';
+                            hbCard.innerHTML = `
+                                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:6px;">
+                                    <h4 style="margin:0; font-family:'Cinzel', serif; color:#a78bfa; font-size:0.9rem;">⚔️ Homebrew: ${item.name}</h4>
+                                    <span style="font-size:0.65rem; color:#38bdf8;">${char.name}</span>
+                                </div>
+                                <div style="font-size:0.75rem; color:#cbd5e1;">
+                                    <strong>Type:</strong> ${item.type || 'Weapon'} | <strong>Formula:</strong> <span style="color:#fbbf24; font-weight:bold;">${item.damage}</span><br>
+                                    ${item.notes ? `<strong>Notes:</strong> <em>${item.notes}</em>` : ''}
+                                </div>
+                                <div style="display:flex; gap:8px; margin-top:4px;">
+                                    <button class="wave4-btn" style="background:#10b981; flex:1;" onclick="Wave4Engine.approveHomebrewItem('${char.id}', '${item.id}')">Approve</button>
+                                    <button class="wave4-btn" style="background:#ef4444; flex:1;" onclick="Wave4Engine.rejectHomebrewItem('${char.id}', '${item.id}')">Reject</button>
+                                </div>
+                            `;
+                            queueContainer.appendChild(hbCard);
+                        });
+                    }
+                });
+            }
+
         } catch (e) {
-            console.log("Error rendering level up approvals list", e);
+            console.log("Error rendering approvals list", e);
         }
     },
 
-    async approveLevelUp(charId) {
-        try {
-            const res = await fetch('/api/level-up/approve', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ charId })
-            });
-            if (res.ok) {
-                const data = await res.json();
-                alert(data.message || "Level-up successfully approved!");
-                this.fetchLevelUpApprovals();
-            }
-        } catch(e) {
-            console.error("Failed to approve level up:", e);
+    approveLevelUp(charId) {
+        fetch('/api/level-up/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ charId })
+        }).then(res => res.json()).then(data => {
+            alert(data.message || "Level-up successfully approved!");
+            this.fetchLevelUpApprovals();
+        }).catch(e => console.error(e));
+    },
+
+    approveHomebrewItem(charId, itemId) {
+        if (window.socket && window.socket.connected) {
+            window.socket.emit('approve-homebrew-item', { charId, itemId });
+            alert("⚔️ Homebrew item approved permanently!");
+            setTimeout(() => this.fetchLevelUpApprovals(), 500);
         }
+    },
+
+    rejectHomebrewItem(charId, itemId) {
+        if (window.socket && window.socket.connected) {
+            window.socket.emit('reject-homebrew-item', { charId, itemId });
+            alert("❌ Homebrew item proposal rejected.");
+            setTimeout(() => this.fetchLevelUpApprovals(), 500);
+        }
+    },
     }
 };
 

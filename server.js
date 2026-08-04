@@ -7,16 +7,45 @@ const { Server } = require('socket.io');
 const QRCode = require('qrcode');
 const os = require('os');
 
+const { PartyStore } = require('./services/partyStore');
+const dataCache = require('./services/dataCache');
+const setupSockets = require('./sockets');
+
+const monstersRouter = require('./routes/monsters');
+const spellsRouter = require('./routes/spells');
+const soundsRouter = require('./routes/sounds');
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-// --- ACTIVE PARTY SWITCHER ---
+// Initialize in-memory data cache on startup
+dataCache.init();
+
+// Active Party Switcher & PartyStore
 let activePartyFileName = 'party.json';
 function getPartyPath() {
     return path.join(__dirname, 'data', activePartyFileName);
 }
+const partyStore = new PartyStore(getPartyPath, io);
+const partyRouter = require('./routes/party')(partyStore, getPartyPath);
+
+// Attach Socket handlers
+setupSockets(io, partyStore);
+
+// High-capacity body parser middleware for 4K map image uploads & PDF base64 payloads
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
+
+// Error handler middleware for malformed JSON payloads
+app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        console.error("JSON parsing error on request:", err.message);
+        return res.status(400).json({ error: "Malformed JSON payload in request body", details: err.message });
+    }
+    next(err);
+});
 
 // Middleware to prevent aggressive browser caching on local development files
 app.use((req, res, next) => {
@@ -25,9 +54,453 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json()); // Allows the server to understand JSON data
 
-// --- IP AUTO-DETECTION HELPER ---
+// Mount Modular API Routers
+app.use('/api/monsters', monstersRouter);
+app.use('/api/spells', spellsRouter);
+app.use('/api/sounds', soundsRouter);
+app.use('/api', partyRouter);
+
+// Helper to sync party.json & currentEncounterState to active battle map scene
+function syncPartyAndEncounterToScene(activeScene) {
+    if (!activeScene) return activeScene;
+    if (!activeScene.tokens) activeScene.tokens = [];
+
+    // 1. Sync Party Characters
+    const partyPath = getPartyPath();
+    if (fs.existsSync(partyPath)) {
+        try {
+            const party = JSON.parse(fs.readFileSync(partyPath, 'utf8'));
+            party.forEach((char, idx) => {
+                let tok = activeScene.tokens.find(t => t.character_id === char.id || t.id === `tok_party_${char.id}` || t.name === char.name);
+                if (!tok) {
+                    tok = {
+                        id: `tok_party_${char.id}`,
+                        character_id: char.id,
+                        name: char.name || `Player ${idx + 1}`,
+                        x: 280 + (idx % 6) * 140,
+                        y: 350 + Math.floor(idx / 6) * 140,
+                        size_cells: 1,
+                        color: char.theme_color || '#3b82f6',
+                        vision_radius_ft: 60,
+                        disposition: 'friendly',
+                        hp_current: char.hp_current || char.hp || 10,
+                        hp_max: char.hp_max || char.maxHp || 10,
+                        conditions: char.conditions || []
+                    };
+                    activeScene.tokens.push(tok);
+                } else {
+                    tok.name = char.name || tok.name;
+                    if (char.hp_current !== undefined) tok.hp_current = char.hp_current;
+                    if (char.hp_max) tok.hp_max = char.hp_max;
+                }
+            });
+        } catch (e) {}
+    }
+
+    // 2. Sync Encounter Combatants (Monsters / Enemies)
+    if (typeof currentEncounterState !== 'undefined' && Array.isArray(currentEncounterState)) {
+        currentEncounterState.forEach((mon, idx) => {
+            let tok = activeScene.tokens.find(t => t.id === `tok_mon_${mon.id}` || t.name === mon.name);
+            var isLarge = (mon.name && mon.name.toLowerCase().includes('allosaurus')) || mon.size === 'large' || mon.size === 'huge';
+            if (!tok) {
+                tok = {
+                    id: `tok_mon_${mon.id || idx}`,
+                    name: mon.name || `Monster ${idx + 1}`,
+                    x: 1050 + (idx % 5) * 140,
+                    y: 490 + Math.floor(idx / 5) * 140,
+                    size_cells: isLarge ? 2 : 1,
+                    color: '#ef4444',
+                    vision_radius_ft: 60,
+                    disposition: 'hostile',
+                    hp_current: Math.max(0, (mon.maxHp || 30) - (mon.currentDamage || 0)),
+                    hp_max: mon.maxHp || 30,
+                    conditions: mon.conditions || []
+                };
+                activeScene.tokens.push(tok);
+            } else {
+                tok.hp_current = Math.max(0, (mon.maxHp || 30) - (mon.currentDamage || 0));
+                if (mon.maxHp) tok.hp_max = mon.maxHp;
+            }
+        });
+    }
+
+    return activeScene;
+}
+
+// Atomic save helper for scenes.json to prevent file corruption
+function saveScenesJson(parsedData, callback) {
+    const scenesPath = path.join(__dirname, 'data', 'scenes.json');
+    const tmpPath = scenesPath + '.tmp';
+    fs.writeFile(tmpPath, JSON.stringify(parsedData, null, 2), 'utf8', (err) => {
+        if (err) {
+            if (callback) callback(err);
+            return;
+        }
+        fs.rename(tmpPath, scenesPath, (renameErr) => {
+            if (callback) callback(renameErr);
+        });
+    });
+}
+
+// GET active scene data (auto-synced with party & monsters)
+app.get('/api/scene', (req, res) => {
+    const scenesPath = path.join(__dirname, 'data', 'scenes.json');
+    if (fs.existsSync(scenesPath)) {
+        fs.readFile(scenesPath, 'utf8', (err, data) => {
+            if (err) return res.status(500).json({ error: "Failed to read scenes" });
+            try {
+                let parsed = JSON.parse(data);
+                const activeId = parsed.active_scene_id;
+                let activeScene = (parsed.scenes || []).find(s => s.id === activeId) || parsed.scenes[0];
+                activeScene = syncPartyAndEncounterToScene(activeScene);
+                
+                // Save synced state back atomically to scenes.json
+                saveScenesJson(parsed, () => {
+                    return res.json(activeScene);
+                });
+            } catch (e) {
+                return res.status(500).json({ error: "Invalid scenes JSON" });
+            }
+        });
+    } else {
+        return res.status(404).json({ error: "scenes.json not found" });
+    }
+});
+
+// Explicit Add Token to Map REST API
+app.post('/api/token/add', (req, res) => {
+    const { name, disposition, size_cells, hp_max, color } = req.body;
+    if (!name) return res.status(400).json({ error: "Missing token name" });
+
+    const scenesPath = path.join(__dirname, 'data', 'scenes.json');
+    if (fs.existsSync(scenesPath)) {
+        fs.readFile(scenesPath, 'utf8', (err, raw) => {
+            if (err) return res.status(500).json({ error: "Could not read scenes" });
+            try {
+                let parsed = JSON.parse(raw);
+                let activeScene = (parsed.scenes || []).find(s => s.id === parsed.active_scene_id) || parsed.scenes[0];
+                if (!activeScene.tokens) activeScene.tokens = [];
+
+                const isHostile = disposition === 'hostile';
+                const newToken = {
+                    id: `tok_manual_${Date.now()}`,
+                    name: name,
+                    x: isHostile ? 1120 : 420,
+                    y: 560,
+                    size_cells: parseInt(size_cells || '1', 10),
+                    color: color || (isHostile ? '#ef4444' : '#3b82f6'),
+                    vision_radius_ft: 60,
+                    disposition: disposition || 'hostile',
+                    hp_current: parseInt(hp_max || '20', 10),
+                    hp_max: parseInt(hp_max || '20', 10),
+                    conditions: []
+                };
+
+                activeScene.tokens.push(newToken);
+                fs.writeFile(scenesPath, JSON.stringify(parsed, null, 2), () => {
+                    io.emit('scene:update', activeScene);
+                    return res.json({ success: true, token: newToken, scene: activeScene });
+                });
+            } catch (e) {
+                return res.status(500).json({ error: "Failed to update scene tokens" });
+            }
+        });
+    }
+});
+
+// Clear All Tokens from Active Scene
+app.post('/api/scene/clear-tokens', (req, res) => {
+    const scenesPath = path.join(__dirname, 'data', 'scenes.json');
+    if (fs.existsSync(scenesPath)) {
+        fs.readFile(scenesPath, 'utf8', (err, raw) => {
+            if (err) return res.status(500).json({ error: "Could not read scenes" });
+            try {
+                let parsed = JSON.parse(raw);
+                let activeScene = (parsed.scenes || []).find(s => s.id === parsed.active_scene_id) || parsed.scenes[0];
+                activeScene.tokens = [];
+                fs.writeFile(scenesPath, JSON.stringify(parsed, null, 2), () => {
+                    io.emit('scene:update', activeScene);
+                    return res.json({ success: true, scene: activeScene });
+                });
+            } catch (e) {
+                return res.status(500).json({ error: "Failed to clear tokens" });
+            }
+        });
+    }
+});
+
+// Clear All Lights from Active Scene
+app.post('/api/scene/clear-lights', (req, res) => {
+    const scenesPath = path.join(__dirname, 'data', 'scenes.json');
+    if (fs.existsSync(scenesPath)) {
+        fs.readFile(scenesPath, 'utf8', (err, raw) => {
+            if (err) return res.status(500).json({ error: "Could not read scenes" });
+            try {
+                let parsed = JSON.parse(raw);
+                let activeScene = (parsed.scenes || []).find(s => s.id === parsed.active_scene_id) || parsed.scenes[0];
+                activeScene.lights = [];
+                fs.writeFile(scenesPath, JSON.stringify(parsed, null, 2), () => {
+                    io.emit('scene:update', activeScene);
+                    return res.json({ success: true, scene: activeScene });
+                });
+            } catch (e) {
+                return res.status(500).json({ error: "Failed to clear lights" });
+            }
+        });
+    }
+});
+
+// Clear All Walls from Active Scene
+app.post('/api/scene/clear-walls', (req, res) => {
+    const scenesPath = path.join(__dirname, 'data', 'scenes.json');
+    if (fs.existsSync(scenesPath)) {
+        fs.readFile(scenesPath, 'utf8', (err, raw) => {
+            if (err) return res.status(500).json({ error: "Could not read scenes" });
+            try {
+                let parsed = JSON.parse(raw);
+                let activeScene = (parsed.scenes || []).find(s => s.id === parsed.active_scene_id) || parsed.scenes[0];
+                activeScene.walls = [];
+                saveScenesJson(parsed, () => {
+                    io.emit('scene:update', activeScene);
+                    return res.json({ success: true, scene: activeScene });
+                });
+            } catch (e) {
+                return res.status(500).json({ error: "Failed to clear walls" });
+            }
+        });
+    }
+});
+
+// Toggle Fog of War Mode (off / vision)
+app.post('/api/scene/toggle-fog', (req, res) => {
+    const scenesPath = path.join(__dirname, 'data', 'scenes.json');
+    if (fs.existsSync(scenesPath)) {
+        fs.readFile(scenesPath, 'utf8', (err, raw) => {
+            if (err) return res.status(500).json({ error: "Could not read scenes" });
+            try {
+                let parsed = JSON.parse(raw);
+                let activeScene = (parsed.scenes || []).find(s => s.id === parsed.active_scene_id) || parsed.scenes[0];
+                if (!activeScene.fog) activeScene.fog = { mode: 'vision', revealed_polygons: [] };
+                
+                activeScene.fog.mode = (activeScene.fog.mode === 'off') ? 'vision' : 'off';
+                const currentMode = activeScene.fog.mode;
+
+                saveScenesJson(parsed, () => {
+                    io.emit('scene:update', activeScene);
+                    return res.json({ success: true, mode: currentMode, scene: activeScene });
+                });
+            } catch (e) {
+                return res.status(500).json({ error: "Failed to toggle fog mode" });
+            }
+        });
+    } else {
+        return res.status(404).json({ error: "scenes.json not found" });
+    }
+});
+
+// Helper to get or create a distinct scene profile for a map URL
+function getOrCreateSceneForMap(parsedData, mapUrl, sceneName) {
+    if (!parsedData.scenes) parsedData.scenes = [];
+    
+    let existingScene = parsedData.scenes.find(s => s.background_url === mapUrl);
+    if (existingScene) {
+        if (sceneName && (!existingScene.name || existingScene.name === 'New Battlemap')) {
+            existingScene.name = sceneName;
+        }
+        parsedData.active_scene_id = existingScene.id;
+        return syncPartyAndEncounterToScene(existingScene);
+    }
+    
+    const basename = path.basename(mapUrl);
+    const cleanName = sceneName || basename.replace(/^\d+_/, '').replace(/\.[^/.]+$/, '').replace(/[-_]+/g, ' ');
+
+    const newSceneId = 'scene_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+    const newScene = {
+        id: newSceneId,
+        name: cleanName,
+        width_px: 2800,
+        height_px: 2100,
+        background_color: "#121824",
+        background_url: mapUrl,
+        grid: {
+            type: "square",
+            size_px: 70,
+            offset_x: 0,
+            offset_y: 0,
+            color: "#ffffff",
+            opacity: 0.2,
+            visible: true
+        },
+        walls: [],
+        lights: [],
+        tokens: [],
+        drawings: [],
+        templates: [],
+        fog: {
+            mode: "off",
+            revealed_polygons: []
+        },
+        aoe_templates: []
+    };
+    
+    parsedData.scenes.push(newScene);
+    parsedData.active_scene_id = newSceneId;
+    return syncPartyAndEncounterToScene(newScene);
+}
+
+// Upload Map Image Base64
+app.post('/api/upload-map', (req, res) => {
+    const { filename, image_data, scene_name } = req.body;
+    if (!filename || !image_data) {
+        return res.status(400).json({ error: "Missing filename or image_data" });
+    }
+
+    try {
+        const cleanBase64 = image_data.replace(/^data:(image|video)\/[a-zA-Z0-9-+.]+;base64,/, "");
+        const buffer = Buffer.from(cleanBase64, 'base64');
+        const safeName = Date.now() + '_' + filename.replace(/[^a-zA-Z0-9_.-]/g, '_');
+        const targetPath = path.join(__dirname, 'public', 'maps', safeName);
+
+        fs.writeFile(targetPath, buffer, (err) => {
+            if (err) return res.status(500).json({ error: "Failed to save map file" });
+
+            const mapUrl = `/maps/${safeName}`;
+            const scenesPath = path.join(__dirname, 'data', 'scenes.json');
+            
+            let parsed = { active_scene_id: 'scene_default', scenes: [] };
+            if (fs.existsSync(scenesPath)) {
+                try {
+                    parsed = JSON.parse(fs.readFileSync(scenesPath, 'utf8'));
+                } catch (e) {}
+            }
+
+            const activeScene = getOrCreateSceneForMap(parsed, mapUrl, scene_name);
+            saveScenesJson(parsed, () => {
+                io.emit('scene:update', activeScene);
+                return res.json({ success: true, url: mapUrl, scene: activeScene });
+            });
+        });
+    } catch (e) {
+        return res.status(500).json({ error: "Invalid map image encoding" });
+    }
+});
+
+// GET all map files from public/maps directory with dynamic scene synchronization
+app.get('/api/maps', (req, res) => {
+    const mapsDir = path.join(__dirname, 'public', 'maps');
+    const scenesPath = path.join(__dirname, 'data', 'scenes.json');
+
+    if (!fs.existsSync(mapsDir)) {
+        fs.mkdirSync(mapsDir, { recursive: true });
+    }
+
+    fs.readdir(mapsDir, (err, files) => {
+        if (err) return res.status(500).json({ error: "Failed to read maps directory" });
+
+        const validExts = ['.jpg', '.jpeg', '.png', '.webp', '.webm', '.mp4', '.mov', '.m4v'];
+        const mapFiles = (files || []).filter(f => validExts.includes(path.extname(f).toLowerCase()));
+
+        let parsedScenes = { active_scene_id: 'scene_default', scenes: [] };
+        if (fs.existsSync(scenesPath)) {
+            try {
+                parsedScenes = JSON.parse(fs.readFileSync(scenesPath, 'utf8'));
+            } catch (e) {}
+        }
+
+        let scenesUpdated = false;
+        mapFiles.forEach(f => {
+            const mapUrl = `/maps/${f}`;
+            const exists = (parsedScenes.scenes || []).some(s => s.background_url === mapUrl);
+            if (!exists) {
+                const cleanName = f.replace(/^\d+_/, '').replace(/\.[^/.]+$/, '').replace(/[-_]+/g, ' ');
+                const newId = 'scene_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+                parsedScenes.scenes.push({
+                    id: newId,
+                    name: cleanName,
+                    width_px: 2800,
+                    height_px: 2100,
+                    background_color: "#121824",
+                    background_url: mapUrl,
+                    grid: { type: "square", size_px: 70, offset_x: 0, offset_y: 0, color: "#ffffff", opacity: 0.2, visible: true },
+                    walls: [],
+                    lights: [],
+                    tokens: [],
+                    drawings: [],
+                    templates: [],
+                    fog: { mode: "off", revealed_polygons: [] },
+                    aoe_templates: []
+                });
+                scenesUpdated = true;
+            }
+        });
+
+        const sendResponse = () => {
+            const result = mapFiles.map(f => {
+                const mapUrl = `/maps/${f}`;
+                const matchingScene = (parsedScenes.scenes || []).find(s => s.background_url === mapUrl);
+                return {
+                    filename: f,
+                    url: mapUrl,
+                    name: matchingScene ? matchingScene.name : f.replace(/^\d+_/, '').replace(/\.[^/.]+$/, '').replace(/[-_]+/g, ' '),
+                    scene_id: matchingScene ? matchingScene.id : null,
+                    isVideo: /\.(webm|mp4|mov|m4v)$/i.test(f)
+                };
+            });
+
+            const activeScene = (parsedScenes.scenes || []).find(s => s.id === parsedScenes.active_scene_id);
+
+            res.json({
+                maps: result,
+                active_scene_id: parsedScenes.active_scene_id,
+                active_background_url: activeScene ? activeScene.background_url : null
+            });
+        };
+
+        if (scenesUpdated) {
+            saveScenesJson(parsedScenes, () => sendResponse());
+        } else {
+            sendResponse();
+        }
+    });
+});
+
+// Select Active Map Scene API Endpoint
+app.post('/api/scene/select', (req, res) => {
+    const { mapUrl, sceneId } = req.body;
+    const scenesPath = path.join(__dirname, 'data', 'scenes.json');
+
+    let parsed = { active_scene_id: 'scene_default', scenes: [] };
+    if (fs.existsSync(scenesPath)) {
+        try {
+            parsed = JSON.parse(fs.readFileSync(scenesPath, 'utf8'));
+        } catch (e) {}
+    }
+
+    let targetScene = null;
+    if (sceneId) {
+        targetScene = (parsed.scenes || []).find(s => s.id === sceneId);
+    }
+    if (!targetScene && mapUrl) {
+        targetScene = (parsed.scenes || []).find(s => s.background_url === mapUrl);
+    }
+
+    if (!targetScene && mapUrl) {
+        targetScene = getOrCreateSceneForMap(parsed, mapUrl);
+    } else if (targetScene) {
+        parsed.active_scene_id = targetScene.id;
+        targetScene = syncPartyAndEncounterToScene(targetScene);
+    }
+
+    if (targetScene) {
+        saveScenesJson(parsed, () => {
+            io.emit('scene:update', targetScene);
+            return res.json({ success: true, active_scene_id: parsed.active_scene_id, scene: targetScene });
+        });
+    } else {
+        return res.status(404).json({ error: "Target scene or map not found" });
+    }
+});
 function getLocalIPAddress() {
     const interfaces = os.networkInterfaces();
     let fallbackIP = '127.0.0.1';
@@ -272,6 +745,173 @@ io.on('connection', (socket) => {
         io.to('dm').emit('whisper-received-dm', { characterId, characterName, message });
     });
 
+    socket.on('propose-homebrew-item', ({ charId, item }) => {
+        const partyPath = getPartyPath();
+        fs.readFile(partyPath, 'utf8', (err, data) => {
+            if (err) return;
+            try {
+                let party = JSON.parse(data);
+                const idx = party.findIndex(c => c.id === charId);
+                if (idx !== -1) {
+                    if (!party[idx].homebrew_proposals) party[idx].homebrew_proposals = [];
+                    item.id = item.id || 'hb_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+                    item.status = 'pending';
+                    item.createdAt = new Date().toISOString();
+                    party[idx].homebrew_proposals.push(item);
+                    
+                    fs.writeFile(partyPath, JSON.stringify(party, null, 2), () => {
+                        io.to(`player:${charId}`).emit('character-updated', party[idx]);
+                        io.to('dm').emit('party-updated', party);
+                        io.to('dm').emit('homebrew-proposed', { charId, characterName: party[idx].name, item });
+                    });
+                }
+            } catch (e) {}
+        });
+    });
+
+    socket.on('approve-homebrew-item', ({ charId, itemId }) => {
+        const partyPath = getPartyPath();
+        fs.readFile(partyPath, 'utf8', (err, data) => {
+            if (err) return;
+            try {
+                let party = JSON.parse(data);
+                const idx = party.findIndex(c => c.id === charId);
+                if (idx !== -1) {
+                    const proposals = party[idx].homebrew_proposals || [];
+                    const pIdx = proposals.findIndex(p => p.id === itemId);
+                    if (pIdx !== -1) {
+                        const approvedItem = proposals.splice(pIdx, 1)[0];
+                        approvedItem.status = 'approved';
+                        
+                        if (approvedItem.type === 'weapon') {
+                            if (!party[idx].weapons) party[idx].weapons = [];
+                            party[idx].weapons.push(approvedItem);
+                        } else {
+                            if (!party[idx].inventory) party[idx].inventory = [];
+                            party[idx].inventory.push(approvedItem);
+                        }
+
+                        fs.writeFile(partyPath, JSON.stringify(party, null, 2), () => {
+                            io.to(`player:${charId}`).emit('character-updated', party[idx]);
+                            io.to('dm').emit('party-updated', party);
+                            io.to(`player:${charId}`).emit('homebrew-approved', approvedItem);
+                        });
+                    }
+                }
+            } catch (e) {}
+        });
+    });
+
+    socket.on('reject-homebrew-item', ({ charId, itemId }) => {
+        const partyPath = getPartyPath();
+        fs.readFile(partyPath, 'utf8', (err, data) => {
+            if (err) return;
+            try {
+                let party = JSON.parse(data);
+                const idx = party.findIndex(c => c.id === charId);
+                if (idx !== -1) {
+                    if (party[idx].homebrew_proposals) {
+                        party[idx].homebrew_proposals = party[idx].homebrew_proposals.filter(p => p.id !== itemId);
+                        fs.writeFile(partyPath, JSON.stringify(party, null, 2), () => {
+                            io.to(`player:${charId}`).emit('character-updated', party[idx]);
+                            io.to('dm').emit('party-updated', party);
+                        });
+                    }
+                }
+            } catch (e) {}
+        });
+    });
+
+    // DM sends homebrew/custom item to player sheet with interactive prompt
+    socket.on('dm-send-item', ({ charId, item }) => {
+        const partyPath = getPartyPath();
+        fs.readFile(partyPath, 'utf8', (err, data) => {
+            if (err) return;
+            try {
+                let party = JSON.parse(data);
+                const idx = party.findIndex(c => c.id === charId);
+                if (idx !== -1) {
+                    item.id = item.id || 'hb_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+                    io.to(`player:${charId}`).emit('item-receive-prompt', {
+                        charId,
+                        characterName: party[idx].name,
+                        item
+                    });
+                    socket.emit('dm-item-status-alert', {
+                        type: 'info',
+                        message: `Offered "${item.name}" to ${party[idx].name}. Awaiting player response...`
+                    });
+                }
+            } catch (e) {
+                console.error("Error in dm-send-item:", e);
+            }
+        });
+    });
+
+    // Player accepts sent item from DM
+    socket.on('player-accept-item', ({ charId, item }) => {
+        const partyPath = getPartyPath();
+        fs.readFile(partyPath, 'utf8', (err, data) => {
+            if (err) return;
+            try {
+                let party = JSON.parse(data);
+                const idx = party.findIndex(c => c.id === charId);
+                if (idx !== -1) {
+                    if (!party[idx].inventory) party[idx].inventory = [];
+                    
+                    const existingIdx = party[idx].inventory.findIndex(i => (typeof i === 'object' && i.id && i.id === item.id));
+                    if (existingIdx === -1) {
+                        party[idx].inventory.push(item);
+                    }
+
+                    const isWeapon = item.type === 'M' || item.type === 'R' || item.type === 'weapon' || item.weaponCategory || item.dmg1;
+                    if (isWeapon) {
+                        if (!party[idx].weapons) party[idx].weapons = [];
+                        const existingWpn = party[idx].weapons.findIndex(w => (typeof w === 'object' && w.id && w.id === item.id));
+                        if (existingWpn === -1) {
+                            party[idx].weapons.push(item);
+                        }
+                    }
+
+                    if (item.rarity && item.rarity !== 'None') {
+                        if (!party[idx].magic_items) party[idx].magic_items = [];
+                        if (!party[idx].magic_items.includes(item.name)) {
+                            party[idx].magic_items.push(item.name);
+                        }
+                    }
+
+                    fs.writeFile(partyPath, JSON.stringify(party, null, 2), 'utf8', () => {
+                        io.to(`player:${charId}`).emit('character-updated', party[idx]);
+                        io.to('dm').emit('party-updated', party);
+                        io.to('dm').emit('dm-item-status-alert', {
+                            type: 'success',
+                            message: `🎉 ${party[idx].name} accepted "${item.name}"!`
+                        });
+                    });
+                }
+            } catch (e) {
+                console.error("Error in player-accept-item:", e);
+            }
+        });
+    });
+
+    // Player declines sent item from DM
+    socket.on('player-decline-item', ({ charId, item }) => {
+        const partyPath = getPartyPath();
+        fs.readFile(partyPath, 'utf8', (err, data) => {
+            if (err) return;
+            try {
+                let party = JSON.parse(data);
+                const idx = party.findIndex(c => c.id === charId);
+                const charName = idx !== -1 ? party[idx].name : 'Player';
+                io.to('dm').emit('dm-item-status-alert', {
+                    type: 'warning',
+                    message: `❌ ${charName} declined "${item.name}".`
+                });
+            } catch (e) {}
+        });
+    });
+
     socket.on('award-badge', ({ characterId, badgeId }) => {
         console.log(`Awarding badge ${badgeId} to player ${characterId}`);
         const partyPath = getPartyPath();
@@ -294,6 +934,51 @@ io.on('connection', (socket) => {
             } catch (e) {
                 console.error("Failed to award badge:", e);
             }
+        });
+    });
+
+    // Socket Handler: Real-time PDF Parser Execution & Streaming Log
+    socket.on('start-pdf-extraction', (config) => {
+        const { filePath, type = 'all', pages, crMin, crMax, spellLevel, rarity } = config || {};
+        if (!filePath || !fs.existsSync(filePath)) {
+            return socket.emit('pdf-log-line', { type: 'error', text: 'PDF File not found on server.' });
+        }
+
+        const args = ['parse_pdf.py', '--file', filePath, '--type', type];
+        if (pages) { args.push('--pages'); args.push(pages); }
+        if (crMin !== undefined && crMin !== null && crMin !== '') { args.push('--cr-min'); args.push(String(crMin)); }
+        if (crMax !== undefined && crMax !== null && crMax !== '') { args.push('--cr-max'); args.push(String(crMax)); }
+        if (spellLevel !== undefined && spellLevel !== null && spellLevel !== '') { args.push('--spell-level'); args.push(String(spellLevel)); }
+        if (rarity) { args.push('--rarity'); args.push(rarity); }
+
+        const pyProcess = spawn('python', args, { cwd: __dirname });
+
+        pyProcess.stdout.on('data', (data) => {
+            const lines = data.toString().split('\n');
+            lines.forEach(line => {
+                const cleanLine = line.trim();
+                if (!cleanLine) return;
+                
+                if (cleanLine.startsWith('[PROGRESS:')) {
+                    const pctMatch = cleanLine.match(/\[PROGRESS:(\d+)%\]/);
+                    const pct = pctMatch ? parseInt(pctMatch[1]) : 0;
+                    socket.emit('pdf-log-line', { type: 'progress', pct, text: cleanLine });
+                } else if (cleanLine.startsWith('[SAVED]')) {
+                    socket.emit('pdf-log-line', { type: 'saved', text: cleanLine });
+                } else if (cleanLine.startsWith('[COMPLETED]')) {
+                    socket.emit('pdf-log-line', { type: 'completed', text: cleanLine });
+                } else {
+                    socket.emit('pdf-log-line', { type: 'step', text: cleanLine });
+                }
+            });
+        });
+
+        pyProcess.stderr.on('data', (data) => {
+            socket.emit('pdf-log-line', { type: 'warn', text: data.toString().trim() });
+        });
+
+        pyProcess.on('close', (code) => {
+            socket.emit('pdf-extraction-finished', { code, success: code === 0 });
         });
     });
 
@@ -327,6 +1012,134 @@ io.on('connection', (socket) => {
 
     socket.on('trigger-ambient-ticker', (text) => {
         io.emit('ambient-ticker-update', text);
+    });
+
+    // --- GRAIL BATTLE MAP & DICE SOCKET HANDLERS ---
+    socket.on('scene:get', () => {
+        const scenesPath = path.join(__dirname, 'data', 'scenes.json');
+        if (fs.existsSync(scenesPath)) {
+            fs.readFile(scenesPath, 'utf8', (err, data) => {
+                if (!err) {
+                    try {
+                        const parsed = JSON.parse(data);
+                        const activeId = parsed.active_scene_id;
+                        const activeScene = (parsed.scenes || []).find(s => s.id === activeId) || parsed.scenes[0];
+                        socket.emit('scene:data', activeScene);
+                    } catch (e) {}
+                }
+            });
+        }
+    });
+
+    socket.on('token:move', (data) => {
+        const scenesPath = path.join(__dirname, 'data', 'scenes.json');
+        if (fs.existsSync(scenesPath)) {
+            fs.readFile(scenesPath, 'utf8', (err, rawData) => {
+                if (err) return;
+                try {
+                    let parsed = JSON.parse(rawData);
+                    let activeScene = (parsed.scenes || []).find(s => s.id === (data.scene_id || parsed.active_scene_id));
+                    if (activeScene && activeScene.tokens) {
+                        let tok = activeScene.tokens.find(t => t.id === data.token_id);
+                        if (tok) {
+                            tok.x = data.x;
+                            tok.y = data.y;
+                            fs.writeFile(scenesPath, JSON.stringify(parsed, null, 2), (err) => {
+                                io.emit('token:moved', data);
+                            });
+                        }
+                    }
+                } catch (e) {}
+            });
+        }
+    });
+
+    socket.on('token:nudge', (data) => {
+        const { character_id, direction } = data;
+        const scenesPath = path.join(__dirname, 'data', 'scenes.json');
+        if (fs.existsSync(scenesPath)) {
+            fs.readFile(scenesPath, 'utf8', (err, rawData) => {
+                if (err) return;
+                try {
+                    let parsed = JSON.parse(rawData);
+                    let activeScene = (parsed.scenes || []).find(s => s.id === parsed.active_scene_id) || parsed.scenes[0];
+                    if (activeScene && activeScene.tokens) {
+                        let tok = activeScene.tokens.find(t => t.character_id === character_id || t.id === `tok_party_${character_id}`);
+                        if (tok) {
+                            var step = (activeScene.grid && activeScene.grid.size_px) || 70;
+                            if (direction === 'up') tok.y -= step;
+                            if (direction === 'down') tok.y += step;
+                            if (direction === 'left') tok.x -= step;
+                            if (direction === 'right') tok.x += step;
+
+                            fs.writeFile(scenesPath, JSON.stringify(parsed, null, 2), () => {
+                                io.emit('token:moved', { scene_id: activeScene.id, token_id: tok.id, x: tok.x, y: tok.y });
+                                io.emit('scene:update', activeScene);
+                            });
+                        }
+                    }
+                } catch (e) {}
+            });
+        }
+    });
+
+    socket.on('token:elevation', (data) => {
+        const { token_id, elevation } = data;
+        const scenesPath = path.join(__dirname, 'data', 'scenes.json');
+        if (fs.existsSync(scenesPath)) {
+            fs.readFile(scenesPath, 'utf8', (err, rawData) => {
+                if (err) return;
+                try {
+                    let parsed = JSON.parse(rawData);
+                    let activeScene = (parsed.scenes || []).find(s => s.id === parsed.active_scene_id) || parsed.scenes[0];
+                    if (activeScene && activeScene.tokens) {
+                        let tok = activeScene.tokens.find(t => t.id === token_id);
+                        if (tok) {
+                            tok.elevation = parseInt(elevation, 10) || 0;
+                            fs.writeFile(scenesPath, JSON.stringify(parsed, null, 2), () => {
+                                io.emit('scene:update', activeScene);
+                            });
+                        }
+                    }
+                } catch (e) {}
+            });
+        }
+    });
+
+    socket.on('aoe:update', (data) => {
+        const scenesPath = path.join(__dirname, 'data', 'scenes.json');
+        if (fs.existsSync(scenesPath)) {
+            fs.readFile(scenesPath, 'utf8', (err, rawData) => {
+                if (err) return;
+                try {
+                    let parsed = JSON.parse(rawData);
+                    let activeScene = (parsed.scenes || []).find(s => s.id === (data.scene_id || parsed.active_scene_id));
+                    if (activeScene) {
+                        activeScene.aoe_templates = data.templates || [];
+                        fs.writeFile(scenesPath, JSON.stringify(parsed, null, 2), () => {
+                            io.emit('aoe:updated', data);
+                        });
+                    }
+                } catch (e) {}
+            });
+        }
+    });
+
+    socket.on('dice:roll', (rollData) => {
+        console.log('Dice rolled:', rollData);
+        io.emit('dice:broadcast', rollData);
+    });
+
+    socket.on('measure:draw', (data) => {
+        io.emit('measure:broadcast', data);
+    });
+
+    socket.on('measure:clear', () => {
+        io.emit('measure:clear');
+    });
+
+    socket.on('overlay:trigger-cinematic', (data) => {
+        io.emit('overlay:cinematic', data);
     });
 
     socket.on('disconnect', () => {
@@ -564,58 +1377,78 @@ app.get('/api/party', (req, res) => {
     });
 });
 
-// Load and Cache Class / Subclass Data from folder data/class
+// Load and Cache Class / Subclass Data from folder data/class & data/subclass.json
 let cachedClassesData = null;
 
 function getClassesAndSubclasses() {
     if (cachedClassesData) return cachedClassesData;
 
     const classDir = path.join(__dirname, 'data', 'class');
+    const subclassFile = path.join(__dirname, 'data', 'subclass.json');
     const classes = {};
-    const subclasses = [];
+    let subclasses = [];
 
-    if (!fs.existsSync(classDir)) {
-        console.error("Classes directory does not exist:", classDir);
-        return { classes, subclasses };
-    }
-
-    try {
-        const files = fs.readdirSync(classDir);
-        files.forEach(file => {
-            if (file.startsWith('class-') && file.endsWith('.json')) {
-                const filePath = path.join(classDir, file);
-                try {
-                    const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-                    if (content && Array.isArray(content.class)) {
-                        content.class.forEach(cls => {
-                            if (cls && cls.name) {
-                                // Add class to lookup
-                                classes[cls.name] = cls;
-
-                                // Flatten and add subclasses
-                                if (Array.isArray(cls.subclasses)) {
-                                    cls.subclasses.forEach(sub => {
-                                        if (sub && sub.name) {
-                                            // Keep a clean copy with a reference to the parent class name
-                                            const subCopy = {
-                                                ...sub,
-                                                class: { name: cls.name }
-                                            };
-                                            subclasses.push(subCopy);
-                                        }
-                                    });
-                                }
-                            }
-                        });
-                    }
-                } catch (err) {
-                    console.error(`Error parsing class file ${file}:`, err);
-                }
+    // 1. Prefer dedicated data/subclass.json file if present
+    if (fs.existsSync(subclassFile)) {
+        try {
+            const content = JSON.parse(fs.readFileSync(subclassFile, 'utf8'));
+            if (Array.isArray(content)) {
+                subclasses = content;
             }
-        });
-    } catch (err) {
-        console.error("Error reading classes directory:", err);
+        } catch (err) {
+            console.error("Error parsing data/subclass.json:", err);
+        }
     }
+
+    // 2. Load classes and fallback subclasses from data/class/*.json
+    if (fs.existsSync(classDir)) {
+        try {
+            const files = fs.readdirSync(classDir);
+            files.forEach(file => {
+                if (file.startsWith('class-') && file.endsWith('.json')) {
+                    const filePath = path.join(classDir, file);
+                    try {
+                        const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+                        if (content && Array.isArray(content.class)) {
+                            content.class.forEach(cls => {
+                                if (cls && cls.name) {
+                                    classes[cls.name] = cls;
+                                    if (subclasses.length === 0 && Array.isArray(cls.subclasses)) {
+                                        cls.subclasses.forEach(sub => {
+                                            if (sub && sub.name) {
+                                                subclasses.push({
+                                                    ...sub,
+                                                    class: { name: cls.name }
+                                                });
+                                            }
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                    } catch (err) {
+                        console.error(`Error parsing class file ${file}:`, err);
+                    }
+                }
+            });
+        } catch (err) {
+            console.error("Error reading classes directory:", err);
+        }
+    }
+
+    // Filter out any Unearthed Arcana (UA), Playtest, or Sidekick subclass entries
+    subclasses = subclasses.filter(sc => {
+        if (!sc || !sc.name) return false;
+        const name = sc.name;
+        const source = sc.source || '';
+        if (name.includes('UA') || name.includes('(UA)') || name.includes('Playtest') || name.includes('Sidekick')) {
+            return false;
+        }
+        if (source.startsWith('UA') || source.includes('Modern') || source.includes('Mystic')) {
+            return false;
+        }
+        return true;
+    });
 
     cachedClassesData = { classes, subclasses };
     return cachedClassesData;
@@ -632,6 +1465,17 @@ app.get('/api/subclasses', (req, res) => {
     const data = getClassesAndSubclasses();
     res.json(data.subclasses);
 });
+
+// Get SRD Wild Shapes & Familiars
+app.get('/api/creatures', (req, res) => {
+    const creaturesPath = path.join(__dirname, 'data', 'creatures.json');
+    if (fs.existsSync(creaturesPath)) {
+        res.sendFile(creaturesPath);
+    } else {
+        res.json({ wild_shapes: [], familiars: [] });
+    }
+});
+
 
 // Get Pending Characters Proposed by Players
 app.get('/api/pending-characters', (req, res) => {
@@ -1387,43 +2231,7 @@ app.get('/api/downtime', (req, res) => {
     });
 });
 
-// Get Bulk Monster Beastiary Files
-app.get('/api/monsters', (req, res) => {
-    const monstersDir = path.join(__dirname, 'data', 'monsters');
-    const hbMonstersDir = path.join(__dirname, 'data', 'homebrew', 'monsters');
-    let allMonsters = [];
-
-    const loadFromDir = (dir) => {
-        if (!fs.existsSync(dir)) return;
-        try {
-            fs.readdirSync(dir).forEach(file => {
-                if (file.endsWith('.json')) {
-                    const filePath = path.join(dir, file);
-                    try {
-                        const fileContent = fs.readFileSync(filePath, 'utf8');
-                        const monsterData = JSON.parse(fileContent);
-                        
-                        if (Array.isArray(monsterData)) {
-                            allMonsters = allMonsters.concat(monsterData);
-                        } else {
-                            allMonsters.push(monsterData);
-                        }
-                    } catch (err) {
-                        console.error(`Error reading monster file ${file} in ${dir}:`, err);
-                    }
-                }
-            });
-        } catch(err) {
-            console.error(`Failed to read monsters directory ${dir}:`, err);
-        }
-    };
-
-    // Load from standard and homebrew
-    loadFromDir(monstersDir);
-    loadFromDir(hbMonstersDir);
-
-    res.json(allMonsters);
-});
+// Get Bulk Monster Bestiary Files - Handled by monstersRouter via dataCache
 
 // Update Downtime Projects (The Grinding Mechanic)
 app.post('/api/downtime/update', (req, res) => {
@@ -2114,6 +2922,7 @@ app.post('/api/ingest/parse-text', (req, res) => {
 // "Convert copper to gold (value/100), and any leftover convert to silver (value/10). any additional left over round up to nearest silver"
 function convertCpToGpPrice(cpValue) {
     if (!cpValue) return 0;
+    if (typeof cpValue === 'string') return cpValue;
     const gold = Math.floor(cpValue / 100);
     const leftoverCp = cpValue % 100;
     const silver = Math.ceil(leftoverCp / 10);
@@ -2581,64 +3390,7 @@ const parseLocalMarkdown = (fileName, content) => {
     return spell;
 };
 
-// GET Route /api/spells
-app.get('/api/spells', (req, res) => {
-    const localFolder = path.join(__dirname, 'data', 'spells');
-    const hbFolder = path.join(__dirname, 'data', 'homebrew', 'spells');
-    
-    let spells = [];
-    const directoriesToScan = [];
-
-    if (fs.existsSync(localFolder)) directoriesToScan.push({ path: localFolder, isHB: false });
-    if (fs.existsSync(hbFolder)) directoriesToScan.push({ path: hbFolder, isHB: true });
-
-    if (directoriesToScan.length === 0) {
-        return res.json([]);
-    }
-
-    let scannedDirsCount = 0;
-    let totalMdFiles = [];
-
-    directoriesToScan.forEach(dirInfo => {
-        fs.readdir(dirInfo.path, (dirErr, files) => {
-            scannedDirsCount++;
-            if (!dirErr && files) {
-                const mdFiles = files.filter(f => f.endsWith('.md')).map(f => ({
-                    dir: dirInfo.path,
-                    fileName: f,
-                    isHB: dirInfo.isHB
-                }));
-                totalMdFiles = totalMdFiles.concat(mdFiles);
-            }
-
-            if (scannedDirsCount === directoriesToScan.length) {
-                if (totalMdFiles.length === 0) {
-                    return res.json([]);
-                }
-
-                let completed = 0;
-                totalMdFiles.forEach(fileInfo => {
-                    const filePath = path.join(fileInfo.dir, fileInfo.fileName);
-                    fs.readFile(filePath, 'utf-8', (readErr, fileContent) => {
-                        completed++;
-                        if (!readErr) {
-                            try {
-                                const parsed = parseLocalMarkdown(fileInfo.fileName, fileContent);
-                                parsed.isHomebrew = fileInfo.isHB;
-                                spells.push(parsed);
-                            } catch (e) {
-                                console.error("Error parsing spell", fileInfo.fileName, e);
-                            }
-                        }
-                        if (completed === totalMdFiles.length) {
-                            res.json(spells);
-                        }
-                    });
-                });
-            }
-        });
-    });
-});
+// GET Route /api/spells - Handled by spellsRouter via dataCache
 
 // GET Route /api/spells/lookup/:spellName
 app.get('/api/spells/lookup/:spellName', (req, res) => {
@@ -2793,27 +3545,7 @@ app.get('/api/hazards/generate', (req, res) => {
     });
 });
 
-// Soundboard Control Setup
-app.post('/api/sounds/trigger', (req, res) => {
-    const { sound } = req.body; // e.g. 'sword-clash.mp3', 'desert-wind.mp3'
-    activeSoundTrigger = {
-        sound: sound,
-        timestamp: Date.now()
-    };
-    io.emit('board-state-updated', {
-        encounter: currentEncounterState,
-        activeCombatIndex: activeCombatIndex,
-        activeRound: activeRound,
-        soundTrigger: activeSoundTrigger,
-        handout: currentHandoutImage
-    });
-    setTimeout(() => {
-        if (activeSoundTrigger && activeSoundTrigger.sound === sound) {
-            activeSoundTrigger = null;
-        }
-    }, 2000);
-    res.json({ success: true, triggered: sound });
-});
+// Legacy sound trigger endpoint removed - Soundboard uses /api/sounds and sockets/index.js
 
 
 // ----------------------------------------------------
@@ -2933,20 +3665,7 @@ app.get('/api/streamdeck/clear', (req, res) => {
     res.json({ success: true, message: "Cleared all active spell templates." });
 });
 
-// Endpoint: Physical Sound Trigger via API
-app.get('/api/streamdeck/sound/:soundFile', (req, res) => {
-    const soundFile = req.params.soundFile;
-    activeSoundTrigger = {
-        sound: soundFile,
-        timestamp: Date.now()
-    };
-    setTimeout(() => {
-        if (activeSoundTrigger && activeSoundTrigger.sound === soundFile) {
-            activeSoundTrigger = null;
-        }
-    }, 2000);
-    res.json({ success: true, triggered: soundFile });
-});
+
 
 
 // ----------------------------------------------------
@@ -3235,8 +3954,9 @@ app.get('/api/wiki/entities', (req, res) => {
             entities = entities.concat(party.map(x => ({ id: x.id, name: x.name, description: `Level ${x.level} ${x.race} ${x.class}. Secrets: ${x.secrets || 'None'}`, type: 'player' })));
         }
         if (fs.existsSync(factionsPath)) {
-            const factions = JSON.parse(fs.readFileSync(factionsPath, 'utf8'));
-            entities = entities.concat(factions.map(x => ({ id: x.id, name: x.name, description: x.description || x.lore || '', type: 'faction' })));
+            const factionsRaw = JSON.parse(fs.readFileSync(factionsPath, 'utf8'));
+            const factionsList = Array.isArray(factionsRaw) ? factionsRaw : (factionsRaw.factions || []);
+            entities = entities.concat(factionsList.map(x => ({ id: x.id, name: x.name, description: x.description || x.lore || '', type: 'faction' })));
         }
     } catch(e) {
         console.error("Wiki extraction error:", e);
@@ -3392,6 +4112,172 @@ app.post('/api/traps/save', (req, res) => {
         if (err) return res.status(500).json({ error: "Failed to save trap library" });
         res.json({ success: true });
     });
+});
+
+// Homebrew Items REST Endpoints
+app.get('/api/homebrew/items', (req, res) => {
+    const hbItemsFile = path.join(__dirname, 'data', 'homebrew', 'magic_items.json');
+    if (fs.existsSync(hbItemsFile)) {
+        try {
+            const items = JSON.parse(fs.readFileSync(hbItemsFile, 'utf8'));
+            return res.json(items);
+        } catch (e) {}
+    }
+    res.json([]);
+});
+
+app.post('/api/homebrew/items', (req, res) => {
+    const item = req.body;
+    if (!item || !item.name) {
+        return res.status(400).json({ error: "Item name is required." });
+    }
+    const hbDir = path.join(__dirname, 'data', 'homebrew');
+    if (!fs.existsSync(hbDir)) {
+        fs.mkdirSync(hbDir, { recursive: true });
+    }
+    const hbItemsFile = path.join(hbDir, 'magic_items.json');
+    let items = [];
+    if (fs.existsSync(hbItemsFile)) {
+        try {
+            items = JSON.parse(fs.readFileSync(hbItemsFile, 'utf8'));
+        } catch (e) {}
+    }
+    if (!Array.isArray(items)) items = [];
+    
+    if (!item.id) {
+        item.id = 'hb_item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+    }
+    item.isHomebrew = true;
+    item.source = item.source || 'Homebrew';
+
+    const existingIdx = items.findIndex(i => (i.id && i.id === item.id) || i.name.toLowerCase() === item.name.toLowerCase());
+    if (existingIdx !== -1) {
+        items[existingIdx] = item;
+    } else {
+        items.push(item);
+    }
+
+    fs.writeFile(hbItemsFile, JSON.stringify(items, null, 2), 'utf8', (err) => {
+        if (err) return res.status(500).json({ error: "Failed to save homebrew item" });
+        res.json({ success: true, item, items });
+    });
+});
+
+app.delete('/api/homebrew/items/:id', (req, res) => {
+    const itemId = req.params.id;
+    const hbItemsFile = path.join(__dirname, 'data', 'homebrew', 'magic_items.json');
+    if (!fs.existsSync(hbItemsFile)) return res.json({ success: true, items: [] });
+    try {
+        let items = JSON.parse(fs.readFileSync(hbItemsFile, 'utf8'));
+        items = items.filter(i => i.id !== itemId && i.name !== itemId);
+        fs.writeFileSync(hbItemsFile, JSON.stringify(items, null, 2), 'utf8');
+        res.json({ success: true, items });
+    } catch (e) {
+        res.status(500).json({ error: "Failed to delete homebrew item" });
+    }
+});
+
+// PDF Parser Upload & Inspection Endpoints
+app.post('/api/pdf-parser/upload', (req, res) => {
+    const { fileName, base64Data } = req.body || {};
+    if (!fileName || !base64Data) {
+        return res.status(400).json({ error: "fileName and base64Data are required." });
+    }
+
+    const uploadsDir = path.join(__dirname, 'data', 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    const safeName = fileName.replace(/[^a-zA-Z0-9_\-\.]/g, '_');
+    const filePath = path.join(uploadsDir, safeName);
+    const buffer = Buffer.from(base64Data.replace(/^data:application\/pdf;base64,/, ''), 'base64');
+
+    fs.writeFile(filePath, buffer, (err) => {
+        if (err) return res.status(500).json({ error: "Failed to save PDF upload file." });
+
+        // Run inspect CLI to get page count & title
+        const exec = require('child_process').exec;
+        exec(`python parse_pdf.py --info --file "${filePath}"`, { cwd: __dirname }, (error, stdout, stderr) => {
+            let info = { page_count: 0, title: safeName, file_size_bytes: buffer.length };
+            try {
+                if (stdout) {
+                    const parsedInfo = JSON.parse(stdout.trim());
+                    if (!parsedInfo.error) info = parsedInfo;
+                }
+            } catch (e) {}
+
+            res.json({ success: true, filePath, fileName: safeName, info });
+        });
+    });
+});
+
+app.post('/api/pdf-parser/inspect', (req, res) => {
+    const { filePath } = req.body || {};
+    if (!filePath || !fs.existsSync(filePath)) {
+        return res.status(400).json({ error: "Valid filePath is required." });
+    }
+
+    const exec = require('child_process').exec;
+    exec(`python parse_pdf.py --info --file "${filePath}"`, { cwd: __dirname }, (error, stdout, stderr) => {
+        try {
+            if (stdout) {
+                const info = JSON.parse(stdout.trim());
+                return res.json({ success: true, info });
+            }
+        } catch (e) {}
+        res.json({ success: false, error: "Failed to inspect PDF." });
+    });
+});
+
+// Draft Duplicate Detection Endpoint
+app.get('/api/drafts/check-duplicates', (req, res) => {
+    const draftsDir = path.join(__dirname, 'data', 'drafts');
+    const existingNames = new Set();
+
+    // Check active items compendium
+    const itemsPath = path.join(__dirname, 'data', 'items.json');
+    if (fs.existsSync(itemsPath)) {
+        try {
+            const itemsData = JSON.parse(fs.readFileSync(itemsPath, 'utf8'));
+            const list = Array.isArray(itemsData) ? itemsData : (itemsData.item || []);
+            list.forEach(i => i.name && existingNames.add(i.name.toLowerCase()));
+        } catch (e) {}
+    }
+
+    // Check homebrew magic items compendium
+    const hbItemsPath = path.join(__dirname, 'data', 'homebrew', 'magic_items.json');
+    if (fs.existsSync(hbItemsPath)) {
+        try {
+            const hbList = JSON.parse(fs.readFileSync(hbItemsPath, 'utf8'));
+            hbList.forEach(i => i.name && existingNames.add(i.name.toLowerCase()));
+        } catch (e) {}
+    }
+
+    // Check active monsters compendium
+    const monstersDir = path.join(__dirname, 'data', 'monsters');
+    if (fs.existsSync(monstersDir)) {
+        try {
+            const mFiles = fs.readdirSync(monstersDir);
+            mFiles.forEach(f => existingNames.add(f.replace('.json', '').replace(/_/g, ' ').toLowerCase()));
+        } catch (e) {}
+    }
+
+    const duplicates = [];
+    ['spells', 'monsters', 'magic_items'].forEach(cat => {
+        const catDir = path.join(draftsDir, cat);
+        if (fs.existsSync(catDir)) {
+            const files = fs.readdirSync(catDir);
+            files.forEach(file => {
+                const cleanName = file.replace(/\.(json|md)$/, '').replace(/_/g, ' ').toLowerCase();
+                if (existingNames.has(cleanName)) {
+                    duplicates.push({ category: cat, fileName: file, cleanName });
+                }
+            });
+        }
+    });
+
+    res.json({ success: true, duplicates });
 });
 
 // 4. Continuity & Retcon Tracker

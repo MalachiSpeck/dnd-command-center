@@ -95,28 +95,33 @@ async function handleSessionReconnect() {
 }
 
 function showBanner(status, textOverride = '') {
-    const bannerText = document.getElementById('pwa-status-text');
-    const modeBadge = document.getElementById('pwa-mode-badge');
-    if (!bannerText) return;
+    const pill = document.getElementById('pwa-network-pill');
+    const dot = document.getElementById('pwa-dot');
+    const text = document.getElementById('pwa-status-text');
+
+    if (!pill || !dot || !text) return;
 
     if (status === 'connected') {
-        bannerText.innerText = textOverride || "Status: Live Sync Enabled";
-        if (modeBadge) {
-            modeBadge.innerText = "LIVE MODE";
-            modeBadge.style.backgroundColor = "var(--success-green)";
-        }
+        pill.style.background = 'rgba(34, 197, 94, 0.15)';
+        pill.style.borderColor = '#22c55e';
+        pill.style.color = '#4ade80';
+        dot.style.background = '#22c55e';
+        dot.style.boxShadow = '0 0 6px #22c55e';
+        text.innerText = textOverride || "Online";
     } else if (status === 'reconnecting') {
-        bannerText.innerText = textOverride || "Status: Synchronizing changes...";
-        if (modeBadge) {
-            modeBadge.innerText = "SYNCING";
-            modeBadge.style.backgroundColor = "var(--gold-amber)";
-        }
+        pill.style.background = 'rgba(245, 158, 11, 0.15)';
+        pill.style.borderColor = '#fbbf24';
+        pill.style.color = '#fde047';
+        dot.style.background = '#fbbf24';
+        dot.style.boxShadow = '0 0 6px #fbbf24';
+        text.innerText = textOverride || "Syncing...";
     } else {
-        bannerText.innerText = textOverride || "Status: Sandbox Offline Mode";
-        if (modeBadge) {
-            modeBadge.innerText = "OFFLINE";
-            modeBadge.style.backgroundColor = "var(--crimson-rage)";
-        }
+        pill.style.background = 'rgba(239, 68, 68, 0.15)';
+        pill.style.borderColor = '#ef4444';
+        pill.style.color = '#fca5a5';
+        dot.style.background = '#ef4444';
+        dot.style.boxShadow = '0 0 6px #ef4444';
+        text.innerText = textOverride || "Offline Mode (Saved on Device)";
     }
 }
 

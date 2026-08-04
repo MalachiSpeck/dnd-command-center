@@ -1,8 +1,18 @@
 {
-  "gold": 500,
+  "gold": 2,
   "weight_capacity": 300,
   "items": [
-    { "name": "Rope, Hempen (50ft)", "quantity": 2, "weight": 10, "value": 1 },
-    { "name": "Rations (1 day)", "quantity": 10, "weight": 2, "value": 0.5 }
+    {
+      "name": "Rope, Hempen (50ft)",
+      "quantity": 2,
+      "weight": 10,
+      "value": 1
+    },
+    {
+      "name": "Rations (1 day)",
+      "quantity": 10,
+      "weight": 2,
+      "value": 0.5
+    }
   ]
 }
