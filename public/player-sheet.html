@@ -5126,6 +5126,20 @@
             campaignSpells = await window.offlineStore.getAll('spells') || [];
             if (campaignSpells.length === 0) {
                 console.warn("Spells database empty. Syncing from live server...");
+                try {
+                    const spellRes = await fetch('/api/spells');
+                    if (spellRes.ok) {
+                        const fetchedSpells = await spellRes.json();
+                        campaignSpells = fetchedSpells;
+                        for (const sp of fetchedSpells) {
+                            await window.offlineStore.put('spells', sp);
+                        }
+                        console.log(`[Spells] Cached ${fetchedSpells.length} spells into local storage.`);
+                        if (typeof renderSpellsList === 'function') renderSpellsList();
+                    }
+                } catch(e) {
+                    console.warn("Could not fetch spells from server:", e);
+                }
             }
 
             // Fetch magic items library (offline-resilient)
