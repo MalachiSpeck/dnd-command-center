@@ -14,6 +14,8 @@ class ResourceVaultEngine {
             second_wind: '#38bdf8',
             superiority_dice: '#f59e0b',
             lay_on_hands: '#eab308',
+            bardic_inspiration: '#ec4899',
+            arcane_recovery: '#38bdf8',
             default: '#8b5cf6'
         };
 
@@ -54,7 +56,7 @@ class ResourceVaultEngine {
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(139, 92, 246, 0.25); padding-bottom: 8px; margin-bottom: 10px; flex-wrap: wrap; gap: 6px;">
                 <div style="display: flex; align-items: center; gap: 6px;">
                     <span style="font-size: 1.1rem;">⚡</span>
-                    <div class="section-title" style="margin: 0; color: #c4b5fd; font-family: 'Cinzel', serif; font-size: 0.95rem; letter-spacing: 0.5px;">KINETIC RESOURCE VAULT</div>
+                    <div class="section-title" style="margin: 0; color: #c4b5fd; font-family: 'Cinzel', serif; font-size: 0.95rem; letter-spacing: 0.5px;">CLASS RESOURCE TRACKER</div>
                 </div>
                 <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
                     ${this.renderConverterButtons(char)}
@@ -344,7 +346,7 @@ class ResourceVaultEngine {
         modal.innerHTML = `
             <div style="background:#121218; border:1.5px solid var(--arcane-violet); border-radius:12px; width:92%; max-width:480px; padding:18px; color:white; box-shadow:0 8px 30px rgba(0,0,0,0.8);">
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-iron); padding-bottom:10px; margin-bottom:12px;">
-                    <div style="font-weight:bold; font-family:'Cinzel', serif; font-size:1rem; color:#c4b5fd;">🔄 Kinetic Class Converters</div>
+                    <div style="font-weight:bold; font-family:'Cinzel', serif; font-size:1rem; color:#c4b5fd;">🔄 Class Resource Converters</div>
                     <button onclick="document.getElementById('converter-modal-overlay').style.display='none'" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;">✕</button>
                 </div>
 
@@ -623,7 +625,13 @@ class ResourceVaultEngine {
 
         alert(`🎲 Rolled ${dieType} (${roll}) + CON (${conMod}) = Healed ${healed} HP!\nRemaining Hit Dice: ${char.hit_dice_current}`);
 
-        if (typeof window.updateHPDisplay === 'function') window.updateHPDisplay();
+        if (typeof window.renderCharacterSheet === 'function') {
+            window.renderCharacterSheet();
+        }
+        if (typeof window.queueUpdateAndSync === 'function') {
+            window.queueUpdateAndSync();
+        }
+
         this.openRestPreviewModal('short');
     }
 
@@ -673,6 +681,9 @@ class ResourceVaultEngine {
 
         if (typeof window.renderCharacterSheet === 'function') {
             window.renderCharacterSheet();
+        }
+        if (typeof window.queueUpdateAndSync === 'function') {
+            window.queueUpdateAndSync();
         }
 
         alert(`✨ ${isLong ? 'Long' : 'Short'} Rest complete! Resources and HP updated.`);

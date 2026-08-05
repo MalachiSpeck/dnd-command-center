@@ -434,6 +434,8 @@ class CharacterEngine {
         let clericLvl = 0;
         let fighterLvl = 0;
         let druidLvl = 0;
+        let bardLvl = 0;
+        let wizardLvl = 0;
         let isBattleMaster = false;
         let subclassNames = (result.subclasses || []).map(s => (typeof s === 'string' ? s : (s.name || '')).toLowerCase());
         if (result.subclass) subclassNames.push(String(result.subclass).toLowerCase());
@@ -448,6 +450,8 @@ class CharacterEngine {
             if (name === 'Cleric') clericLvl += lvl;
             if (name === 'Fighter') fighterLvl += lvl;
             if (name === 'Druid') druidLvl += lvl;
+            if (name === 'Bard') bardLvl += lvl;
+            if (name === 'Wizard') wizardLvl += lvl;
             if (subclassNames.some(s => s.includes('battle master') || s.includes('battlemaster'))) isBattleMaster = true;
         });
 
@@ -522,6 +526,26 @@ class CharacterEngine {
             setResource('wild_shape', 'Wild Shape', 2, 'pips', 'short', '#34d399');
         } else {
             delete newVault.wild_shape;
+        }
+
+        if (bardLvl >= 1) {
+            const chaMod = result.ability_modifiers?.cha !== undefined ? result.ability_modifiers.cha : Math.floor(((result.stats?.cha || 10) - 10) / 2);
+            const bardMax = Math.max(1, chaMod);
+            let bardDie = 'd6';
+            if (bardLvl >= 15) bardDie = 'd12';
+            else if (bardLvl >= 10) bardDie = 'd10';
+            else if (bardLvl >= 5) bardDie = 'd8';
+            
+            const bardRest = bardLvl >= 5 ? 'short' : 'long';
+            setResource('bardic_inspiration', 'Bardic Inspiration', bardMax, 'dice', bardRest, '#ec4899', bardDie);
+        } else {
+            delete newVault.bardic_inspiration;
+        }
+
+        if (wizardLvl >= 1) {
+            setResource('arcane_recovery', 'Arcane Recovery', 1, 'pips', 'long', '#38bdf8');
+        } else {
+            delete newVault.arcane_recovery;
         }
 
         result.resource_vault = newVault;
