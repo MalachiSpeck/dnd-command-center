@@ -4758,20 +4758,28 @@
             if (!window.character || typeof window.character !== 'object') {
                 window.character = {};
             }
-            if (!window.character.settings) {
-                window.character.settings = {
-                    densityMode: 'standard',
-                    scorePriority: 'modifier',
-                    fontStyle: 'cinematic',
-                    rollMode: 'interactive',
-                    digitalDiceEnabled: true,
-                    autoExhaustion: true,
-                    sfxEnabled: true
-                };
+
+            let localSettings = {};
+            try {
+                const raw = localStorage.getItem('dnd_player_settings');
+                if (raw) localSettings = JSON.parse(raw);
+            } catch(e) {}
+
+            const defaults = {
+                densityMode: 'standard',
+                scorePriority: 'modifier',
+                fontStyle: 'cinematic',
+                rollMode: 'interactive',
+                digitalDiceEnabled: true,
+                autoExhaustion: true,
+                sfxEnabled: true
+            };
+
+            window.character.settings = Object.assign({}, defaults, window.character.settings || {}, localSettings);
+            if (typeof character !== 'undefined' && character) {
+                character.settings = window.character.settings;
             }
-            if (window.character.settings.digitalDiceEnabled === undefined) {
-                window.character.settings.digitalDiceEnabled = true;
-            }
+
             applyAllPlayerSettings();
         }
 
@@ -4783,6 +4791,14 @@
                 window.character.settings = {};
             }
             window.character.settings[key] = value;
+            if (typeof character !== 'undefined' && character) {
+                character.settings = window.character.settings;
+            }
+
+            try {
+                localStorage.setItem('dnd_player_settings', JSON.stringify(window.character.settings));
+            } catch(e) {}
+
             applyAllPlayerSettings();
             if (typeof queueUpdateAndSync === 'function') queueUpdateAndSync();
         }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dm-cc-cache-v36';
+const CACHE_NAME = 'dm-cc-cache-v37';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',

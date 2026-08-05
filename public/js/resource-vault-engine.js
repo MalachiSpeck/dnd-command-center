@@ -623,6 +623,11 @@ class ResourceVaultEngine {
 
         char.hp_current = Math.min(char.hp_max, (char.hp_current || 0) + healed);
 
+        if (typeof character !== 'undefined' && character) {
+            character.hp_current = char.hp_current;
+            character.hit_dice_current = char.hit_dice_current;
+        }
+
         alert(`🎲 Rolled ${dieType} (${roll}) + CON (${conMod}) = Healed ${healed} HP!\nRemaining Hit Dice: ${char.hit_dice_current}`);
 
         if (typeof window.renderCharacterSheet === 'function') {
@@ -658,6 +663,13 @@ class ResourceVaultEngine {
                 char.exhaustion = Math.max(0, char.exhaustion - 1);
                 char.exhaustion_level = char.exhaustion;
             }
+        }
+
+        if (typeof character !== 'undefined' && character) {
+            character.hp_current = char.hp_current;
+            character.hit_dice_current = char.hit_dice_current;
+            if (char.spell_slots_current) character.spell_slots_current = [...char.spell_slots_current];
+            if (char.exhaustion !== undefined) character.exhaustion = char.exhaustion;
         }
 
         Object.keys(vault).forEach(key => {

@@ -172,12 +172,14 @@
     /* Sidebar/Grid additions for new sections */
     .dashboard-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         gap: 15px;
         padding: 15px;
         flex-grow: 1;
         height: calc(100vh - 145px);
         overflow: hidden;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     /* Utility Tab & Global Hidden Styles */
@@ -211,6 +213,9 @@
         gap: 15px;
         overflow-y: auto;
         padding-right: 5px;
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .center-column {
@@ -219,6 +224,9 @@
         gap: 15px;
         overflow-y: auto;
         padding-right: 5px;
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     /* Secrets slide-out drawer styles */
