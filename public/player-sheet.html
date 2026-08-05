@@ -2814,7 +2814,7 @@
         async function initCampfireHub() {
             // Render OAuth UI
             const settingsContainer = document.getElementById('gdrive-settings-panel');
-            if (settingsContainer && window.gdriveClient) {
+            if (settingsContainer && window.gdriveClient && typeof renderGDriveSettings === 'function') {
                 renderGDriveSettings(settingsContainer);
             }
 
@@ -2967,6 +2967,11 @@
 
             // Compact Spell slots in Vitals
             renderCompactSpellSlots();
+
+            // Resource Vault HUD Card
+            if (window.resourceVaultEngine && typeof window.resourceVaultEngine.renderVaultCard === 'function') {
+                window.resourceVaultEngine.renderVaultCard(character);
+            }
 
             // Exhaustion
             const exLvl = character.exhaustion_level !== undefined ? character.exhaustion_level : (character.exhaustion || 0);

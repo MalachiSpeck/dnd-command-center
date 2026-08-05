@@ -1738,7 +1738,6 @@ D20 Distribution Graph:
             alert("❌ Homebrew item proposal rejected.");
             setTimeout(() => this.fetchLevelUpApprovals(), 500);
         }
-    },
     }
 };
 
