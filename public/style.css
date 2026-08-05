@@ -50,7 +50,7 @@ h1, h2, h3 {
 /* Main Dashboard Layout */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
     gap: 20px;
     padding: 20px;
     flex-grow: 1;
