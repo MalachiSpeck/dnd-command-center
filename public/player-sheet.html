@@ -1910,8 +1910,14 @@
             </div>
 
             <div style="overflow-y: auto; flex: 1; padding-right: 4px; display: flex; flex-direction: column; gap: 14px;">
-                <!-- School Filter -->
+                <!-- Class Filter -->
                 <div>
+                    <label style="font-size: 0.75rem; color: var(--gold-amber); font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 6px;">Class / Spell List</label>
+                    <div id="filter-class-options" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                </div>
+
+                <!-- School Filter -->
+                <div style="border-top: 1px solid var(--border-iron); padding-top: 12px;">
                     <label style="font-size: 0.75rem; color: var(--gold-amber); font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 6px;">Magic School</label>
                     <div id="filter-school-options" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
                 </div>
@@ -3738,11 +3744,30 @@
         }
 
         let activeSpellFilters = {
+            classes: [],
             schools: [],
             castingTimes: [],
             ranges: [],
             durations: []
         };
+
+        function getSpellClasses(spell) {
+            if (!spell) return [];
+            let list = [];
+
+            if (Array.isArray(spell.classes)) {
+                list = spell.classes.map(c => typeof c === 'string' ? c : (c && c.name ? c.name : '')).filter(Boolean);
+            } else if (typeof spell.classes === 'string') {
+                list = spell.classes.split(/[\s,]+/);
+            } else if (spell.description && typeof spell.description === 'string') {
+                const match = spell.description.match(/^classes:\s*([^\r\n]+)/im);
+                if (match) {
+                    list = match[1].split(/[\s,]+/);
+                }
+            }
+
+            return list.map(c => c.toLowerCase().replace(/[^a-z0-9]/g, '').trim()).filter(Boolean);
+        }
 
         function openSpellFilterModal() {
             populateFilterOptionsDOM();
@@ -3755,6 +3780,7 @@
 
         function toggleSpellFilterChip(category, value) {
             const arr = activeSpellFilters[category];
+            if (!arr) return;
             const idx = arr.indexOf(value);
             if (idx === -1) {
                 arr.push(value);
@@ -3765,7 +3791,7 @@
         }
 
         function resetSpellFilterOptions() {
-            activeSpellFilters = { schools: [], castingTimes: [], ranges: [], durations: [] };
+            activeSpellFilters = { classes: [], schools: [], castingTimes: [], ranges: [], durations: [] };
             populateFilterOptionsDOM();
             updateActiveFilterBadge();
             renderSpellsList();
@@ -3778,7 +3804,9 @@
         }
 
         function updateActiveFilterBadge() {
-            const count = activeSpellFilters.schools.length + activeSpellFilters.castingTimes.length + activeSpellFilters.ranges.length + activeSpellFilters.durations.length;
+            const count = (activeSpellFilters.classes ? activeSpellFilters.classes.length : 0) +
+                activeSpellFilters.schools.length + activeSpellFilters.castingTimes.length +
+                activeSpellFilters.ranges.length + activeSpellFilters.durations.length;
             const badge = document.getElementById('spell-filter-active-count');
             if (badge) {
                 if (count > 0) {
@@ -3791,6 +3819,7 @@
         }
 
         function populateFilterOptionsDOM() {
+            const classesList = ['Artificer', 'Bard', 'Cleric', 'Druid', 'Paladin', 'Ranger', 'Sorcerer', 'Warlock', 'Wizard'];
             const schoolsList = ['Abjuration', 'Conjuration', 'Divination', 'Enchantment', 'Evocation', 'Illusion', 'Necromancy', 'Transmutation'];
             const castingList = ['1 action', '1 bonus action', '1 reaction', '1 minute', '10 minutes', '1 hour', '8 hours'];
             const rangeList = ['Self', 'Touch', '30 feet', '60 feet', '90 feet', '120 feet', '150 feet', '500 feet', 'Sight', 'Special'];
@@ -3802,7 +3831,7 @@
                 el.innerHTML = '';
                 items.forEach(item => {
                     const itemLower = item.toLowerCase();
-                    const isActive = activeSpellFilters[categoryKey].includes(itemLower);
+                    const isActive = (activeSpellFilters[categoryKey] || []).includes(itemLower);
                     const btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = `filter-chip ${isActive ? 'active' : ''}`;
@@ -3812,6 +3841,7 @@
                 });
             };
 
+            renderCategoryChips('filter-class-options', classesList, 'classes');
             renderCategoryChips('filter-school-options', schoolsList, 'schools');
             renderCategoryChips('filter-casting-options', castingList, 'castingTimes');
             renderCategoryChips('filter-range-options', rangeList, 'ranges');
@@ -3841,7 +3871,13 @@
                 filteredList = filteredList.filter(s => s.name.toLowerCase().includes(searchInput));
             }
 
-            // 2. Multi-option Modal Filters (School, Casting Time, Range, Duration)
+            // 2. Multi-option Modal Filters (Class, School, Casting Time, Range, Duration)
+            if (activeSpellFilters.classes && activeSpellFilters.classes.length > 0) {
+                filteredList = filteredList.filter(s => {
+                    const spellClasses = getSpellClasses(s);
+                    return activeSpellFilters.classes.some(c => spellClasses.includes(c));
+                });
+            }
             if (activeSpellFilters.schools.length > 0) {
                 filteredList = filteredList.filter(s => s.school && activeSpellFilters.schools.includes(s.school.toLowerCase()));
             }
