@@ -8,17 +8,76 @@ const QRCode = require('qrcode');
 const os = require('os');
 
 const { PartyStore } = require('./services/partyStore');
+const { JsonFileStore } = require('./services/jsonFileStore');
+const { readJsonSafe, readJsonSafeSync } = require('./services/jsonStore');
 const dataCache = require('./services/dataCache');
 const setupSockets = require('./sockets');
 
 const monstersRouter = require('./routes/monsters');
 const spellsRouter = require('./routes/spells');
 const soundsRouter = require('./routes/sounds');
+const scenesRouter = require('./routes/scenes');
+const mapsRouter = require('./routes/maps');
+const draftsRouter = require('./routes/drafts');
+const projectorRouter = require('./routes/projector');
+const campaignRouter = require('./routes/campaign');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 const PORT = process.env.PORT || 3000;
+
+function getProjectorState() {
+    return projectorState;
+}
+
+function setProjectorState(newState) {
+    projectorState = newState;
+}
+
+// --- DM PASSCODE & PATH SAFETY UTILITIES ---
+const DM_PASSCODE = process.env.DM_PASSCODE || '0524';
+const failedPinAttempts = new Map();
+
+function safeJoin(baseDir, ...userSegments) {
+    const resolvedBase = path.resolve(baseDir);
+    const targetPath = path.resolve(baseDir, ...userSegments);
+    if (!targetPath.startsWith(resolvedBase + path.sep) && targetPath !== resolvedBase) {
+        const err = new Error("Invalid path: Path traversal outside base directory");
+        err.statusCode = 400;
+        throw err;
+    }
+    return targetPath;
+}
+
+function checkPinRateLimit(ip) {
+    const now = Date.now();
+    const record = failedPinAttempts.get(ip);
+    if (record && record.lockedUntil && now < record.lockedUntil) {
+        const remainingSec = Math.ceil((record.lockedUntil - now) / 1000);
+        return { locked: true, remainingSec };
+    }
+    return { locked: false };
+}
+
+function recordFailedPin(ip) {
+    const now = Date.now();
+    const record = failedPinAttempts.get(ip) || { count: 0, lockedUntil: 0 };
+    if (record.lockedUntil && now >= record.lockedUntil) {
+        record.count = 0;
+        record.lockedUntil = 0;
+    }
+    record.count++;
+    if (record.count >= 5) {
+        record.lockedUntil = now + (15 * 60 * 1000); // 15 min lockout
+    }
+    failedPinAttempts.set(ip, record);
+    return record;
+}
+
+function clearFailedPin(ip) {
+    failedPinAttempts.delete(ip);
+}
 
 // Initialize in-memory data cache on startup
 dataCache.init();
@@ -32,11 +91,43 @@ const partyStore = new PartyStore(getPartyPath, io);
 const partyRouter = require('./routes/party')(partyStore, getPartyPath);
 
 // Attach Socket handlers
-setupSockets(io, partyStore);
+setupSockets(io, partyStore, DM_PASSCODE);
 
 // High-capacity body parser middleware for 4K map image uploads & PDF base64 payloads
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
+
+// DM PIN verification endpoint
+app.post('/api/auth/verify-dm', (req, res) => {
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const limit = checkPinRateLimit(ip);
+    if (limit.locked) {
+        return res.status(429).json({ 
+            success: false, 
+            error: `Too many failed attempts. Locked out for ${limit.remainingSec} seconds.` 
+        });
+    }
+
+    const { passcode } = req.body || {};
+    if (passcode === DM_PASSCODE) {
+        clearFailedPin(ip);
+        res.cookie('dm_passcode', passcode, { httpOnly: false, sameSite: 'lax' });
+        return res.json({ success: true, passcode });
+    } else {
+        const rec = recordFailedPin(ip);
+        const attemptsRemaining = Math.max(0, 5 - rec.count);
+        if (rec.count >= 5) {
+            return res.status(429).json({ 
+                success: false, 
+                error: 'Maximum 5 attempts reached. Locked out for 15 minutes.' 
+            });
+        }
+        return res.status(401).json({ 
+            success: false, 
+            error: `Invalid PIN. ${attemptsRemaining} attempt(s) remaining.` 
+        });
+    }
+});
 
 // Error handler middleware for malformed JSON payloads
 app.use((err, req, res, next) => {
@@ -55,11 +146,20 @@ app.use((req, res, next) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Scenes Store
+const scenesPath = path.join(__dirname, 'data', 'scenes.json');
+const scenesStore = new JsonFileStore(scenesPath, { active_scene_id: 'scene_default', scenes: [] }, io, 'scene:update');
+
 // Mount Modular API Routers
 app.use('/api/monsters', monstersRouter);
 app.use('/api/spells', spellsRouter);
 app.use('/api/sounds', soundsRouter);
 app.use('/api', partyRouter);
+app.use('/api', scenesRouter(scenesStore, syncPartyAndEncounterToScene));
+app.use('/api', mapsRouter(scenesStore));
+app.use('/api', draftsRouter(io));
+app.use('/api', projectorRouter(getProjectorState, setProjectorState, io));
+app.use('/api', campaignRouter(io));
 
 // Helper to sync party.json & currentEncounterState to active battle map scene
 function syncPartyAndEncounterToScene(activeScene) {
@@ -68,34 +168,32 @@ function syncPartyAndEncounterToScene(activeScene) {
 
     // 1. Sync Party Characters
     const partyPath = getPartyPath();
-    if (fs.existsSync(partyPath)) {
-        try {
-            const party = JSON.parse(fs.readFileSync(partyPath, 'utf8'));
-            party.forEach((char, idx) => {
-                let tok = activeScene.tokens.find(t => t.character_id === char.id || t.id === `tok_party_${char.id}` || t.name === char.name);
-                if (!tok) {
-                    tok = {
-                        id: `tok_party_${char.id}`,
-                        character_id: char.id,
-                        name: char.name || `Player ${idx + 1}`,
-                        x: 280 + (idx % 6) * 140,
-                        y: 350 + Math.floor(idx / 6) * 140,
-                        size_cells: 1,
-                        color: char.theme_color || '#3b82f6',
-                        vision_radius_ft: 60,
-                        disposition: 'friendly',
-                        hp_current: char.hp_current || char.hp || 10,
-                        hp_max: char.hp_max || char.maxHp || 10,
-                        conditions: char.conditions || []
-                    };
-                    activeScene.tokens.push(tok);
-                } else {
-                    tok.name = char.name || tok.name;
-                    if (char.hp_current !== undefined) tok.hp_current = char.hp_current;
-                    if (char.hp_max) tok.hp_max = char.hp_max;
-                }
-            });
-        } catch (e) {}
+    const party = readJsonSafeSync(partyPath, [], 'SyncPartyToScene');
+    if (Array.isArray(party)) {
+        party.forEach((char, idx) => {
+            let tok = activeScene.tokens.find(t => t.character_id === char.id || t.id === `tok_party_${char.id}` || t.name === char.name);
+            if (!tok) {
+                tok = {
+                    id: `tok_party_${char.id}`,
+                    character_id: char.id,
+                    name: char.name || `Player ${idx + 1}`,
+                    x: 280 + (idx % 6) * 140,
+                    y: 350 + Math.floor(idx / 6) * 140,
+                    size_cells: 1,
+                    color: char.theme_color || '#3b82f6',
+                    vision_radius_ft: 60,
+                    disposition: 'friendly',
+                    hp_current: char.hp_current || char.hp || 10,
+                    hp_max: char.hp_max || char.maxHp || 10,
+                    conditions: char.conditions || []
+                };
+                activeScene.tokens.push(tok);
+            } else {
+                tok.name = char.name || tok.name;
+                if (char.hp_current !== undefined) tok.hp_current = char.hp_current;
+                if (char.hp_max) tok.hp_max = char.hp_max;
+            }
+        });
     }
 
     // 2. Sync Encounter Combatants (Monsters / Enemies)
@@ -143,364 +241,6 @@ function saveScenesJson(parsedData, callback) {
     });
 }
 
-// GET active scene data (auto-synced with party & monsters)
-app.get('/api/scene', (req, res) => {
-    const scenesPath = path.join(__dirname, 'data', 'scenes.json');
-    if (fs.existsSync(scenesPath)) {
-        fs.readFile(scenesPath, 'utf8', (err, data) => {
-            if (err) return res.status(500).json({ error: "Failed to read scenes" });
-            try {
-                let parsed = JSON.parse(data);
-                const activeId = parsed.active_scene_id;
-                let activeScene = (parsed.scenes || []).find(s => s.id === activeId) || parsed.scenes[0];
-                activeScene = syncPartyAndEncounterToScene(activeScene);
-                
-                // Save synced state back atomically to scenes.json
-                saveScenesJson(parsed, () => {
-                    return res.json(activeScene);
-                });
-            } catch (e) {
-                return res.status(500).json({ error: "Invalid scenes JSON" });
-            }
-        });
-    } else {
-        return res.status(404).json({ error: "scenes.json not found" });
-    }
-});
-
-// Explicit Add Token to Map REST API
-app.post('/api/token/add', (req, res) => {
-    const { name, disposition, size_cells, hp_max, color } = req.body;
-    if (!name) return res.status(400).json({ error: "Missing token name" });
-
-    const scenesPath = path.join(__dirname, 'data', 'scenes.json');
-    if (fs.existsSync(scenesPath)) {
-        fs.readFile(scenesPath, 'utf8', (err, raw) => {
-            if (err) return res.status(500).json({ error: "Could not read scenes" });
-            try {
-                let parsed = JSON.parse(raw);
-                let activeScene = (parsed.scenes || []).find(s => s.id === parsed.active_scene_id) || parsed.scenes[0];
-                if (!activeScene.tokens) activeScene.tokens = [];
-
-                const isHostile = disposition === 'hostile';
-                const newToken = {
-                    id: `tok_manual_${Date.now()}`,
-                    name: name,
-                    x: isHostile ? 1120 : 420,
-                    y: 560,
-                    size_cells: parseInt(size_cells || '1', 10),
-                    color: color || (isHostile ? '#ef4444' : '#3b82f6'),
-                    vision_radius_ft: 60,
-                    disposition: disposition || 'hostile',
-                    hp_current: parseInt(hp_max || '20', 10),
-                    hp_max: parseInt(hp_max || '20', 10),
-                    conditions: []
-                };
-
-                activeScene.tokens.push(newToken);
-                fs.writeFile(scenesPath, JSON.stringify(parsed, null, 2), () => {
-                    io.emit('scene:update', activeScene);
-                    return res.json({ success: true, token: newToken, scene: activeScene });
-                });
-            } catch (e) {
-                return res.status(500).json({ error: "Failed to update scene tokens" });
-            }
-        });
-    }
-});
-
-// Clear All Tokens from Active Scene
-app.post('/api/scene/clear-tokens', (req, res) => {
-    const scenesPath = path.join(__dirname, 'data', 'scenes.json');
-    if (fs.existsSync(scenesPath)) {
-        fs.readFile(scenesPath, 'utf8', (err, raw) => {
-            if (err) return res.status(500).json({ error: "Could not read scenes" });
-            try {
-                let parsed = JSON.parse(raw);
-                let activeScene = (parsed.scenes || []).find(s => s.id === parsed.active_scene_id) || parsed.scenes[0];
-                activeScene.tokens = [];
-                fs.writeFile(scenesPath, JSON.stringify(parsed, null, 2), () => {
-                    io.emit('scene:update', activeScene);
-                    return res.json({ success: true, scene: activeScene });
-                });
-            } catch (e) {
-                return res.status(500).json({ error: "Failed to clear tokens" });
-            }
-        });
-    }
-});
-
-// Clear All Lights from Active Scene
-app.post('/api/scene/clear-lights', (req, res) => {
-    const scenesPath = path.join(__dirname, 'data', 'scenes.json');
-    if (fs.existsSync(scenesPath)) {
-        fs.readFile(scenesPath, 'utf8', (err, raw) => {
-            if (err) return res.status(500).json({ error: "Could not read scenes" });
-            try {
-                let parsed = JSON.parse(raw);
-                let activeScene = (parsed.scenes || []).find(s => s.id === parsed.active_scene_id) || parsed.scenes[0];
-                activeScene.lights = [];
-                fs.writeFile(scenesPath, JSON.stringify(parsed, null, 2), () => {
-                    io.emit('scene:update', activeScene);
-                    return res.json({ success: true, scene: activeScene });
-                });
-            } catch (e) {
-                return res.status(500).json({ error: "Failed to clear lights" });
-            }
-        });
-    }
-});
-
-// Clear All Walls from Active Scene
-app.post('/api/scene/clear-walls', (req, res) => {
-    const scenesPath = path.join(__dirname, 'data', 'scenes.json');
-    if (fs.existsSync(scenesPath)) {
-        fs.readFile(scenesPath, 'utf8', (err, raw) => {
-            if (err) return res.status(500).json({ error: "Could not read scenes" });
-            try {
-                let parsed = JSON.parse(raw);
-                let activeScene = (parsed.scenes || []).find(s => s.id === parsed.active_scene_id) || parsed.scenes[0];
-                activeScene.walls = [];
-                saveScenesJson(parsed, () => {
-                    io.emit('scene:update', activeScene);
-                    return res.json({ success: true, scene: activeScene });
-                });
-            } catch (e) {
-                return res.status(500).json({ error: "Failed to clear walls" });
-            }
-        });
-    }
-});
-
-// Toggle Fog of War Mode (off / vision)
-app.post('/api/scene/toggle-fog', (req, res) => {
-    const scenesPath = path.join(__dirname, 'data', 'scenes.json');
-    if (fs.existsSync(scenesPath)) {
-        fs.readFile(scenesPath, 'utf8', (err, raw) => {
-            if (err) return res.status(500).json({ error: "Could not read scenes" });
-            try {
-                let parsed = JSON.parse(raw);
-                let activeScene = (parsed.scenes || []).find(s => s.id === parsed.active_scene_id) || parsed.scenes[0];
-                if (!activeScene.fog) activeScene.fog = { mode: 'vision', revealed_polygons: [] };
-                
-                activeScene.fog.mode = (activeScene.fog.mode === 'off') ? 'vision' : 'off';
-                const currentMode = activeScene.fog.mode;
-
-                saveScenesJson(parsed, () => {
-                    io.emit('scene:update', activeScene);
-                    return res.json({ success: true, mode: currentMode, scene: activeScene });
-                });
-            } catch (e) {
-                return res.status(500).json({ error: "Failed to toggle fog mode" });
-            }
-        });
-    } else {
-        return res.status(404).json({ error: "scenes.json not found" });
-    }
-});
-
-// Helper to get or create a distinct scene profile for a map URL
-function getOrCreateSceneForMap(parsedData, mapUrl, sceneName) {
-    if (!parsedData.scenes) parsedData.scenes = [];
-    
-    let existingScene = parsedData.scenes.find(s => s.background_url === mapUrl);
-    if (existingScene) {
-        if (sceneName && (!existingScene.name || existingScene.name === 'New Battlemap')) {
-            existingScene.name = sceneName;
-        }
-        parsedData.active_scene_id = existingScene.id;
-        return syncPartyAndEncounterToScene(existingScene);
-    }
-    
-    const basename = path.basename(mapUrl);
-    const cleanName = sceneName || basename.replace(/^\d+_/, '').replace(/\.[^/.]+$/, '').replace(/[-_]+/g, ' ');
-
-    const newSceneId = 'scene_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
-    const newScene = {
-        id: newSceneId,
-        name: cleanName,
-        width_px: 2800,
-        height_px: 2100,
-        background_color: "#121824",
-        background_url: mapUrl,
-        grid: {
-            type: "square",
-            size_px: 70,
-            offset_x: 0,
-            offset_y: 0,
-            color: "#ffffff",
-            opacity: 0.2,
-            visible: true
-        },
-        walls: [],
-        lights: [],
-        tokens: [],
-        drawings: [],
-        templates: [],
-        fog: {
-            mode: "off",
-            revealed_polygons: []
-        },
-        aoe_templates: []
-    };
-    
-    parsedData.scenes.push(newScene);
-    parsedData.active_scene_id = newSceneId;
-    return syncPartyAndEncounterToScene(newScene);
-}
-
-// Upload Map Image Base64
-app.post('/api/upload-map', (req, res) => {
-    const { filename, image_data, scene_name } = req.body;
-    if (!filename || !image_data) {
-        return res.status(400).json({ error: "Missing filename or image_data" });
-    }
-
-    try {
-        const cleanBase64 = image_data.replace(/^data:(image|video)\/[a-zA-Z0-9-+.]+;base64,/, "");
-        const buffer = Buffer.from(cleanBase64, 'base64');
-        const safeName = Date.now() + '_' + filename.replace(/[^a-zA-Z0-9_.-]/g, '_');
-        const targetPath = path.join(__dirname, 'public', 'maps', safeName);
-
-        fs.writeFile(targetPath, buffer, (err) => {
-            if (err) return res.status(500).json({ error: "Failed to save map file" });
-
-            const mapUrl = `/maps/${safeName}`;
-            const scenesPath = path.join(__dirname, 'data', 'scenes.json');
-            
-            let parsed = { active_scene_id: 'scene_default', scenes: [] };
-            if (fs.existsSync(scenesPath)) {
-                try {
-                    parsed = JSON.parse(fs.readFileSync(scenesPath, 'utf8'));
-                } catch (e) {}
-            }
-
-            const activeScene = getOrCreateSceneForMap(parsed, mapUrl, scene_name);
-            saveScenesJson(parsed, () => {
-                io.emit('scene:update', activeScene);
-                return res.json({ success: true, url: mapUrl, scene: activeScene });
-            });
-        });
-    } catch (e) {
-        return res.status(500).json({ error: "Invalid map image encoding" });
-    }
-});
-
-// GET all map files from public/maps directory with dynamic scene synchronization
-app.get('/api/maps', (req, res) => {
-    const mapsDir = path.join(__dirname, 'public', 'maps');
-    const scenesPath = path.join(__dirname, 'data', 'scenes.json');
-
-    if (!fs.existsSync(mapsDir)) {
-        fs.mkdirSync(mapsDir, { recursive: true });
-    }
-
-    fs.readdir(mapsDir, (err, files) => {
-        if (err) return res.status(500).json({ error: "Failed to read maps directory" });
-
-        const validExts = ['.jpg', '.jpeg', '.png', '.webp', '.webm', '.mp4', '.mov', '.m4v'];
-        const mapFiles = (files || []).filter(f => validExts.includes(path.extname(f).toLowerCase()));
-
-        let parsedScenes = { active_scene_id: 'scene_default', scenes: [] };
-        if (fs.existsSync(scenesPath)) {
-            try {
-                parsedScenes = JSON.parse(fs.readFileSync(scenesPath, 'utf8'));
-            } catch (e) {}
-        }
-
-        let scenesUpdated = false;
-        mapFiles.forEach(f => {
-            const mapUrl = `/maps/${f}`;
-            const exists = (parsedScenes.scenes || []).some(s => s.background_url === mapUrl);
-            if (!exists) {
-                const cleanName = f.replace(/^\d+_/, '').replace(/\.[^/.]+$/, '').replace(/[-_]+/g, ' ');
-                const newId = 'scene_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
-                parsedScenes.scenes.push({
-                    id: newId,
-                    name: cleanName,
-                    width_px: 2800,
-                    height_px: 2100,
-                    background_color: "#121824",
-                    background_url: mapUrl,
-                    grid: { type: "square", size_px: 70, offset_x: 0, offset_y: 0, color: "#ffffff", opacity: 0.2, visible: true },
-                    walls: [],
-                    lights: [],
-                    tokens: [],
-                    drawings: [],
-                    templates: [],
-                    fog: { mode: "off", revealed_polygons: [] },
-                    aoe_templates: []
-                });
-                scenesUpdated = true;
-            }
-        });
-
-        const sendResponse = () => {
-            const result = mapFiles.map(f => {
-                const mapUrl = `/maps/${f}`;
-                const matchingScene = (parsedScenes.scenes || []).find(s => s.background_url === mapUrl);
-                return {
-                    filename: f,
-                    url: mapUrl,
-                    name: matchingScene ? matchingScene.name : f.replace(/^\d+_/, '').replace(/\.[^/.]+$/, '').replace(/[-_]+/g, ' '),
-                    scene_id: matchingScene ? matchingScene.id : null,
-                    isVideo: /\.(webm|mp4|mov|m4v)$/i.test(f)
-                };
-            });
-
-            const activeScene = (parsedScenes.scenes || []).find(s => s.id === parsedScenes.active_scene_id);
-
-            res.json({
-                maps: result,
-                active_scene_id: parsedScenes.active_scene_id,
-                active_background_url: activeScene ? activeScene.background_url : null
-            });
-        };
-
-        if (scenesUpdated) {
-            saveScenesJson(parsedScenes, () => sendResponse());
-        } else {
-            sendResponse();
-        }
-    });
-});
-
-// Select Active Map Scene API Endpoint
-app.post('/api/scene/select', (req, res) => {
-    const { mapUrl, sceneId } = req.body;
-    const scenesPath = path.join(__dirname, 'data', 'scenes.json');
-
-    let parsed = { active_scene_id: 'scene_default', scenes: [] };
-    if (fs.existsSync(scenesPath)) {
-        try {
-            parsed = JSON.parse(fs.readFileSync(scenesPath, 'utf8'));
-        } catch (e) {}
-    }
-
-    let targetScene = null;
-    if (sceneId) {
-        targetScene = (parsed.scenes || []).find(s => s.id === sceneId);
-    }
-    if (!targetScene && mapUrl) {
-        targetScene = (parsed.scenes || []).find(s => s.background_url === mapUrl);
-    }
-
-    if (!targetScene && mapUrl) {
-        targetScene = getOrCreateSceneForMap(parsed, mapUrl);
-    } else if (targetScene) {
-        parsed.active_scene_id = targetScene.id;
-        targetScene = syncPartyAndEncounterToScene(targetScene);
-    }
-
-    if (targetScene) {
-        saveScenesJson(parsed, () => {
-            io.emit('scene:update', targetScene);
-            return res.json({ success: true, active_scene_id: parsed.active_scene_id, scene: targetScene });
-        });
-    } else {
-        return res.status(404).json({ error: "Target scene or map not found" });
-    }
-});
 function getLocalIPAddress() {
     const interfaces = os.networkInterfaces();
     let fallbackIP = '127.0.0.1';
@@ -1834,239 +1574,6 @@ app.post('/api/party/secrets', (req, res) => {
     });
 });
 
-// ----------------------------------------------------
-// API ROUTES: HOMEBREW & DRAFT REVIEW SYSTEM
-// ----------------------------------------------------
-
-// List all drafts in the review staging folder
-app.get('/api/drafts', (req, res) => {
-    const draftsDir = path.join(__dirname, 'data', 'drafts');
-    const categories = ['spells', 'monsters', 'magic_items'];
-    const result = { spells: [], monsters: [], magic_items: [] };
-
-    if (!fs.existsSync(draftsDir)) {
-        return res.json(result);
-    }
-
-    let readCount = 0;
-    categories.forEach(cat => {
-        const catDir = path.join(draftsDir, cat);
-        if (!fs.existsSync(catDir)) {
-            readCount++;
-            if (readCount === categories.length) res.json(result);
-            return;
-        }
-
-        fs.readdir(catDir, (err, files) => {
-            readCount++;
-            if (!err && files) {
-                result[cat] = files;
-            }
-            if (readCount === categories.length) {
-                res.json(result);
-            }
-        });
-    });
-});
-
-// Read a specific draft's contents
-app.get('/api/drafts/:type/:fileName', (req, res) => {
-    const { type, fileName } = req.params;
-    const targetPath = path.join(__dirname, 'data', 'drafts', type, fileName);
-
-    if (!fs.existsSync(targetPath)) {
-        return res.status(404).json({ error: "Draft file not found." });
-    }
-
-    fs.readFile(targetPath, 'utf8', (err, data) => {
-        if (err) return res.status(500).json({ error: "Failed to read draft file." });
-        
-        if (type === 'spells') {
-            // Spells are markdown (return raw text)
-            res.send(data);
-        } else {
-            // Monsters and items are JSON (return parsed)
-            try {
-                res.json(JSON.parse(data));
-            } catch (e) {
-                res.status(500).json({ error: "Failed to parse JSON in draft." });
-            }
-        }
-    });
-});
-
-// Delete/Reject a specific draft
-app.delete('/api/drafts/:type/:fileName', (req, res) => {
-    const { type, fileName } = req.params;
-    const targetPath = path.join(__dirname, 'data', 'drafts', type, fileName);
-
-    if (!fs.existsSync(targetPath)) {
-        return res.status(404).json({ error: "Draft not found." });
-    }
-
-    fs.unlink(targetPath, (err) => {
-        if (err) return res.status(500).json({ error: "Failed to delete draft." });
-        res.json({ success: true, message: "Draft discarded successfully." });
-    });
-});
-
-// Approve and save a draft to the Homebrew repository
-app.post('/api/drafts/approve', (req, res) => {
-    const { type, fileName, data } = req.body;
-    if (!type || !fileName || !data) {
-        return res.status(400).json({ error: "Missing required approval fields." });
-    }
-
-    const homebrewDir = path.join(__dirname, 'data', 'homebrew');
-    const draftPath = path.join(__dirname, 'data', 'drafts', type, fileName);
-
-    // Create homebrew directory structure
-    if (!fs.existsSync(homebrewDir)) {
-        fs.mkdirSync(homebrewDir, { recursive: true });
-    }
-
-    if (type === 'spells') {
-        const spellsHBDir = path.join(homebrewDir, 'spells');
-        if (!fs.existsSync(spellsHBDir)) fs.mkdirSync(spellsHBDir, { recursive: true });
-
-        const targetPath = path.join(spellsHBDir, fileName);
-        fs.writeFile(targetPath, data, 'utf8', (writeErr) => {
-            if (writeErr) return res.status(500).json({ error: "Failed to write homebrew spell." });
-            
-            // Clean up original draft
-            if (fs.existsSync(draftPath)) fs.unlinkSync(draftPath);
-            res.json({ success: true, message: "Spell approved and moved to Homebrew!" });
-        });
-
-    } else if (type === 'monsters') {
-        const monstersHBDir = path.join(homebrewDir, 'monsters');
-        if (!fs.existsSync(monstersHBDir)) fs.mkdirSync(monstersHBDir, { recursive: true });
-
-        const targetPath = path.join(monstersHBDir, fileName);
-        fs.writeFile(targetPath, JSON.stringify(data, null, 2), 'utf8', (writeErr) => {
-            if (writeErr) return res.status(500).json({ error: "Failed to write homebrew monster." });
-            
-            // Clean up original draft
-            if (fs.existsSync(draftPath)) fs.unlinkSync(draftPath);
-            res.json({ success: true, message: "Monster approved and moved to Homebrew!" });
-        });
-
-    } else if (type === 'magic_items') {
-        const itemsHBFile = path.join(homebrewDir, 'magic_items.json');
-        
-        let homebrewItems = [];
-        if (fs.existsSync(itemsHBFile)) {
-            try {
-                homebrewItems = JSON.parse(fs.readFileSync(itemsHBFile, 'utf8'));
-            } catch(e) {}
-        }
-
-        homebrewItems.push(data);
-
-        fs.writeFile(itemsHBFile, JSON.stringify(homebrewItems, null, 2), 'utf8', (writeErr) => {
-            if (writeErr) return res.status(500).json({ error: "Failed to save homebrew magic items list." });
-            
-            // Clean up original draft
-            if (fs.existsSync(draftPath)) fs.unlinkSync(draftPath);
-            res.json({ success: true, message: "Magic Item approved and saved to Homebrew!" });
-        });
-    } else {
-        res.status(400).json({ error: "Invalid type specified." });
-    }
-});
-
-// Approve All staged drafts at once
-app.post('/api/drafts/approve-all', (req, res) => {
-    const homebrewDir = path.join(__dirname, 'data', 'homebrew');
-    const draftsDir = path.join(__dirname, 'data', 'drafts');
-
-    if (!fs.existsSync(homebrewDir)) {
-        fs.mkdirSync(homebrewDir, { recursive: true });
-    }
-
-    let spellsApproved = 0;
-    let monstersApproved = 0;
-    let itemsApproved = 0;
-
-    // 1. Spells (MD files)
-    const spellsDraftDir = path.join(draftsDir, 'spells');
-    const spellsHBDir = path.join(homebrewDir, 'spells');
-    if (fs.existsSync(spellsDraftDir)) {
-        if (!fs.existsSync(spellsHBDir)) fs.mkdirSync(spellsHBDir, { recursive: true });
-        const files = fs.readdirSync(spellsDraftDir).filter(f => f.endsWith('.md'));
-        files.forEach(file => {
-            const src = path.join(spellsDraftDir, file);
-            const dst = path.join(spellsHBDir, file);
-            try {
-                fs.copyFileSync(src, dst);
-                fs.unlinkSync(src);
-                spellsApproved++;
-            } catch(e) {
-                console.error("Error approving spell draft:", file, e);
-            }
-        });
-    }
-
-    // 2. Monsters (JSON files)
-    const monstersDraftDir = path.join(draftsDir, 'monsters');
-    const monstersHBDir = path.join(homebrewDir, 'monsters');
-    if (fs.existsSync(monstersDraftDir)) {
-        if (!fs.existsSync(monstersHBDir)) fs.mkdirSync(monstersHBDir, { recursive: true });
-        const files = fs.readdirSync(monstersDraftDir).filter(f => f.endsWith('.json'));
-        files.forEach(file => {
-            const src = path.join(monstersDraftDir, file);
-            const dst = path.join(monstersHBDir, file);
-            try {
-                fs.copyFileSync(src, dst);
-                fs.unlinkSync(src);
-                monstersApproved++;
-            } catch(e) {
-                console.error("Error approving monster draft:", file, e);
-            }
-        });
-    }
-
-    // 3. Magic Items (JSON files)
-    const itemsDraftDir = path.join(draftsDir, 'magic_items');
-    const itemsHBFile = path.join(homebrewDir, 'magic_items.json');
-    if (fs.existsSync(itemsDraftDir)) {
-        const files = fs.readdirSync(itemsDraftDir).filter(f => f.endsWith('.json'));
-        
-        let homebrewItems = [];
-        if (fs.existsSync(itemsHBFile)) {
-            try {
-                homebrewItems = JSON.parse(fs.readFileSync(itemsHBFile, 'utf8'));
-            } catch(e) {}
-        }
-
-        files.forEach(file => {
-            const src = path.join(itemsDraftDir, file);
-            try {
-                const itemData = JSON.parse(fs.readFileSync(src, 'utf8'));
-                if (Array.isArray(itemData)) {
-                    homebrewItems = homebrewItems.concat(itemData);
-                } else {
-                    homebrewItems.push(itemData);
-                }
-                fs.unlinkSync(src);
-                itemsApproved++;
-            } catch(e) {
-                console.error("Error approving magic item draft:", file, e);
-            }
-        });
-
-        fs.writeFileSync(itemsHBFile, JSON.stringify(homebrewItems, null, 2), 'utf8');
-    }
-
-    res.json({
-        success: true,
-        message: `Approved all staged drafts: ${spellsApproved} spells, ${monstersApproved} monsters, and ${itemsApproved} magic items saved to active library.`,
-        spells: spellsApproved,
-        monsters: monstersApproved,
-        items: itemsApproved
-    });
-});
-
 // Approve All Player Sync Proposals at once
 app.post('/api/proposals/approve-all', (req, res) => {
     const partyPath = getPartyPath();
@@ -2147,49 +1654,8 @@ app.get('/api/board-state', (req, res) => {
 });
 
 // ----------------------------------------------------
-// API ROUTES: TABLE PROJECTOR & FOG STATE
+// API ROUTES: DOWNTIME PROJECTS & REFERENCE DATA
 // ----------------------------------------------------
-
-// Get Projector Canvas State
-app.get('/api/projector-state', (req, res) => {
-    res.json(projectorState);
-});
-
-// Get Projector Active Map Image
-app.get('/api/projector/map', (req, res) => {
-    res.json({ mapUrl: projectorState.mapUrl });
-});
-
-// Update Projector Canvas State
-app.post('/api/projector-state', (req, res) => {
-    projectorState = { ...projectorState, ...req.body };
-    io.emit('projector-state-updated', projectorState);
-    res.json({ success: true, message: "Projector state updated.", state: projectorState });
-});
-
-// Persistent Fog of War State json file
-app.get('/api/projector/fog', (req, res) => {
-    const fogPath = path.join(__dirname, 'data', 'fog_state.json');
-    fs.readFile(fogPath, 'utf8', (err, data) => {
-        if (err) return res.json({ fogGrid: [] });
-        try {
-            res.json(JSON.parse(data));
-        } catch (e) {
-            res.json({ fogGrid: [] });
-        }
-    });
-});
-
-app.post('/api/projector/fog', (req, res) => {
-    const { fogGrid } = req.body;
-    projectorState.fogGrid = fogGrid;
-    const fogPath = path.join(__dirname, 'data', 'fog_state.json');
-    fs.writeFile(fogPath, JSON.stringify({ fogGrid }, null, 2), 'utf8', (err) => {
-        if (err) console.error("Failed to persist fog state:", err);
-        io.emit('projector-state-updated', projectorState);
-        res.json({ success: true, fogGrid });
-    });
-});
 
 // ----------------------------------------------------
 // API ROUTES: DOWNTIME PROJECTS & REFERENCE DATA
@@ -2198,7 +1664,12 @@ app.post('/api/projector/fog', (req, res) => {
 // Get Reference reference JSON helper files
 app.get('/api/reference/:fileName', (req, res) => {
     const file = req.params.fileName + '.json';
-    const refPath = path.join(__dirname, 'data', file);
+    let refPath;
+    try {
+        refPath = safeJoin(__dirname, 'data', file);
+    } catch (e) {
+        return res.status(400).json({ error: e.message });
+    }
     if (!fs.existsSync(refPath)) return res.json({});
     fs.readFile(refPath, 'utf8', (err, data) => {
         if (err) return res.json({});
@@ -2213,7 +1684,12 @@ app.get('/api/reference/:fileName', (req, res) => {
 // Save Reference JSON helper files back (for generic save updates on state)
 app.post('/api/reference/save/:fileName', (req, res) => {
     const file = req.params.fileName + '.json';
-    const refPath = path.join(__dirname, 'data', file);
+    let refPath;
+    try {
+        refPath = safeJoin(__dirname, 'data', file);
+    } catch (e) {
+        return res.status(400).json({ error: e.message });
+    }
     fs.writeFile(refPath, JSON.stringify(req.body, null, 2), 'utf8', (err) => {
         if (err) return res.status(500).json({ error: "Failed to write file." });
         res.json({ success: true });
@@ -4231,161 +3707,7 @@ app.post('/api/pdf-parser/inspect', (req, res) => {
 });
 
 // Draft Duplicate Detection Endpoint
-app.get('/api/drafts/check-duplicates', (req, res) => {
-    const draftsDir = path.join(__dirname, 'data', 'drafts');
-    const existingNames = new Set();
 
-    // Check active items compendium
-    const itemsPath = path.join(__dirname, 'data', 'items.json');
-    if (fs.existsSync(itemsPath)) {
-        try {
-            const itemsData = JSON.parse(fs.readFileSync(itemsPath, 'utf8'));
-            const list = Array.isArray(itemsData) ? itemsData : (itemsData.item || []);
-            list.forEach(i => i.name && existingNames.add(i.name.toLowerCase()));
-        } catch (e) {}
-    }
-
-    // Check homebrew magic items compendium
-    const hbItemsPath = path.join(__dirname, 'data', 'homebrew', 'magic_items.json');
-    if (fs.existsSync(hbItemsPath)) {
-        try {
-            const hbList = JSON.parse(fs.readFileSync(hbItemsPath, 'utf8'));
-            hbList.forEach(i => i.name && existingNames.add(i.name.toLowerCase()));
-        } catch (e) {}
-    }
-
-    // Check active monsters compendium
-    const monstersDir = path.join(__dirname, 'data', 'monsters');
-    if (fs.existsSync(monstersDir)) {
-        try {
-            const mFiles = fs.readdirSync(monstersDir);
-            mFiles.forEach(f => existingNames.add(f.replace('.json', '').replace(/_/g, ' ').toLowerCase()));
-        } catch (e) {}
-    }
-
-    const duplicates = [];
-    ['spells', 'monsters', 'magic_items'].forEach(cat => {
-        const catDir = path.join(draftsDir, cat);
-        if (fs.existsSync(catDir)) {
-            const files = fs.readdirSync(catDir);
-            files.forEach(file => {
-                const cleanName = file.replace(/\.(json|md)$/, '').replace(/_/g, ' ').toLowerCase();
-                if (existingNames.has(cleanName)) {
-                    duplicates.push({ category: cat, fileName: file, cleanName });
-                }
-            });
-        }
-    });
-
-    res.json({ success: true, duplicates });
-});
-
-// 4. Continuity & Retcon Tracker
-app.get('/api/continuity', (req, res) => {
-    const p = path.join(__dirname, 'data', 'continuity.json');
-    fs.readFile(p, 'utf8', (err, data) => {
-        if (err) return res.json([]);
-        try { res.json(JSON.parse(data)); } catch (e) { res.json([]); }
-    });
-});
-
-app.post('/api/continuity/save', (req, res) => {
-    const p = path.join(__dirname, 'data', 'continuity.json');
-    fs.writeFile(p, JSON.stringify(req.body, null, 2), 'utf8', (err) => {
-        if (err) return res.status(500).json({ error: "Failed to save continuity" });
-        res.json({ success: true });
-    });
-});
-
-// 5. Travel Formations
-app.get('/api/formations', (req, res) => {
-    const p = path.join(__dirname, 'data', 'formations.json');
-    fs.readFile(p, 'utf8', (err, data) => {
-        if (err) return res.json({ active: "Dungeon Crawl", presets: {} });
-        try { res.json(JSON.parse(data)); } catch (e) { res.json({ active: "Dungeon Crawl", presets: {} }); }
-    });
-});
-
-app.post('/api/formations/save', (req, res) => {
-    const p = path.join(__dirname, 'data', 'formations.json');
-    fs.writeFile(p, JSON.stringify(req.body, null, 2), 'utf8', (err) => {
-        if (err) return res.status(500).json({ error: "Failed to save formations" });
-        res.json({ success: true });
-    });
-});
-
-// 6. Spell Interactions Rules
-app.get('/api/spell-interactions', (req, res) => {
-    const p = path.join(__dirname, 'data', 'spell_interactions.json');
-    fs.readFile(p, 'utf8', (err, data) => {
-        if (err) return res.json([]);
-        try { res.json(JSON.parse(data)); } catch (e) { res.json([]); }
-    });
-});
-
-// 7. Dice Statistics Logger
-app.get('/api/dice-statistics', (req, res) => {
-    const p = path.join(__dirname, 'data', 'dice_log.json');
-    fs.readFile(p, 'utf8', (err, data) => {
-        if (err) return res.json([]);
-        try { res.json(JSON.parse(data)); } catch (e) { res.json([]); }
-    });
-});
-
-app.post('/api/dice-statistics/log', (req, res) => {
-    const p = path.join(__dirname, 'data', 'dice_log.json');
-    fs.readFile(p, 'utf8', (err, data) => {
-        let list = [];
-        if (!err) {
-            try { list = JSON.parse(data); } catch (e) {}
-        }
-        list.push(req.body);
-        if (list.length > 500) list.shift(); // Cap at 500 records
-        fs.writeFile(p, JSON.stringify(list, null, 2), 'utf8', () => {
-            res.json({ success: true });
-        });
-    });
-});
-
-// 8. Character Memorial Hall
-app.get('/api/character-memorials', (req, res) => {
-    const p = path.join(__dirname, 'data', 'memorial.json');
-    fs.readFile(p, 'utf8', (err, data) => {
-        if (err) return res.json([]);
-        try { res.json(JSON.parse(data)); } catch (e) { res.json([]); }
-    });
-});
-
-app.post('/api/character-memorials/add', (req, res) => {
-    const p = path.join(__dirname, 'data', 'memorial.json');
-    fs.readFile(p, 'utf8', (err, data) => {
-        let list = [];
-        if (!err) {
-            try { list = JSON.parse(data); } catch (e) {}
-        }
-        list.push(req.body);
-        fs.writeFile(p, JSON.stringify(list, null, 2), 'utf8', () => {
-            res.json({ success: true });
-        });
-    });
-});
-
-// 9. Branching Dialogue Trees
-app.get('/api/dialogue-trees', (req, res) => {
-    const p = path.join(__dirname, 'data', 'dialogues.json');
-    fs.readFile(p, 'utf8', (err, data) => {
-        if (err) return res.json({});
-        try { res.json(JSON.parse(data)); } catch (e) { res.json({}); }
-    });
-});
-
-app.post('/api/dialogue-trees/save', (req, res) => {
-    const p = path.join(__dirname, 'data', 'dialogues.json');
-    fs.writeFile(p, JSON.stringify(req.body, null, 2), 'utf8', (err) => {
-        if (err) return res.status(500).json({ error: "Failed to save dialogues" });
-        res.json({ success: true });
-    });
-});
 
 // ====================================================
 // V2: HYBRID BETWEEN-SESSION ENDPOINTS

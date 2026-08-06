@@ -2083,6 +2083,9 @@ DM Command Center
         if (activeBtn) {
             activeBtn.classList.add('active');
         }
+        if (tabName === 'projector' && typeof window.refreshMapList === 'function') {
+            window.refreshMapList();
+        }
     };
 
     window.openUtilityDrawer = function(tabName) {
@@ -2147,5 +2150,6 @@ DM Command Center
 <script src="/js/lighting_fog.js"></script>
 <script src="/js/scene_engine.js"></script>
 <script src="/app_scene_dm.js?v=999"></script>
+<script src="/js/dm_auth.js"></script>
 </body>
 </html>

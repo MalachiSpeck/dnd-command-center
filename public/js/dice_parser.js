@@ -60,16 +60,59 @@ window.DiceParser = (function () {
     var keepType = match[3]; // 'h' or 'l'
     var keepCount = match[4] ? parseInt(match[4], 10) : count;
 
+    function evaluateSafeArithmetic(exprStr) {
+      if (!exprStr || typeof exprStr !== 'string') return 0;
+      var sanitized = exprStr.replace(/[^0-9+\-*/().]/g, '');
+      if (!sanitized) return 0;
+      var tokens = [];
+      var re = /\d+(?:\.\d+)?|[+\-*/()]/g;
+      var m;
+      while ((m = re.exec(sanitized)) !== null) tokens.push(m[0]);
+      var pos = 0;
+      function parseExpr() {
+        var left = parseTerm();
+        while (pos < tokens.length && (tokens[pos] === '+' || tokens[pos] === '-')) {
+          var op = tokens[pos++];
+          var right = parseTerm();
+          if (op === '+') left += right;
+          else if (op === '-') left -= right;
+        }
+        return left;
+      }
+      function parseTerm() {
+        var left = parseFactor();
+        while (pos < tokens.length && (tokens[pos] === '*' || tokens[pos] === '/')) {
+          var op = tokens[pos++];
+          var right = parseFactor();
+          if (op === '*') left *= right;
+          else if (op === '/') left = right !== 0 ? left / right : 0;
+        }
+        return left;
+      }
+      function parseFactor() {
+        if (pos >= tokens.length) return 0;
+        var tok = tokens[pos++];
+        if (tok === '(') {
+          var val = parseExpr();
+          if (tokens[pos] === ')') pos++;
+          return val;
+        }
+        if (tok === '+') return parseFactor();
+        if (tok === '-') return -parseFactor();
+        var num = parseFloat(tok);
+        return isNaN(num) ? 0 : num;
+      }
+      try {
+        var res = parseExpr();
+        return isNaN(res) ? 0 : Math.round(res * 100) / 100;
+      } catch (e) { return 0; }
+    }
+
     // Extract modifier after dice notation
     var remainingStr = cleanExpr.replace(match[0], '');
     var modifier = 0;
     if (remainingStr) {
-      try {
-        // Safe evaluation of remaining +/- numbers
-        modifier = Function('"use strict";return (' + remainingStr + ')')();
-      } catch (e) {
-        modifier = 0;
-      }
+      modifier = evaluateSafeArithmetic(remainingStr);
     }
 
     var rawRolls = [];

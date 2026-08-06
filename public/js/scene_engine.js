@@ -90,6 +90,10 @@ window.GrailSceneEngine = (function () {
    */
   function loadScene(sceneData) {
     if (!sceneData) return;
+    if (sceneData.scenes && Array.isArray(sceneData.scenes)) {
+      var activeId = sceneData.active_scene_id;
+      sceneData = sceneData.scenes.find(s => s.id === activeId) || sceneData.scenes[0] || sceneData;
+    }
     currentScene = sceneData;
 
     renderBackground();

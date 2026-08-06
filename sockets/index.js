@@ -1,11 +1,25 @@
 const fs = require('fs');
 const path = require('path');
 
-module.exports = function setupSockets(io, partyStore) {
+module.exports = function setupSockets(io, partyStore, dmPasscode) {
     io.on('connection', (socket) => {
+        // Authenticate DM connections via handshake auth or header
+        const handshakeToken = (socket.handshake.auth && socket.handshake.auth.token) || socket.handshake.headers['x-dm-passcode'];
+        if (handshakeToken && handshakeToken === dmPasscode) {
+            socket.isDM = true;
+        }
+
         // Join Room (DM, Player, Projector)
         socket.on('join-room', (data) => {
             const room = typeof data === 'string' ? data : (data && data.room ? data.room : 'players');
+            if (data && data.passcode && data.passcode === dmPasscode) {
+                socket.isDM = true;
+            }
+            if (room === 'dm' && !socket.isDM) {
+                // If attempting to join 'dm' room without PIN, fallback to 'players' room
+                socket.join('players');
+                return;
+            }
             socket.join(room);
             if (data && data.characterName) {
                 socket.characterName = data.characterName;
@@ -58,6 +72,24 @@ module.exports = function setupSockets(io, partyStore) {
         // Skill Challenges
         socket.on('submit-skill-challenge-roll', (data) => {
             io.emit('skill-challenge-roll-submitted', data);
+        });
+
+        // Scene Data Request
+        socket.on('scene:get', async () => {
+            try {
+                const scenesPath = path.join(__dirname, '..', 'data', 'scenes.json');
+                if (fs.existsSync(scenesPath)) {
+                    const raw = await fs.promises.readFile(scenesPath, 'utf8');
+                    const parsed = JSON.parse(raw);
+                    const activeId = parsed.active_scene_id;
+                    const activeScene = (parsed.scenes || []).find(s => s.id === activeId) || (parsed.scenes && parsed.scenes[0]);
+                    if (activeScene) {
+                        socket.emit('scene:data', activeScene);
+                    }
+                }
+            } catch (e) {
+                console.error('[Socket] Error handling scene:get:', e.message);
+            }
         });
 
         // Map Tokens & Overlays

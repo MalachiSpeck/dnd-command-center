@@ -37,6 +37,22 @@ window.initPlayerMobileMap = async function() {
         await window.GrailSceneEngine.init(container, false, socket);
         window.GrailSceneEngine.resize();
 
+        if (socket && !socket._mobileMapBound) {
+            socket._mobileMapBound = true;
+            socket.on('scene:data', function(scene) {
+                if (window.GrailSceneEngine) {
+                    window.GrailSceneEngine.loadScene(scene);
+                    window.GrailSceneEngine.resize();
+                }
+            });
+            socket.on('scene:update', function(scene) {
+                if (window.GrailSceneEngine) {
+                    window.GrailSceneEngine.loadScene(scene);
+                    window.GrailSceneEngine.resize();
+                }
+            });
+        }
+
         fetch('/api/scene')
             .then(res => res.json())
             .then(scene => {
