@@ -488,17 +488,41 @@ DM Command Center
                         <div id="dm-map-canvas-container" style="width: 100%; height: 320px; border-radius: 8px; border: 2px solid #38bdf8; overflow: hidden; position: relative; background: #070b19;"></div>
                     </div>
 
-                    <!-- MAP IMAGE UPLOADER CARD -->
+                    <!-- MAP IMAGE & UNIVERSAL VTT UPLOADER CARD -->
                     <div style="background: #0f172a; border: 1.5px solid #38bdf8; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
-                        <strong style="color: #38bdf8; font-size: 0.85rem;">🖼️ BATTLE MAP IMAGE UPLOADER</strong>
-                        <div style="display: flex; gap: 8px;">
+                        <strong style="color: #38bdf8; font-size: 0.85rem;">🖼️ BATTLE MAP & UNIVERSAL VTT UPLOADER</strong>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                             <button id="btn-upload-map-img" class="btn-primary" style="flex: 1; padding: 8px; background: #2563eb; font-weight: bold; border-radius: 6px; font-size: 0.85rem;" onclick="triggerMapUploadInput()">
-                                📤 Choose & Upload Map File
+                                📤 Upload Map (.png, .jpg, .webp, .mp4)
+                            </button>
+                            <button class="btn-primary" style="flex: 1; padding: 8px; background: #059669; font-weight: bold; border-radius: 6px; font-size: 0.85rem;" onclick="triggerMapUploadInput()">
+                                📥 Import Universal VTT (.dd2vtt, .uvtt)
                             </button>
                         </div>
                         <div id="map-drop-zone" style="border: 2px dashed #38bdf8; border-radius: 6px; padding: 10px; font-size: 0.8rem; color: #94a3b8; text-align: center; cursor: pointer;" ondragover="event.preventDefault(); this.style.borderColor='#60a5fa';" ondragleave="this.style.borderColor='#38bdf8';" ondrop="handleMapFileDrop(event)">
-                            Drag &amp; Drop Map Image Here (.png, .jpg, .webp)
+                            Drag &amp; Drop Map Image (.png, .jpg, .webp) or Universal VTT (.dd2vtt, .uvtt) Here
                         </div>
+                        <div style="font-size: 0.75rem; color: #64748b;">
+                            💡 Auto-grid recognizes filenames like <code>Castle_[32x24].png</code> to instantly calibrate grid size!
+                        </div>
+                    </div>
+
+                    <!-- ROOF & CANOPY OVERLAY CARD -->
+                    <div style="background: #0f0f13; border: 1.5px solid #a855f7; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+                        <strong style="color: #c084fc; font-size: 0.8rem;">🏠 ROOF &amp; CANOPY OVERLAY:</strong>
+                        <div style="display: flex; gap: 6px;">
+                            <button class="btn-primary" style="flex: 1; background: #7e22ce; font-weight: bold; font-size: 0.8rem; padding: 6px;" onclick="triggerRoofUploadInput()">
+                                🏠 Upload Roof Image
+                            </button>
+                            <button class="btn-primary" style="flex: 1; background: #6b21a8; font-weight: bold; font-size: 0.8rem; padding: 6px;" onclick="toggleRoofInterior()">
+                                👁️ Reveal / Hide Interior
+                            </button>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                            <label style="color: #94a3b8; font-size: 0.75rem;">Roof Opacity:</label>
+                            <span id="roof-opacity-label" style="color: #c084fc; font-weight: bold; font-size: 0.75rem;">100%</span>
+                        </div>
+                        <input type="range" id="roof-opacity-slider" min="0" max="100" value="100" style="width: 100%; cursor: pointer;" oninput="setRoofOpacityFromSlider(this.value); document.getElementById('roof-opacity-label').innerText = this.value + '%';">
                     </div>
 
                     <!-- ACTIVE SCENE SELECTOR -->
@@ -528,7 +552,9 @@ DM Command Center
                             <button class="btn-primary" style="background: #10b981; font-weight: bold; font-size: 0.8rem; padding: 6px 10px; border-radius: 6px;" onclick="spawnTokenToMap()">➕ Add</button>
                         </div>
                         <div style="display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap;">
-                            <button class="btn-danger" style="flex: 1; padding: 6px; font-size: 0.75rem; font-weight: bold; border-radius: 6px;" onclick="clearAllTokensFromMap()">🗑️ Clear Tokens</button>
+                            <button class="btn-primary" style="flex: 1; background: #0284c7; padding: 6px; font-size: 0.75rem; font-weight: bold; border-radius: 6px;" onclick="cycleSelectedTokenFacet()">🎭 Switch Form</button>
+                            <button class="btn-danger" style="flex: 1; background: #b91c1c; padding: 6px; font-size: 0.75rem; font-weight: bold; border-radius: 6px;" onclick="toggleSelectedTokenDead()">💀 Mark Dead</button>
+                            <button class="btn-danger" style="flex: 1; padding: 6px; font-size: 0.75rem; font-weight: bold; border-radius: 6px;" onclick="clearAllTokensFromMap()">🗑️ Clear</button>
                             <button class="btn-primary" style="flex: 1; background: #6366f1; padding: 6px; font-size: 0.75rem; font-weight: bold; border-radius: 6px;" onclick="toggleFogOfWarMode()">🌫️ Toggle Fog</button>
                             <button class="btn-primary" style="flex: 1; background: #f59e0b; padding: 6px; font-size: 0.75rem; font-weight: bold; border-radius: 6px; color: black;" onclick="clearAllLightsFromMap()">💡 Clear Lights</button>
                             <button class="btn-danger" style="flex: 1; background: #991b1b; padding: 6px; font-size: 0.75rem; font-weight: bold; border-radius: 6px;" onclick="clearAllWallsFromMap()">🧱 Clear Walls</button>
@@ -592,6 +618,25 @@ DM Command Center
                                 <option value="Night">Night Dim</option>
                                 <option value="Midnight">Midnight dark</option>
                             </select>
+                        </div>
+                    </div>
+
+                    <!-- POSITIONAL AMBIENT AUDIO EMITTERS CARD -->
+                    <div style="background: #0f0f13; border: 1.5px solid #10b981; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong style="color: #34d399; font-size: 0.8rem;">🎵 POSITIONAL SOUND EMITTERS:</strong>
+                            <button class="btn-danger" style="padding: 2px 8px; font-size: 0.7rem; border-radius: 4px;" onclick="toggleMuteAudio()">🔇 Mute All</button>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;">
+                            <button class="btn-primary" style="background: #047857; font-size: 0.75rem; padding: 6px 4px; border-radius: 4px;" onclick="addSoundEmitterPreset('waterfall')">🌊 Waterfall</button>
+                            <button class="btn-primary" style="background: #b45309; font-size: 0.75rem; padding: 6px 4px; border-radius: 4px;" onclick="addSoundEmitterPreset('fire')">🔥 Campfire</button>
+                            <button class="btn-primary" style="background: #1d4ed8; font-size: 0.75rem; padding: 6px 4px; border-radius: 4px;" onclick="addSoundEmitterPreset('blizzard')">❄️ Blizzard</button>
+                            <button class="btn-primary" style="background: #4338ca; font-size: 0.75rem; padding: 6px 4px; border-radius: 4px;" onclick="addSoundEmitterPreset('cave_drone')">🦇 Cave Drone</button>
+                            <button class="btn-primary" style="background: #854d0e; font-size: 0.75rem; padding: 6px 4px; border-radius: 4px;" onclick="addSoundEmitterPreset('tavern')">🍺 Tavern</button>
+                            <button class="btn-primary" style="background: #374151; font-size: 0.75rem; padding: 6px 4px; border-radius: 4px;" onclick="addSoundEmitterPreset()">➕ Custom</button>
+                        </div>
+                        <div style="font-size: 0.7rem; color: #94a3b8;">
+                            💡 Click to spawn a sound source at map center. Drag on map to position; sound falls off naturally with distance!
                         </div>
                     </div>
 
@@ -2147,6 +2192,7 @@ DM Command Center
 <!-- GRAIL PixiJS 8 Scene & Lighting Engine -->
 <script src="https://pixijs.download/v8.0.0/pixi.min.js"></script>
 <script src="/js/dice_parser.js"></script>
+<script src="/js/spatial_audio.js"></script>
 <script src="/js/lighting_fog.js"></script>
 <script src="/js/scene_engine.js"></script>
 <script src="/app_scene_dm.js?v=999"></script>

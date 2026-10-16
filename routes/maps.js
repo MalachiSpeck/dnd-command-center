@@ -106,6 +106,17 @@ module.exports = function mapsRouter(scenesStore) {
                 let matching = parsed.scenes.find(s => s.background_url === mapUrl);
                 if (!matching) {
                     const cleanName = sceneName || safeName.replace(/\.[^/.]+$/, '').replace(/[-_]+/g, ' ');
+                    
+                    // Smart auto-detection of grid dimensions from filename e.g. [32x24] or (30x20)
+                    let detectedGridSize = 70;
+                    const bracketMatch = fileName.match(/\[\s*(\d+)\s*[xX]\s*(\d+)\s*\]/) || fileName.match(/\(\s*(\d+)\s*[xX]\s*(\d+)\s*\)/) || fileName.match(/\b(\d{1,3})\s*[xX]\s*(\d{1,3})\b/);
+                    if (bracketMatch) {
+                        const cellsX = parseInt(bracketMatch[1], 10);
+                        if (cellsX > 0) {
+                            detectedGridSize = Math.round(2800 / cellsX);
+                        }
+                    }
+
                     matching = {
                         id: 'scene_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
                         name: cleanName,
@@ -113,7 +124,7 @@ module.exports = function mapsRouter(scenesStore) {
                         height_px: 2100,
                         background_color: "#121824",
                         background_url: mapUrl,
-                        grid: { type: "square", size_px: 70, offset_x: 0, offset_y: 0, color: "#ffffff", opacity: 0.2, visible: true },
+                        grid: { type: "square", size_px: detectedGridSize, offset_x: 0, offset_y: 0, color: "#ffffff", opacity: 0.2, visible: true },
                         walls: [],
                         lights: [],
                         tokens: [],

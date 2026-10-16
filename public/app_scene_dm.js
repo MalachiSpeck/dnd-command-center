@@ -14,7 +14,7 @@
       input = document.createElement('input');
       input.type = 'file';
       input.id = 'global-map-upload-input';
-      input.accept = 'image/*,video/*,.webm,.mp4,.mov';
+      input.accept = 'image/*,video/*,.webm,.mp4,.mov,.dd2vtt,.uvtt,.json';
       input.style.display = 'none';
       document.body.appendChild(input);
 
@@ -30,8 +30,46 @@
   function handleFileUpload(file) {
     var uploadBtn = document.getElementById('btn-upload-map-img');
     if (uploadBtn) {
-      uploadBtn.innerText = '⏳ Uploading Map...';
+      uploadBtn.innerText = '⏳ Processing Map...';
       uploadBtn.disabled = true;
+    }
+
+    var lowerName = (file.name || '').toLowerCase();
+
+    // 1. Check for Universal VTT (.dd2vtt / .uvtt / .json)
+    if (lowerName.endsWith('.dd2vtt') || lowerName.endsWith('.uvtt') || (lowerName.endsWith('.json') && !lowerName.includes('scenes'))) {
+      var textReader = new FileReader();
+      textReader.onload = function (ev) {
+        if (uploadBtn) {
+          uploadBtn.innerText = '📤 Choose & Upload Map File';
+          uploadBtn.disabled = false;
+        }
+        try {
+          var vttData = JSON.parse(ev.target.result);
+          if (window.GrailSceneEngine) {
+            window.GrailSceneEngine.importUniversalVTT(vttData, function (err, scene) {
+              if (err) {
+                alert('Failed to parse Universal VTT map: ' + err.message);
+              } else {
+                currentScene = scene;
+                alert('🎉 Universal VTT Map Imported! Map, grid size, line-of-sight walls, doors, and lights configured automatically.');
+              }
+            });
+          }
+        } catch (e) {
+          alert('Error parsing Universal VTT file: ' + e.message);
+        }
+      };
+      textReader.readAsText(file);
+      return;
+    }
+
+    // 2. Check for filename auto-grid dimensions (e.g. [32x24] or (30x20))
+    if (window.GrailSceneEngine) {
+      var dims = window.GrailSceneEngine.parseMapDimensionsFromFilename(file.name);
+      if (dims) {
+        console.log(`[Auto-Grid] Detected dimensions in filename: ${dims.cellsX} x ${dims.cellsY}`);
+      }
     }
 
     var reader = new FileReader();
@@ -81,6 +119,86 @@
     };
     reader.readAsDataURL(file);
   }
+
+  // Roof / Canopy Overlay Controls
+  window.triggerRoofUploadInput = function () {
+    var input = document.getElementById('global-roof-upload-input');
+    if (!input) {
+      input = document.createElement('input');
+      input.type = 'file';
+      input.id = 'global-roof-upload-input';
+      input.accept = 'image/*';
+      input.style.display = 'none';
+      document.body.appendChild(input);
+
+      input.addEventListener('change', function () {
+        if (!input.files || !input.files[0]) return;
+        var r = new FileReader();
+        r.onload = function (ev) {
+          if (window.GrailSceneEngine) {
+            window.GrailSceneEngine.setRoofOverlayUrl(ev.target.result);
+            alert('🏠 Roof / Canopy overlay applied! You can adjust opacity or toggle interior reveal.');
+          }
+        };
+        r.readAsDataURL(input.files[0]);
+      });
+    }
+    input.click();
+  };
+
+  window.setRoofOpacityFromSlider = function (val) {
+    if (window.GrailSceneEngine) {
+      window.GrailSceneEngine.setRoofOpacity(parseFloat(val) / 100);
+    }
+  };
+
+  window.toggleRoofInterior = function () {
+    if (!currentScene) return;
+    var currentAlpha = currentScene.roof_opacity !== undefined ? currentScene.roof_opacity : 1.0;
+    var newAlpha = currentAlpha > 0.1 ? 0.0 : 1.0;
+    if (window.GrailSceneEngine) {
+      window.GrailSceneEngine.setRoofOpacity(newAlpha);
+    }
+  };
+
+  // Positional Ambient Sound Emitter Controls
+  window.addSoundEmitterPreset = function (soundKey) {
+    var key = soundKey || prompt('Enter ambient sound preset (waterfall, fire, tavern, cave_drone, blizzard):', 'waterfall');
+    if (!key) return;
+    if (window.GrailSceneEngine) {
+      window.GrailSceneEngine.addSoundEmitter({
+        sound_key: key.toLowerCase(),
+        radius_ft: 35,
+        volume: 0.8
+      });
+    }
+  };
+
+  window.toggleMuteAudio = function () {
+    if (window.SpatialAudioEngine) {
+      var isMuted = window.SpatialAudioEngine.toggleMute();
+      alert('Audio Mute: ' + (isMuted ? 'MUTED' : 'UNMUTED'));
+    }
+  };
+
+  // Token Facet & Dead Status Controls
+  window.cycleSelectedTokenFacet = function () {
+    var tok = currentScene && currentScene.tokens ? currentScene.tokens[0] : null;
+    if (!tok) return alert('No tokens on map to switch forms!');
+    if (window.GrailSceneEngine) {
+      var nextFacet = window.GrailSceneEngine.cycleTokenFacet(tok.id, 1);
+      if (nextFacet) alert('Switched form to: ' + (nextFacet.name || nextFacet));
+    }
+  };
+
+  window.toggleSelectedTokenDead = function () {
+    var tok = currentScene && currentScene.tokens ? currentScene.tokens[0] : null;
+    if (!tok) return alert('No tokens on map!');
+    if (window.GrailSceneEngine) {
+      var isDead = window.GrailSceneEngine.toggleTokenDead(tok.id);
+      alert('Token status: ' + (isDead ? '💀 MARKED DEAD' : '✨ REVIVED'));
+    }
+  };
 
   // 2. Global Trigger Function for Top Bar & Projector Tab Buttons
   window.triggerMapUploadInput = function () {

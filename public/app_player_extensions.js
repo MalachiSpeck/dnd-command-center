@@ -27,6 +27,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- MOBILE MAP VIEWPORT, D-PAD NUDGER & AOE PLACER ---
 
+// Helper to resolve the player's token in a given scene
+function getPlayerToken(scene) {
+    if (!scene || !scene.tokens) return null;
+    var char = window.character || {};
+    var charId = char.id || localStorage.getItem('dnd_active_char_id');
+    var charName = (char.name || '').trim().toLowerCase();
+    return scene.tokens.find(t => 
+        (charId && (t.character_id === charId || t.id === charId || t.id === `tok_party_${charId}`)) ||
+        (charName && t.name && t.name.trim().toLowerCase() === charName)
+    ) || (scene.tokens.find(t => t.disposition === 'friendly') || scene.tokens[0]);
+}
+
+function syncPlayerAudioListener(scene) {
+    if (!window.SpatialAudioEngine || !scene) return;
+    var tok = getPlayerToken(scene);
+    if (tok && typeof tok.x === 'number' && typeof tok.y === 'number') {
+        window.SpatialAudioEngine.setListenerPosition(tok.x, tok.y);
+    }
+}
+
 window.initPlayerMobileMap = async function() {
     var container = document.getElementById('player-mobile-map-container');
     if (!container) return;
@@ -43,12 +63,20 @@ window.initPlayerMobileMap = async function() {
                 if (window.GrailSceneEngine) {
                     window.GrailSceneEngine.loadScene(scene);
                     window.GrailSceneEngine.resize();
+                    syncPlayerAudioListener(scene);
                 }
             });
             socket.on('scene:update', function(scene) {
                 if (window.GrailSceneEngine) {
                     window.GrailSceneEngine.loadScene(scene);
                     window.GrailSceneEngine.resize();
+                    syncPlayerAudioListener(scene);
+                }
+            });
+            socket.on('token:moved', function(data) {
+                if (window.GrailSceneEngine) {
+                    var scene = window.GrailSceneEngine.getCurrentScene ? window.GrailSceneEngine.getCurrentScene() : null;
+                    if (scene) syncPlayerAudioListener(scene);
                 }
             });
         }
@@ -59,9 +87,89 @@ window.initPlayerMobileMap = async function() {
                 if (scene) {
                     window.GrailSceneEngine.loadScene(scene);
                     window.GrailSceneEngine.resize();
+                    syncPlayerAudioListener(scene);
                 }
             })
             .catch(err => console.warn('Could not load mobile map scene:', err));
+    }
+};
+
+window.cyclePlayerTokenFacet = function() {
+    if (!window.GrailSceneEngine) return;
+    fetch('/api/scene')
+        .then(res => res.json())
+        .then(scene => {
+            var tok = getPlayerToken(scene);
+            if (!tok) return alert('No token found on map for your character!');
+            
+            // If token has no facets defined, initialize base + wildshape or alt facet
+            if (!tok.facets || tok.facets.length === 0) {
+                var char = window.character || {};
+                tok.facets = [
+                    { name: char.name || 'Default Form', url: tok.avatar_url || '' },
+                    { name: 'Beast / Wild Shape', url: '' }
+                ];
+                tok.current_facet = 0;
+            }
+            var nextFacet = window.GrailSceneEngine.cycleTokenFacet(tok.id, 1);
+            if (nextFacet) {
+                alert('Switched character form to: ' + (nextFacet.name || 'Form ' + (tok.current_facet + 1)));
+            }
+        })
+        .catch(err => console.error(err));
+};
+
+window.togglePlayerTokenDead = function() {
+    if (!window.GrailSceneEngine) return;
+    fetch('/api/scene')
+        .then(res => res.json())
+        .then(scene => {
+            var tok = getPlayerToken(scene);
+            if (!tok) return alert('No token found on map for your character!');
+            var isDead = window.GrailSceneEngine.toggleTokenDead(tok.id);
+            alert('Character status on battle map: ' + (isDead ? '💀 MARKED DEAD' : '✨ REVIVED'));
+        })
+        .catch(err => console.error(err));
+};
+
+var isShowingMovementRange = false;
+window.togglePlayerMovementRange = function() {
+    if (!window.GrailSceneEngine) return;
+    fetch('/api/scene')
+        .then(res => res.json())
+        .then(scene => {
+            var tok = getPlayerToken(scene);
+            if (!tok) return alert('No token found on map!');
+
+            var char = window.character || {};
+            var rawSpeed = char.speed || (char.wild_shape && char.wild_shape.speed) || '30 ft';
+            var speedFt = parseInt(rawSpeed, 10) || 30;
+
+            if (isShowingMovementRange) {
+                window.GrailSceneEngine.clearAoETemplates();
+                isShowingMovementRange = false;
+                alert('Movement range cleared.');
+            } else {
+                // Add sphere template around player token for regular move and dash
+                window.GrailSceneEngine.setAoEConfig('sphere', speedFt, 0);
+                window.GrailSceneEngine.addAoETemplate(tok.x, tok.y);
+                isShowingMovementRange = true;
+                alert(`🏃 Movement budget displayed: ${speedFt} ft base range (Sphere overlay centered on your token). Click again to clear.`);
+            }
+        })
+        .catch(err => console.error(err));
+};
+
+window.togglePlayerSpatialAudio = function() {
+    if (window.SpatialAudioEngine) {
+        var isMuted = window.SpatialAudioEngine.toggleMute();
+        alert('Positional Ambience: ' + (isMuted ? 'MUTED' : 'UNMUTED 🔊'));
+    }
+};
+
+window.setPlayerRoofOpacity = function(val) {
+    if (window.GrailSceneEngine) {
+        window.GrailSceneEngine.setRoofOpacity(parseFloat(val) / 100);
     }
 };
 
@@ -92,6 +200,7 @@ window.placeMobileAoETemplate = function() {
 window.clearMobileAoETemplates = function() {
     if (window.GrailSceneEngine) {
         window.GrailSceneEngine.clearAoETemplates();
+        isShowingMovementRange = false;
     }
 };
 

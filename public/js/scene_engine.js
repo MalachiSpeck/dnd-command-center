@@ -56,12 +56,13 @@ window.GrailSceneEngine = (function () {
     worldContainer.eventMode = 'static';
     app.stage.addChild(worldContainer);
 
-    // Initialize 8 Z-Ordered Layers
+    // Initialize 9 Z-Ordered Layers
     layers.background = new PIXI.Container(); layers.background.zIndex = 0;
     layers.tiles = new PIXI.Container();      layers.tiles.zIndex = 10;
     layers.grid = new PIXI.Graphics();        layers.grid.zIndex = 20;
     layers.drawing = new PIXI.Graphics();     layers.drawing.zIndex = 30;
     layers.tokens = new PIXI.Container();     layers.tokens.zIndex = 40;
+    layers.roof = new PIXI.Container();       layers.roof.zIndex = 45;
     layers.lighting = new PIXI.Graphics();   layers.lighting.zIndex = 50;
     layers.fog = new PIXI.Graphics();        layers.fog.zIndex = 60;
     layers.ui = new PIXI.Container();         layers.ui.zIndex = 70;
@@ -100,8 +101,15 @@ window.GrailSceneEngine = (function () {
     renderGrid();
     renderWalls();
     renderTokens();
+    renderRoofOverlay();
     renderAoETemplates();
     renderLightingAndFog();
+    renderSoundEmitters();
+
+    // Auto-sync spatial audio emitters if engine available
+    if (window.SpatialAudioEngine && currentScene.sound_emitters) {
+      window.SpatialAudioEngine.syncSceneEmitters(currentScene.sound_emitters, (currentScene.grid && currentScene.grid.size_px) || 70);
+    }
 
     // Auto-fit initial view if container is small (e.g. mobile sheet or mini viewport)
     if (app && app.canvas && app.canvas.parentNode) {
@@ -250,15 +258,7 @@ window.GrailSceneEngine = (function () {
       circle.stroke({ width: 3, color: 0xffffff });
       container.addChild(circle);
 
-      // AoE Blast Target Highlight Ring
-      if (tok.in_aoe) {
-        var highlightRing = new PIXI.Graphics();
-        highlightRing.circle(radius, radius, radius + 6);
-        highlightRing.stroke({ width: 4, color: 0xef4444, alpha: 0.95 });
-        container.addChild(highlightRing);
-      }
-
-      // Token Initials Text
+      // Token Initials Text (underneath avatar in case image fails/loads)
       var initials = 'PC';
       if (tok.name) {
         var parts = tok.name.trim().split(/\s+/);
@@ -276,6 +276,96 @@ window.GrailSceneEngine = (function () {
       text.x = radius;
       text.y = radius;
       container.addChild(text);
+
+      // Avatar Image / Facet Support
+      var avatarUrl = null;
+      if (tok.facets && Array.isArray(tok.facets) && tok.facets.length > 0) {
+        var facetIdx = tok.current_facet || 0;
+        avatarUrl = tok.facets[facetIdx] ? (tok.facets[facetIdx].url || tok.facets[facetIdx]) : null;
+      } else if (tok.image_url) {
+        avatarUrl = tok.image_url;
+      }
+
+      if (avatarUrl) {
+        try {
+          var avatarTexture = PIXI.Texture.from(avatarUrl);
+          var avatarSprite = new PIXI.Sprite(avatarTexture);
+          avatarSprite.width = tokenSizePx - 8;
+          avatarSprite.height = tokenSizePx - 8;
+          avatarSprite.x = 4;
+          avatarSprite.y = 4;
+
+          var avatarMask = new PIXI.Graphics();
+          avatarMask.circle(radius, radius, radius - 4);
+          avatarMask.fill({ color: 0xffffff });
+          container.addChild(avatarMask);
+          avatarSprite.mask = avatarMask;
+          container.addChild(avatarSprite);
+        } catch (e) {
+          console.warn('Token avatar load failed:', e);
+        }
+      }
+
+      // AoE Blast Target Highlight Ring
+      if (tok.in_aoe) {
+        var highlightRing = new PIXI.Graphics();
+        highlightRing.circle(radius, radius, radius + 6);
+        highlightRing.stroke({ width: 4, color: 0xef4444, alpha: 0.95 });
+        container.addChild(highlightRing);
+      }
+
+      // Condition Marker Pips
+      if (tok.conditions && Array.isArray(tok.conditions) && tok.conditions.length > 0) {
+        var condColors = {
+          poisoned: 0x22c55e,
+          concentrating: 0xa855f7,
+          blessed: 0xfbbf24,
+          stunned: 0x06b6d4,
+          paralyzed: 0x0284c7,
+          prone: 0xf97316,
+          blinded: 0x64748b,
+          charmed: 0xec4899,
+          frightened: 0xeab308,
+          invisible: 0x38bdf8
+        };
+        var condCount = Math.min(6, tok.conditions.length);
+        tok.conditions.slice(0, condCount).forEach((condName, cIdx) => {
+          var angle = (cIdx / condCount) * Math.PI * 2 - Math.PI / 2;
+          var cx = radius + (radius + 2) * Math.cos(angle);
+          var cy = radius + (radius + 2) * Math.sin(angle);
+          var pip = new PIXI.Graphics();
+          var col = condColors[(condName || '').toLowerCase()] || 0x38bdf8;
+          pip.circle(cx, cy, 5);
+          pip.fill({ color: col });
+          pip.stroke({ width: 1.5, color: 0xffffff });
+          container.addChild(pip);
+        });
+      }
+
+      // Dead Status Overlay (Red Skull / Crossed Blades)
+      if (tok.is_dead) {
+        var deadOverlay = new PIXI.Graphics();
+        deadOverlay.circle(radius, radius, radius - 4);
+        deadOverlay.fill({ color: 0x000000, alpha: 0.75 });
+        deadOverlay.stroke({ width: 3, color: 0xef4444 });
+        
+        var pad = radius * 0.45;
+        deadOverlay.moveTo(radius - pad, radius - pad);
+        deadOverlay.lineTo(radius + pad, radius + pad);
+        deadOverlay.moveTo(radius + pad, radius - pad);
+        deadOverlay.lineTo(radius - pad, radius + pad);
+        deadOverlay.stroke({ width: 4, color: 0xef4444 });
+        container.addChild(deadOverlay);
+
+        var deadLabel = new PIXI.Text({
+          text: '💀 DEAD',
+          style: { fontFamily: 'sans-serif', fontSize: Math.max(10, radius * 0.35), fill: 0xff4444, fontWeight: 'bold' }
+        });
+        deadLabel.anchor.set(0.5);
+        deadLabel.x = radius;
+        deadLabel.y = radius;
+        container.addChild(deadLabel);
+      }
 
       // HP Ring / Badge
       if (tok.hp_max) {
@@ -365,6 +455,333 @@ window.GrailSceneEngine = (function () {
         pxPerFt
       );
     }
+  }
+
+  /**
+   * Render Multi-Layer Roof / Canopy Overlay
+   */
+  function renderRoofOverlay() {
+    layers.roof.removeChildren();
+    if (!currentScene || !currentScene.roof_overlay_url) return;
+
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function () {
+      try {
+        var texture = PIXI.Texture.from(img);
+        var sprite = new PIXI.Sprite(texture);
+        sprite.width = currentScene.width_px || img.width || 2800;
+        sprite.height = currentScene.height_px || img.height || 2100;
+        sprite.alpha = currentScene.roof_opacity !== undefined ? currentScene.roof_opacity : 1.0;
+        layers.roof.removeChildren();
+        layers.roof.addChild(sprite);
+      } catch (e) {
+        console.warn('Roof overlay texture creation failed:', e);
+      }
+    };
+    img.src = currentScene.roof_overlay_url;
+  }
+
+  function setRoofOpacity(opacity) {
+    if (!currentScene) return;
+    currentScene.roof_opacity = Math.max(0, Math.min(1, parseFloat(opacity)));
+    if (layers.roof && layers.roof.children.length > 0) {
+      layers.roof.children.forEach(c => c.alpha = currentScene.roof_opacity);
+    }
+    if (socket) socket.emit('scene:update', currentScene);
+  }
+
+  function setRoofOverlayUrl(url) {
+    if (!currentScene) return;
+    currentScene.roof_overlay_url = url;
+    renderRoofOverlay();
+    if (socket) socket.emit('scene:update', currentScene);
+  }
+
+  /**
+   * Render Positional Ambient Sound Emitter Handles in DM Studio Mode
+   */
+  var dragEmitter = null;
+  function renderSoundEmitters() {
+    if (!layers.ui) return;
+
+    // Clean up any existing sound pins on UI layer
+    var toRemove = [];
+    layers.ui.children.forEach(c => {
+      if (c._isSoundEmitter) toRemove.push(c);
+    });
+    toRemove.forEach(c => layers.ui.removeChild(c));
+
+    if (!isDM || !currentScene || !currentScene.sound_emitters || currentScene.sound_emitters.length === 0) return;
+
+    var gridPx = (currentScene.grid && currentScene.grid.size_px) || 70;
+    var pxPerFt = gridPx / 5;
+
+    currentScene.sound_emitters.forEach(emitter => {
+      var container = new PIXI.Container();
+      container._isSoundEmitter = true;
+      container.x = emitter.x;
+      container.y = emitter.y;
+      container.eventMode = 'static';
+      container.cursor = 'grab';
+
+      var radiusPx = (emitter.radius_ft || 30) * pxPerFt;
+
+      // Audible Range Ring
+      var rangeRing = new PIXI.Graphics();
+      rangeRing.circle(0, 0, radiusPx);
+      rangeRing.stroke({ width: 1.5, color: 0x38bdf8, alpha: 0.4 });
+      rangeRing.fill({ color: 0x38bdf8, alpha: 0.06 });
+      container.addChild(rangeRing);
+
+      // Icon Pin Center
+      var pin = new PIXI.Graphics();
+      pin.circle(0, 0, 14);
+      pin.fill({ color: 0x0284c7, alpha: 0.95 });
+      pin.stroke({ width: 2, color: 0xffffff });
+      container.addChild(pin);
+
+      var label = new PIXI.Text({
+        text: '🎵 ' + (emitter.sound_key || 'Audio'),
+        style: { fontFamily: 'sans-serif', fontSize: 11, fill: 0xffffff, fontWeight: 'bold' }
+      });
+      label.anchor.set(0.5, 0);
+      label.y = 16;
+      container.addChild(label);
+
+      container.on('pointerdown', (e) => {
+        e.stopPropagation();
+        dragEmitter = emitter;
+        var clientX = e.clientX || (e.global ? e.global.x : 0);
+        var clientY = e.clientY || (e.global ? e.global.y : 0);
+        var worldPt = screenToWorld(clientX, clientY);
+        dragOffset.x = worldPt.x - emitter.x;
+        dragOffset.y = worldPt.y - emitter.y;
+      });
+
+      layers.ui.addChild(container);
+    });
+  }
+
+  function addSoundEmitter(emitter) {
+    if (!currentScene) return;
+    if (!currentScene.sound_emitters) currentScene.sound_emitters = [];
+    var newEmitter = Object.assign({
+      id: 'snd_' + Date.now(),
+      x: 1400,
+      y: 1050,
+      sound_key: 'waterfall',
+      radius_ft: 35,
+      volume: 0.8
+    }, emitter);
+    currentScene.sound_emitters.push(newEmitter);
+    renderSoundEmitters();
+    if (window.SpatialAudioEngine) {
+      window.SpatialAudioEngine.syncSceneEmitters(currentScene.sound_emitters, (currentScene.grid && currentScene.grid.size_px) || 70);
+    }
+    if (socket) socket.emit('scene:update', currentScene);
+    return newEmitter;
+  }
+
+  function removeSoundEmitter(id) {
+    if (!currentScene || !currentScene.sound_emitters) return;
+    currentScene.sound_emitters = currentScene.sound_emitters.filter(s => s.id !== id);
+    renderSoundEmitters();
+    if (window.SpatialAudioEngine) {
+      window.SpatialAudioEngine.syncSceneEmitters(currentScene.sound_emitters, (currentScene.grid && currentScene.grid.size_px) || 70);
+    }
+    if (socket) socket.emit('scene:update', currentScene);
+  }
+
+  function getSoundEmitters() {
+    return (currentScene && currentScene.sound_emitters) ? currentScene.sound_emitters : [];
+  }
+
+  /**
+   * Smart Auto-Grid Detection from Map Filename
+   * Supports: "Dungeon_[32x24].jpg", "Cave_(30x20).png", "Map_40x25_70px.webp"
+   */
+  function parseMapDimensionsFromFilename(filename) {
+    if (!filename || typeof filename !== 'string') return null;
+    var bracketMatch = filename.match(/\[\s*(\d+)\s*[xX]\s*(\d+)\s*\]/);
+    if (bracketMatch) {
+      return { cellsX: parseInt(bracketMatch[1], 10), cellsY: parseInt(bracketMatch[2], 10) };
+    }
+    var parenMatch = filename.match(/\(\s*(\d+)\s*[xX]\s*(\d+)\s*\)/);
+    if (parenMatch) {
+      return { cellsX: parseInt(parenMatch[1], 10), cellsY: parseInt(parenMatch[2], 10) };
+    }
+    var wordMatch = filename.match(/\b(\d{1,3})\s*[xX]\s*(\d{1,3})\b/);
+    if (wordMatch) {
+      return { cellsX: parseInt(wordMatch[1], 10), cellsY: parseInt(wordMatch[2], 10) };
+    }
+    return null;
+  }
+
+  /**
+   * Universal VTT / Dungeondraft (.dd2vtt / .uvtt) Native Importer
+   * Automatically configures map image, grid size, line of sight walls, door portals, and lights!
+   */
+  function importUniversalVTT(vttData, callback) {
+    try {
+      var data = typeof vttData === 'string' ? JSON.parse(vttData) : vttData;
+      if (!data) return false;
+
+      var resolution = data.resolution || {};
+      var mapSize = resolution.map_size || { x: 30, y: 20 };
+      var gridPx = parseInt(resolution.pixels_per_grid || '70', 10);
+      var widthPx = Math.round((mapSize.x || 30) * gridPx);
+      var heightPx = Math.round((mapSize.y || 20) * gridPx);
+
+      var newScene = {
+        id: 'scene_' + Date.now(),
+        name: data.name || 'Universal VTT Import',
+        width_px: widthPx,
+        height_px: heightPx,
+        grid: {
+          type: 'square',
+          size_px: gridPx,
+          visible: true,
+          color: '#ffffff',
+          opacity: 0.2
+        },
+        background_url: '',
+        walls: [],
+        lights: [],
+        tokens: (currentScene && currentScene.tokens) ? currentScene.tokens : [],
+        fog: { mode: 'vision', manual_masks: [], rooms: [] },
+        roof_overlay_url: '',
+        roof_opacity: 1.0,
+        sound_emitters: []
+      };
+
+      // Base64 map image data
+      if (data.image) {
+        var base64 = data.image.trim();
+        if (!base64.startsWith('data:')) {
+          base64 = 'data:image/png;base64,' + base64;
+        }
+        newScene.background_url = base64;
+      }
+
+      // Convert line of sight wall segments
+      if (Array.isArray(data.line_of_sight)) {
+        data.line_of_sight.forEach((wallSegments, wIdx) => {
+          if (!Array.isArray(wallSegments) || wallSegments.length < 2) return;
+          var pts = [];
+          for (var i = 0; i < wallSegments.length; i++) {
+            var pt = wallSegments[i];
+            var x = pt.x <= (mapSize.x + 2) ? pt.x * gridPx : pt.x;
+            var y = pt.y <= (mapSize.y + 2) ? pt.y * gridPx : pt.y;
+            pts.push(Math.round(x), Math.round(y));
+          }
+          if (pts.length >= 4) {
+            newScene.walls.push({
+              id: 'w_uvtt_' + wIdx + '_' + Date.now(),
+              type: 'opaque',
+              points: pts
+            });
+          }
+        });
+      }
+
+      // Convert portals (doors & windows)
+      if (Array.isArray(data.portals)) {
+        data.portals.forEach((portal, pIdx) => {
+          var bounds = portal.bounds || [];
+          if (bounds.length >= 2) {
+            var pts = [];
+            bounds.forEach(b => {
+              var bx = b.x <= (mapSize.x + 2) ? b.x * gridPx : b.x;
+              var by = b.y <= (mapSize.y + 2) ? b.y * gridPx : b.y;
+              pts.push(Math.round(bx), Math.round(by));
+            });
+            newScene.walls.push({
+              id: 'door_uvtt_' + pIdx + '_' + Date.now(),
+              type: 'door',
+              state: portal.closed !== false ? 'closed' : 'open',
+              points: pts
+            });
+          }
+        });
+      }
+
+      // Convert lights
+      if (Array.isArray(data.lights)) {
+        data.lights.forEach((light, lIdx) => {
+          var lx = light.position ? (light.position.x <= (mapSize.x + 2) ? light.position.x * gridPx : light.position.x) : 0;
+          var ly = light.position ? (light.position.y <= (mapSize.y + 2) ? light.position.y * gridPx : light.position.y) : 0;
+          var rangeFt = Math.round((light.range || 4) * 5);
+          var colorHex = light.color ? ('#' + light.color.substring(0, 6)) : '#ffaa44';
+
+          newScene.lights.push({
+            id: 'light_uvtt_' + lIdx + '_' + Date.now(),
+            x: Math.round(lx),
+            y: Math.round(ly),
+            bright_radius_ft: Math.max(5, Math.round(rangeFt * 0.5)),
+            dim_radius_ft: Math.max(10, rangeFt),
+            color: colorHex,
+            flicker: 'torch',
+            produces_shadows: true
+          });
+        });
+      }
+
+      loadScene(newScene);
+      if (socket) socket.emit('scene:update', newScene);
+      if (typeof callback === 'function') callback(null, newScene);
+      return true;
+    } catch (e) {
+      console.error('Failed to parse Universal VTT file:', e);
+      if (typeof callback === 'function') callback(e);
+      return false;
+    }
+  }
+
+  /**
+   * Token Facets (Multi-Sided Tokens), Dead Status, and Conditions API
+   */
+  function cycleTokenFacet(tokenId, direction) {
+    if (!currentScene || !currentScene.tokens) return;
+    var tok = currentScene.tokens.find(t => t.id === tokenId);
+    if (!tok || !tok.facets || tok.facets.length <= 1) return;
+
+    var dir = direction || 1;
+    var current = tok.current_facet || 0;
+    var next = (current + dir) % tok.facets.length;
+    if (next < 0) next = tok.facets.length - 1;
+    tok.current_facet = next;
+    renderTokens();
+    if (socket) socket.emit('scene:update', currentScene);
+    return tok.facets[next];
+  }
+
+  function setTokenFacet(tokenId, facetIndex) {
+    if (!currentScene || !currentScene.tokens) return;
+    var tok = currentScene.tokens.find(t => t.id === tokenId);
+    if (!tok || !tok.facets || !tok.facets[facetIndex]) return;
+    tok.current_facet = facetIndex;
+    renderTokens();
+    if (socket) socket.emit('scene:update', currentScene);
+  }
+
+  function toggleTokenDead(tokenId) {
+    if (!currentScene || !currentScene.tokens) return;
+    var tok = currentScene.tokens.find(t => t.id === tokenId);
+    if (!tok) return;
+    tok.is_dead = !tok.is_dead;
+    renderTokens();
+    if (socket) socket.emit('scene:update', currentScene);
+    return tok.is_dead;
+  }
+
+  function setTokenConditions(tokenId, conditions) {
+    if (!currentScene || !currentScene.tokens) return;
+    var tok = currentScene.tokens.find(t => t.id === tokenId);
+    if (!tok) return;
+    tok.conditions = Array.isArray(conditions) ? conditions : [];
+    renderTokens();
+    if (socket) socket.emit('scene:update', currentScene);
   }
 
   /**
@@ -464,6 +881,13 @@ window.GrailSceneEngine = (function () {
       } else if (dragToken) {
         dragToken.container.x = worldPt.x - dragOffset.x;
         dragToken.container.y = worldPt.y - dragOffset.y;
+      } else if (dragEmitter) {
+        dragEmitter.x = Math.round(worldPt.x - dragOffset.x);
+        dragEmitter.y = Math.round(worldPt.y - dragOffset.y);
+        renderSoundEmitters();
+        if (window.SpatialAudioEngine && currentScene.sound_emitters) {
+          window.SpatialAudioEngine.syncSceneEmitters(currentScene.sound_emitters, (currentScene.grid && currentScene.grid.size_px) || 70);
+        }
       } else if (dragAoE) {
         dragAoE.x = Math.round(worldPt.x - dragOffset.x);
         dragAoE.y = Math.round(worldPt.y - dragOffset.y);
@@ -482,6 +906,11 @@ window.GrailSceneEngine = (function () {
 
     window.addEventListener('mouseup', (e) => {
       if (isPanning) isPanning = false;
+
+      if (dragEmitter) {
+        if (socket) socket.emit('scene:update', currentScene);
+        dragEmitter = null;
+      }
 
       if (dragToken) {
         var gridSize = (currentScene.grid && currentScene.grid.size_px) || 70;
@@ -895,7 +1324,24 @@ window.GrailSceneEngine = (function () {
     zoomOut: zoomOut,
     zoomFit: zoomFit,
     centerOnToken: centerOnToken,
-    resize: resize
+    resize: resize,
+    // Universal VTT & Filename Dimension Parser
+    importUniversalVTT: importUniversalVTT,
+    parseMapDimensionsFromFilename: parseMapDimensionsFromFilename,
+    // Multi-Sided Token Facets, Dead Status & Conditions
+    cycleTokenFacet: cycleTokenFacet,
+    setTokenFacet: setTokenFacet,
+    toggleTokenDead: toggleTokenDead,
+    setTokenConditions: setTokenConditions,
+    // Roof & Canopy Overlay
+    renderRoofOverlay: renderRoofOverlay,
+    setRoofOpacity: setRoofOpacity,
+    setRoofOverlayUrl: setRoofOverlayUrl,
+    // Spatial Sound Emitters
+    renderSoundEmitters: renderSoundEmitters,
+    addSoundEmitter: addSoundEmitter,
+    removeSoundEmitter: removeSoundEmitter,
+    getSoundEmitters: getSoundEmitters
   };
 
 })();
